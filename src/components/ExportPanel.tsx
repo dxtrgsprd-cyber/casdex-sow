@@ -95,13 +95,8 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
             </div>
           </div>
 
-          <hr className="border-border" />
 
-          {/* Export all */}
-          <Button onClick={handleExportAll} size="lg" className="w-full" disabled={!allLoaded}>
-            <Download className="w-5 h-5 mr-2" />
-            Download All Documents (.zip)
-          </Button>
+
         </CardContent>
       </Card>
 
