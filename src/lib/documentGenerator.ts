@@ -30,11 +30,23 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     Customer: merged.companyName,
     SOLUTION_ARCHITECT: merged.solutionArchitect,
     SCOPE: merged.scope,
-    'Material List': merged.scope,
+    'Material List': '', // injected at end of document instead
     SCOPE_OF_WORK: merged.scopeOfWork,
     'Scope of Work': merged.scopeOfWork,
     Notes: merged.notes,
   };
+}
+
+/** Build Word XML paragraphs for the material list */
+function buildMaterialListXml(scope: string): string {
+  if (!scope) return '';
+  const lines = scope.split('\n').filter(l => l.trim());
+  const heading = `<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Material List</w:t></w:r></w:p>`;
+  const items = lines.map(line => {
+    const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<w:p><w:r><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+  }).join('');
+  return heading + items;
 }
 
 export function generateDocx(
@@ -58,10 +70,23 @@ export function generateDocx(
     nullGetter: () => '',
   });
 
+  const merged = { ...info, ...overrides };
   const data = getTemplateData(info, overrides);
   doc.render(data);
 
-  const out = doc.getZip().generate({
+  // Inject material list at the very end of the document body
+  const outZip = doc.getZip();
+  const docXml = outZip.file('word/document.xml')?.asText();
+  if (docXml && merged.scope) {
+    const materialXml = buildMaterialListXml(merged.scope);
+    const closingIdx = docXml.lastIndexOf('</w:body>');
+    if (closingIdx !== -1) {
+      const newDocXml = docXml.slice(0, closingIdx) + materialXml + docXml.slice(closingIdx);
+      outZip.file('word/document.xml', newDocXml);
+    }
+  }
+
+  const out = outZip.generate({
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     compression: 'DEFLATE',
