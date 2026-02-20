@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
-import { Download, FileText, Archive, Upload, AlertCircle } from 'lucide-react';
+import { Download, FileText, Archive, Upload, AlertCircle, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { downloadDocx, downloadAllAsZip } from '@/lib/documentGenerator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
 interface ExportPanelProps {
@@ -22,6 +24,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
 export default function ExportPanel({ info, overrides, templateFiles, hardwareScheduleFile, onBack }: ExportPanelProps) {
   const [exporting, setExporting] = useState(false);
   const [missingTemplates, setMissingTemplates] = useState<DocumentType[]>([]);
+  const [folderName, setFolderName] = useState(info.projectName || 'SOW_Documents');
 
   const handleUploadTemplate = useCallback((docType: DocumentType, file: File) => {
     const reader = new FileReader();
@@ -49,11 +52,11 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
     }
     setExporting(true);
     try {
-      await downloadAllAsZip(templateFiles, info, overrides, hardwareScheduleFile);
+      await downloadAllAsZip(templateFiles, info, overrides, hardwareScheduleFile, folderName);
     } finally {
       setExporting(false);
     }
-  }, [templateFiles, info, overrides, hardwareScheduleFile]);
+  }, [templateFiles, info, overrides, hardwareScheduleFile, folderName]);
 
   return (
     <div className="space-y-6">
@@ -130,6 +133,25 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
                 </Button>
               ))}
             </div>
+          </div>
+
+          <hr className="border-border" />
+
+          {/* Folder name */}
+          <div className="space-y-2">
+            <Label htmlFor="folderName" className="flex items-center gap-2">
+              <FolderOpen className="w-4 h-4 text-muted-foreground" />
+              Export Folder Name
+            </Label>
+            <Input
+              id="folderName"
+              value={folderName}
+              onChange={(e) => setFolderName(e.target.value)}
+              placeholder="e.g. ProjectName_SOW"
+            />
+            <p className="text-xs text-muted-foreground">
+              ZIP file and inner folder will use this name
+            </p>
           </div>
 
           <hr className="border-border" />
