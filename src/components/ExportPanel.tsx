@@ -1,17 +1,14 @@
 import { useState, useCallback } from 'react';
-import { Download, FileText, Archive, Upload, AlertCircle, FolderOpen } from 'lucide-react';
+import { Download, FileText, Upload, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { downloadDocx, downloadAllAsZip } from '@/lib/documentGenerator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { downloadDocx } from '@/lib/documentGenerator';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
 interface ExportPanelProps {
   info: ProjectInfo;
   overrides: DocumentOverrides;
   templateFiles: Record<DocumentType, ArrayBuffer | null>;
-  hardwareScheduleFile: File | null;
   onBack: () => void;
 }
 
@@ -21,10 +18,8 @@ const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_SUB_Project', label: 'SOW SUB Project' },
 ];
 
-export default function ExportPanel({ info, overrides, templateFiles, hardwareScheduleFile, onBack }: ExportPanelProps) {
-  const [exporting, setExporting] = useState(false);
+export default function ExportPanel({ info, overrides, templateFiles, onBack }: ExportPanelProps) {
   const [missingTemplates, setMissingTemplates] = useState<DocumentType[]>([]);
-  const [folderName, setFolderName] = useState(info.projectName || 'SOW_Documents');
 
   const handleUploadTemplate = useCallback((docType: DocumentType, file: File) => {
     const reader = new FileReader();
@@ -44,19 +39,19 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
     downloadDocx(template, info, overrides[docType], `${docType}.docx`);
   }, [templateFiles, info, overrides]);
 
-  const handleExportAll = useCallback(async () => {
+  const handleExportAll = useCallback(() => {
     const missing = docTypes.filter(d => !templateFiles[d.type]).map(d => d.type);
     if (missing.length > 0) {
       setMissingTemplates(missing);
       return;
     }
-    setExporting(true);
-    try {
-      await downloadAllAsZip(templateFiles, info, overrides, hardwareScheduleFile, folderName);
-    } finally {
-      setExporting(false);
+    for (const { type } of docTypes) {
+      const template = templateFiles[type];
+      if (template) {
+        downloadDocx(template, info, overrides[type], `${type}.docx`);
+      }
     }
-  }, [templateFiles, info, overrides, hardwareScheduleFile, folderName]);
+  }, [templateFiles, info, overrides]);
 
   return (
     <div className="space-y-6">
@@ -67,7 +62,7 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
             Export Documents
           </CardTitle>
           <CardDescription>
-            Download individual documents or all at once as a ZIP archive
+            Upload your templates and download generated documents
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -119,7 +114,7 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
 
           {/* Individual exports */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">Individual Downloads</p>
+            <p className="text-sm font-medium">Download Documents</p>
             <div className="grid gap-3 sm:grid-cols-3">
               {docTypes.map(({ type, label }) => (
                 <Button
@@ -137,35 +132,11 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
 
           <hr className="border-border" />
 
-          {/* Folder name */}
-          <div className="space-y-2">
-            <Label htmlFor="folderName" className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-muted-foreground" />
-              Export Folder Name
-            </Label>
-            <Input
-              id="folderName"
-              value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
-              placeholder="e.g. ProjectName_SOW"
-            />
-            <p className="text-xs text-muted-foreground">
-              ZIP file and inner folder will use this name
-            </p>
-          </div>
-
-          <hr className="border-border" />
-
           {/* Export all */}
-          <Button onClick={handleExportAll} disabled={exporting} size="lg" className="w-full">
-            <Archive className="w-5 h-5 mr-2" />
-            {exporting ? 'Generating ZIP…' : 'Export All as ZIP'}
+          <Button onClick={handleExportAll} size="lg" className="w-full">
+            <Download className="w-5 h-5 mr-2" />
+            Download All Documents
           </Button>
-          {hardwareScheduleFile && (
-            <p className="text-xs text-muted-foreground text-center">
-              Hardware schedule ({hardwareScheduleFile.name}) will be included in the ZIP
-            </p>
-          )}
         </CardContent>
       </Card>
 
