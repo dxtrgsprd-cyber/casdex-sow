@@ -22,14 +22,12 @@ import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
 
 const Index = () => {
-  // Run migration once
   const migrated = useRef(false);
   if (!migrated.current) {
     migrateIfNeeded();
     migrated.current = true;
   }
 
-  // Initialize: load active project or create one
   const [projectId, setProjectId] = useState<string>(() => {
     const activeId = getActiveProjectId();
     if (activeId && loadProjectData(activeId)) return activeId;
@@ -48,6 +46,8 @@ const Index = () => {
   const [projectInfo, setProjectInfo] = useState<ProjectInfo>({ ...defaultProjectInfo, ...loadedData?.projectInfo });
   const [hardwareScheduleFile, setHardwareScheduleFile] = useState<File | null>(null);
   const [hardwareScheduleFileName, setHardwareScheduleFileName] = useState<string | null>(loadedData?.hardwareScheduleFileName ?? null);
+  const [appendixFile, setAppendixFile] = useState<File | null>(null);
+  const [appendixFileName, setAppendixFileName] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<DocumentOverrides>({ ...defaultOverrides, ...loadedData?.overrides });
   const [templateFiles, setTemplateFiles] = useState<Record<DocumentType, ArrayBuffer | null>>({
     SOW_Customer: null,
@@ -55,7 +55,6 @@ const Index = () => {
     SOW_SUB_Project: null,
   });
 
-  // Auto-save on state changes
   useEffect(() => {
     saveProjectData(projectId, {
       currentStep,
@@ -68,7 +67,6 @@ const Index = () => {
     setProjectIndex(getProjectIndex());
   }, [projectId, currentStep, bomItems, bomFileName, projectInfo, hardwareScheduleFileName, overrides]);
 
-  // Load a different project
   const handleLoadProject = useCallback((id: string) => {
     const data = loadProjectData(id);
     if (!data) return;
@@ -80,6 +78,8 @@ const Index = () => {
     setProjectInfo({ ...defaultProjectInfo, ...data.projectInfo });
     setHardwareScheduleFile(null);
     setHardwareScheduleFileName(data.hardwareScheduleFileName);
+    setAppendixFile(null);
+    setAppendixFileName(null);
     setOverrides({ ...defaultOverrides, ...data.overrides });
     toast.success(`Loaded project: ${data.projectInfo.oppNumber || 'Untitled'}`);
   }, []);
@@ -107,7 +107,6 @@ const Index = () => {
     toast.success('New project created');
   }, [handleLoadProject]);
 
-  // Auto-load embedded templates on mount
   useEffect(() => {
     const docTypes: DocumentType[] = ['SOW_Customer', 'SOW_SUB_Quoting', 'SOW_SUB_Project'];
     docTypes.forEach(async (docType) => {
@@ -153,6 +152,11 @@ const Index = () => {
   const handleHardwareSchedule = useCallback((file: File | null, name: string | null) => {
     setHardwareScheduleFile(file);
     setHardwareScheduleFileName(name);
+  }, []);
+
+  const handleAppendix = useCallback((file: File | null, name: string | null) => {
+    setAppendixFile(file);
+    setAppendixFileName(name);
   }, []);
 
   return (
@@ -206,6 +210,8 @@ const Index = () => {
           <HardwareScheduleUpload
             fileName={hardwareScheduleFileName}
             onFileSelected={handleHardwareSchedule}
+            appendixFileName={appendixFileName}
+            onAppendixSelected={handleAppendix}
             onNext={() => nextStep(3)}
             onBack={() => goToStep(2)}
           />
@@ -227,6 +233,7 @@ const Index = () => {
             overrides={overrides}
             templateFiles={templateFiles}
             hardwareScheduleFile={hardwareScheduleFile}
+            appendixFile={appendixFile}
             onBack={() => goToStep(4)}
           />
         )}
