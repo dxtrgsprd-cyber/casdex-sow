@@ -25,6 +25,7 @@ const fields: { key: keyof ProjectInfo; label: string; section: string; type?: '
   { key: 'customerPhone', label: 'Customer Phone', section: 'Customer' },
   { key: 'solutionArchitect', label: 'Solution Architect', section: 'HTS' },
   { key: 'scope', label: 'Material List', section: 'Material List', type: 'textarea' },
+  { key: 'scopeOfWork', label: 'Scope of Work', section: 'Scope of Work', type: 'textarea' },
   { key: 'notes', label: 'Additional Notes', section: 'Other', type: 'textarea' },
 ];
 
@@ -43,6 +44,9 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
             <CardTitle className="text-lg">{section === 'Material List' ? section : `${section} Information`}</CardTitle>
             {section === 'Material List' && (
               <CardDescription>Auto-populated from BOM. Edit as needed.</CardDescription>
+            )}
+            {section === 'Scope of Work' && (
+              <CardDescription>Paste your Scope of Work narrative here. This will populate all 3 SOW documents.</CardDescription>
             )}
           </CardHeader>
           <CardContent>

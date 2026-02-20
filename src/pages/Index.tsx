@@ -5,23 +5,80 @@ import ProjectInfoForm from '@/components/ProjectInfoForm';
 import HardwareScheduleUpload from '@/components/HardwareScheduleUpload';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
+import { Button } from '@/components/ui/button';
 import { defaultProjectInfo, defaultOverrides } from '@/types/sow';
 import type { ProjectInfo, BomItem, DocumentOverrides, DocumentType } from '@/types/sow';
+import { toast } from 'sonner';
+
+const STORAGE_KEY = 'sow-generator-state';
+
+interface SavedState {
+  currentStep: number;
+  bomItems: BomItem[];
+  bomFileName: string | null;
+  projectInfo: ProjectInfo;
+  hardwareScheduleFileName: string | null;
+  overrides: DocumentOverrides;
+}
+
+function loadSavedState(): Partial<SavedState> | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveState(state: SavedState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // storage full, ignore
+  }
+}
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState(1);
+  const saved = loadSavedState();
+  const [currentStep, setCurrentStep] = useState(saved?.currentStep ?? 1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [bomItems, setBomItems] = useState<BomItem[]>([]);
-  const [bomFileName, setBomFileName] = useState<string | null>(null);
-  const [projectInfo, setProjectInfo] = useState<ProjectInfo>(defaultProjectInfo);
+  const [bomItems, setBomItems] = useState<BomItem[]>(saved?.bomItems ?? []);
+  const [bomFileName, setBomFileName] = useState<string | null>(saved?.bomFileName ?? null);
+  const [projectInfo, setProjectInfo] = useState<ProjectInfo>({ ...defaultProjectInfo, ...saved?.projectInfo });
   const [hardwareScheduleFile, setHardwareScheduleFile] = useState<File | null>(null);
-  const [hardwareScheduleFileName, setHardwareScheduleFileName] = useState<string | null>(null);
-  const [overrides, setOverrides] = useState<DocumentOverrides>(defaultOverrides);
+  const [hardwareScheduleFileName, setHardwareScheduleFileName] = useState<string | null>(saved?.hardwareScheduleFileName ?? null);
+  const [overrides, setOverrides] = useState<DocumentOverrides>({ ...defaultOverrides, ...saved?.overrides });
   const [templateFiles, setTemplateFiles] = useState<Record<DocumentType, ArrayBuffer | null>>({
     SOW_Customer: null,
     SOW_SUB_Quoting: null,
     SOW_SUB_Project: null,
   });
+
+  // Auto-save on state changes
+  useEffect(() => {
+    saveState({
+      currentStep,
+      bomItems,
+      bomFileName,
+      projectInfo,
+      hardwareScheduleFileName,
+      overrides,
+    });
+  }, [currentStep, bomItems, bomFileName, projectInfo, hardwareScheduleFileName, overrides]);
+
+  const handleClearSaved = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setCurrentStep(1);
+    setCompletedSteps(new Set());
+    setBomItems([]);
+    setBomFileName(null);
+    setProjectInfo(defaultProjectInfo);
+    setHardwareScheduleFile(null);
+    setHardwareScheduleFileName(null);
+    setOverrides(defaultOverrides);
+    toast.success('Session cleared — starting fresh');
+  }, []);
 
   // Auto-load embedded templates on mount
   useEffect(() => {
@@ -81,6 +138,9 @@ const Index = () => {
             <h1 className="text-xl font-bold text-foreground">SOW Document Generator</h1>
             <p className="text-sm text-muted-foreground">Howard Technology Solutions</p>
           </div>
+          <Button variant="outline" size="sm" onClick={handleClearSaved}>
+            Start New
+          </Button>
         </div>
       </header>
 
