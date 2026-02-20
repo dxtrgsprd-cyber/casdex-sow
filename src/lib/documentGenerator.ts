@@ -42,6 +42,14 @@ export function generateDocx(
   overrides: Partial<ProjectInfo>
 ): Blob {
   const zip = new PizZip(templateBuffer);
+
+  // Remove customXml parts that may contain broken template tags
+  Object.keys(zip.files).forEach((key) => {
+    if (key.startsWith('customXml/')) {
+      zip.remove(key);
+    }
+  });
+
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
