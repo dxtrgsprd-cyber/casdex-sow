@@ -81,7 +81,7 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>← Back</Button>
-        <Button onClick={onNext}>Continue to Hardware Schedule →</Button>
+        <Button onClick={onNext}>Continue to Appendix →</Button>
       </div>
     </div>
   );
