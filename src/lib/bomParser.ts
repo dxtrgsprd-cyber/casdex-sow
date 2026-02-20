@@ -80,7 +80,7 @@ function buildColumnMap(sheet: XLSX.WorkSheet): ColumnMap | null {
       }
     }
 
-    if (map.description !== undefined || matchCount >= 2) {
+    if (matchCount >= 2 && map.description !== undefined) {
       return {
         description: map.description ?? -1,
         quantity: map.quantity ?? -1,
