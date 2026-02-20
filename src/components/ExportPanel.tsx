@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { generateDocx } from '@/lib/documentGenerator';
 import { appendToDocs } from '@/lib/appendixInjector';
-import { downloadHardwareSchedule } from '@/lib/hardwareScheduleInjector';
 import { saveAs } from 'file-saver';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
@@ -12,7 +11,6 @@ interface ExportPanelProps {
   info: ProjectInfo;
   overrides: DocumentOverrides;
   templateFiles: Record<DocumentType, ArrayBuffer | null>;
-  hardwareScheduleFile: File | null;
   appendixFile: File | null;
   onBack: () => void;
 }
@@ -23,7 +21,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_SUB_Project', label: 'SOW SUB Project' },
 ];
 
-export default function ExportPanel({ info, overrides, templateFiles, hardwareScheduleFile, appendixFile, onBack }: ExportPanelProps) {
+export default function ExportPanel({ info, overrides, templateFiles, appendixFile, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
   const handleExportSingle = useCallback(async (docType: DocumentType) => {
@@ -37,13 +35,7 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
     }
 
     saveAs(docBlob, `${docType}.docx`);
-
-    if (hardwareScheduleFile) {
-      downloadHardwareSchedule(hardwareScheduleFile);
-    }
-  }, [templateFiles, info, overrides, hardwareScheduleFile, appendixFile]);
-
-  const hasExtras = hardwareScheduleFile || appendixFile;
+  }, [templateFiles, info, overrides, appendixFile]);
 
   return (
     <div className="space-y-6">
@@ -56,7 +48,6 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
           <CardDescription>
             Templates are pre-loaded — just download your documents
             {appendixFile && ` (appendix "${appendixFile.name}" will be inserted at the end)`}
-            {hardwareScheduleFile && ' (hardware schedule will also download separately)'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
