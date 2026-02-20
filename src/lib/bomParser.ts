@@ -36,6 +36,7 @@ const FIELD_KEYWORDS: Record<string, string[]> = {
   description: ['description', 'desc', 'item', 'name', 'product', 'material', 'equipment', 'component', 'line item'],
   quantity: ['quantity', 'qty', 'count', 'amount', 'units'],
   partNumber: ['part', 'part number', 'p/n', 'pn', 'sku', 'model', 'part#', 'catalog', 'mfr', 'manufacturer'],
+  vendor: ['vendor', 'manufacturer', 'mfg', 'brand', 'supplier', 'make'],
   unitPrice: ['unit price', 'price', 'unit cost', 'cost', 'each'],
   totalPrice: ['total', 'total price', 'ext price', 'extended', 'line total', 'ext cost', 'extended price'],
 };
@@ -50,6 +51,7 @@ interface ColumnMap {
   description: number;
   quantity: number;
   partNumber: number;
+  vendor: number;
   unitPrice: number;
   totalPrice: number;
   headerRow: number;
@@ -85,6 +87,7 @@ function buildColumnMap(sheet: XLSX.WorkSheet): ColumnMap | null {
         description: map.description ?? -1,
         quantity: map.quantity ?? -1,
         partNumber: map.partNumber ?? -1,
+        vendor: map.vendor ?? -1,
         unitPrice: map.unitPrice ?? -1,
         totalPrice: map.totalPrice ?? -1,
         headerRow: row,
@@ -191,6 +194,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const descCol = colMap && colMap.description >= 0 ? colMap.description : COL_B;
           const qtyCol = colMap && colMap.quantity >= 0 ? colMap.quantity : 2;
           const partCol = colMap && colMap.partNumber >= 0 ? colMap.partNumber : -1;
+          const vendorCol = colMap && colMap.vendor >= 0 ? colMap.vendor : -1;
           const unitPriceCol = colMap && colMap.unitPrice >= 0 ? colMap.unitPrice : -1;
           const totalPriceCol = colMap && colMap.totalPrice >= 0 ? colMap.totalPrice : -1;
 
@@ -230,11 +234,15 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
             const partNumber = partCol >= 0
               ? String(getCellValue(partCol)).trim()
               : undefined;
+            const vendor = vendorCol >= 0
+              ? String(getCellValue(vendorCol)).trim()
+              : undefined;
 
             items.push({
               description: descRaw,
               quantity: qty ?? 0,
               partNumber: partNumber && partNumber !== '' && partNumber !== 'undefined' ? partNumber : undefined,
+              vendor: vendor && vendor !== '' && vendor !== 'undefined' ? vendor : undefined,
               unitPrice: unitPrice ?? undefined,
               totalPrice: totalPrice ?? undefined,
             });
