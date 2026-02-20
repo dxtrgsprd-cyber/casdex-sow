@@ -28,7 +28,7 @@ const fieldLabels: Record<string, string> = {
   Project_Number: 'Project Number',
   Date: 'Date',
   Company_Name: 'Customer Name',
-  Company_Address: 'Company Address',
+  Company_Address: 'Project Location',
   City_State_Zip: 'City / State / Zip',
   Customer_Name: 'Point of Contact',
   Customer_Contact: 'Customer Contact',
