@@ -52,10 +52,19 @@ const Index = () => {
     setCurrentStep(from + 1);
   }, [completeStep]);
 
-  const handleBomParsed = useCallback((items: BomItem[], scopeText: string, fileName: string) => {
+  const handleBomParsed = useCallback((items: BomItem[], scopeText: string, fileName: string, parsedInfo: Partial<ProjectInfo>) => {
     setBomItems(items);
     setBomFileName(fileName);
-    setProjectInfo(prev => ({ ...prev, scope: scopeText }));
+    // Merge parsed project info into current state, only filling empty fields
+    setProjectInfo(prev => {
+      const merged = { ...prev, scope: scopeText };
+      for (const [key, value] of Object.entries(parsedInfo)) {
+        if (value && !prev[key as keyof ProjectInfo]) {
+          (merged as any)[key as keyof ProjectInfo] = value;
+        }
+      }
+      return merged;
+    });
   }, []);
 
   const handleHardwareSchedule = useCallback((file: File | null, name: string | null) => {
