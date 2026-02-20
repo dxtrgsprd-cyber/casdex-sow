@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { parseBomFile } from '@/lib/bomParser';
-import type { BomItem } from '@/types/sow';
+import type { BomItem, ProjectInfo } from '@/types/sow';
 
 interface BomUploadProps {
   bomItems: BomItem[];
   bomFileName: string | null;
-  onBomParsed: (items: BomItem[], scopeText: string, fileName: string) => void;
+  onBomParsed: (items: BomItem[], scopeText: string, fileName: string, projectInfo: Partial<ProjectInfo>) => void;
   onNext: () => void;
 }
 
@@ -22,8 +22,8 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
     setError(null);
     setLoading(true);
     try {
-      const { items, scopeText } = await parseBomFile(file);
-      onBomParsed(items, scopeText, file.name);
+      const { items, scopeText, projectInfo } = await parseBomFile(file);
+      onBomParsed(items, scopeText, file.name, projectInfo);
     } catch (err) {
       setError((err as Error).message);
     } finally {
