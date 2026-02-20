@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Download, FileText, Upload, AlertCircle } from 'lucide-react';
+import { useCallback } from 'react';
+import { Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { downloadDocx } from '@/lib/documentGenerator';
@@ -19,32 +19,15 @@ const docTypes: { type: DocumentType; label: string }[] = [
 ];
 
 export default function ExportPanel({ info, overrides, templateFiles, onBack }: ExportPanelProps) {
-  const [missingTemplates, setMissingTemplates] = useState<DocumentType[]>([]);
-
-  const handleUploadTemplate = useCallback((docType: DocumentType, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      templateFiles[docType] = e.target?.result as ArrayBuffer;
-      setMissingTemplates(prev => prev.filter(t => t !== docType));
-    };
-    reader.readAsArrayBuffer(file);
-  }, [templateFiles]);
+  const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
   const handleExportSingle = useCallback((docType: DocumentType) => {
     const template = templateFiles[docType];
-    if (!template) {
-      setMissingTemplates(prev => [...new Set([...prev, docType])]);
-      return;
-    }
+    if (!template) return;
     downloadDocx(template, info, overrides[docType], `${docType}.docx`);
   }, [templateFiles, info, overrides]);
 
   const handleExportAll = useCallback(() => {
-    const missing = docTypes.filter(d => !templateFiles[d.type]).map(d => d.type);
-    if (missing.length > 0) {
-      setMissingTemplates(missing);
-      return;
-    }
     for (const { type } of docTypes) {
       const template = templateFiles[type];
       if (template) {
@@ -62,55 +45,13 @@ export default function ExportPanel({ info, overrides, templateFiles, onBack }: 
             Export Documents
           </CardTitle>
           <CardDescription>
-            Upload your templates and download generated documents
+            Templates are pre-loaded — just download your documents
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Template upload section */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium">Document Templates</p>
-            <p className="text-xs text-muted-foreground">
-              Upload your .docx templates so placeholders can be filled. Templates must use {'{{Field_Name}}'} syntax.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {docTypes.map(({ type, label }) => (
-                <div key={type} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{label}</span>
-                    {templateFiles[type] && (
-                      <span className="text-xs text-primary font-medium">✓</span>
-                    )}
-                  </div>
-                  {!templateFiles[type] && (
-                    <label>
-                      <input
-                        type="file"
-                        accept=".docx"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadTemplate(type, file);
-                        }}
-                      />
-                      <Button variant="outline" size="sm" asChild>
-                        <span className="flex items-center gap-1">
-                          <Upload className="w-3 h-3" /> Upload
-                        </span>
-                      </Button>
-                    </label>
-                  )}
-                  {missingTemplates.includes(type) && !templateFiles[type] && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> Required
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <hr className="border-border" />
+          {!allLoaded && (
+            <p className="text-sm text-muted-foreground">Loading templates…</p>
+          )}
 
           {/* Individual exports */}
           <div className="space-y-3">
@@ -133,7 +74,7 @@ export default function ExportPanel({ info, overrides, templateFiles, onBack }: 
           <hr className="border-border" />
 
           {/* Export all */}
-          <Button onClick={handleExportAll} size="lg" className="w-full">
+          <Button onClick={handleExportAll} size="lg" className="w-full" disabled={!allLoaded}>
             <Download className="w-5 h-5 mr-2" />
             Download All Documents
           </Button>
