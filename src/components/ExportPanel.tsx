@@ -2,13 +2,16 @@ import { useCallback } from 'react';
 import { Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { downloadDocx } from '@/lib/documentGenerator';
+import { generateDocx } from '@/lib/documentGenerator';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
 interface ExportPanelProps {
   info: ProjectInfo;
   overrides: DocumentOverrides;
   templateFiles: Record<DocumentType, ArrayBuffer | null>;
+  hardwareScheduleFile: File | null;
   onBack: () => void;
 }
 
@@ -18,23 +21,43 @@ const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_SUB_Project', label: 'SOW SUB Project' },
 ];
 
-export default function ExportPanel({ info, overrides, templateFiles, onBack }: ExportPanelProps) {
+export default function ExportPanel({ info, overrides, templateFiles, hardwareScheduleFile, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
-  const handleExportSingle = useCallback((docType: DocumentType) => {
+  const handleExportSingle = useCallback(async (docType: DocumentType) => {
     const template = templateFiles[docType];
     if (!template) return;
-    downloadDocx(template, info, overrides[docType], `${docType}.docx`);
-  }, [templateFiles, info, overrides]);
+    const docBlob = generateDocx(template, info, overrides[docType]);
 
-  const handleExportAll = useCallback(() => {
+    if (hardwareScheduleFile) {
+      const zip = new JSZip();
+      zip.file(`${docType}.docx`, docBlob);
+      const hsBuffer = await hardwareScheduleFile.arrayBuffer();
+      zip.file(hardwareScheduleFile.name, hsBuffer);
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      saveAs(zipBlob, `${docType}.zip`);
+    } else {
+      saveAs(docBlob, `${docType}.docx`);
+    }
+  }, [templateFiles, info, overrides, hardwareScheduleFile]);
+
+  const handleExportAll = useCallback(async () => {
+    const zip = new JSZip();
     for (const { type } of docTypes) {
       const template = templateFiles[type];
       if (template) {
-        downloadDocx(template, info, overrides[type], `${type}.docx`);
+        const blob = generateDocx(template, info, overrides[type]);
+        zip.file(`${type}.docx`, blob);
       }
     }
-  }, [templateFiles, info, overrides]);
+    if (hardwareScheduleFile) {
+      const hsBuffer = await hardwareScheduleFile.arrayBuffer();
+      zip.file(hardwareScheduleFile.name, hsBuffer);
+    }
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const name = info.projectName || 'SOW_Documents';
+    saveAs(zipBlob, `${name}.zip`);
+  }, [templateFiles, info, overrides, hardwareScheduleFile]);
 
   return (
     <div className="space-y-6">
@@ -46,6 +69,7 @@ export default function ExportPanel({ info, overrides, templateFiles, onBack }: 
           </CardTitle>
           <CardDescription>
             Templates are pre-loaded — just download your documents
+            {hardwareScheduleFile && ' (hardware schedule will be included)'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -65,7 +89,7 @@ export default function ExportPanel({ info, overrides, templateFiles, onBack }: 
                   disabled={!templateFiles[type]}
                 >
                   <FileText className="w-4 h-4 mr-1.5" />
-                  {label} (.docx)
+                  {label} {hardwareScheduleFile ? '(.zip)' : '(.docx)'}
                 </Button>
               ))}
             </div>
@@ -76,7 +100,7 @@ export default function ExportPanel({ info, overrides, templateFiles, onBack }: 
           {/* Export all */}
           <Button onClick={handleExportAll} size="lg" className="w-full" disabled={!allLoaded}>
             <Download className="w-5 h-5 mr-2" />
-            Download All Documents
+            Download All Documents (.zip)
           </Button>
         </CardContent>
       </Card>
