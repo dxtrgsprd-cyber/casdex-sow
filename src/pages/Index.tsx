@@ -226,6 +226,7 @@ const Index = () => {
             info={projectInfo}
             overrides={overrides}
             templateFiles={templateFiles}
+            hardwareScheduleFile={hardwareScheduleFile}
             onBack={() => goToStep(4)}
           />
         )}
