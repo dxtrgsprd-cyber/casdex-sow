@@ -158,18 +158,35 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const sheet = workbook.Sheets[sheetName];
           const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
 
+          console.log(`[BOM] Processing sheet: "${sheetName}", range: ${sheet['!ref']}`);
+
           // Extract project info from the first sheet that has header data
           const sheetInfo = extractProjectInfo(sheet);
           if (Object.keys(sheetInfo).length > Object.keys(extractedInfo).length) {
             extractedInfo = { ...extractedInfo, ...sheetInfo };
           }
 
+          // Log rows 18-21 columns A-K to understand structure
+          for (let r = 17; r <= 21; r++) {
+            const rowData: string[] = [];
+            for (let c = 0; c <= 10; c++) {
+              const addr = XLSX.utils.encode_cell({ r, c });
+              const cell = sheet[addr];
+              rowData.push(`${XLSX.utils.encode_col(c)}${r+1}=${cell ? JSON.stringify(cell.v) : '(empty)'}`);
+            }
+            console.log(`[BOM] Row ${r+1}: ${rowData.join(' | ')}`);
+          }
+
           // Check if B20 has data — skip sheet for material list if not
           const b20Addr = XLSX.utils.encode_cell({ r: DATA_START_ROW, c: COL_B });
           const b20Cell = sheet[b20Addr];
-          if (!b20Cell || !String(b20Cell.v).trim()) continue;
+          if (!b20Cell || !String(b20Cell.v).trim()) {
+            console.log(`[BOM] Sheet "${sheetName}" skipped: B20 is empty`);
+            continue;
+          }
 
           const colMap = buildColumnMap(sheet);
+          console.log(`[BOM] Column map:`, colMap);
 
           const items: BomItem[] = [];
           const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
