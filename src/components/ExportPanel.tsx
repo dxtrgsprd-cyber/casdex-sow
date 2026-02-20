@@ -16,8 +16,8 @@ interface ExportPanelProps {
 }
 
 const docTypes: { type: DocumentType; label: string }[] = [
-  { type: 'SOW_Customer', label: 'SOW Customer' },
   { type: 'SOW_SUB_Quoting', label: 'SOW SUB Quoting' },
+  { type: 'SOW_Customer', label: 'SOW Customer' },
   { type: 'SOW_SUB_Project', label: 'SOW SUB Project' },
 ];
 
