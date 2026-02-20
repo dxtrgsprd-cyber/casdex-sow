@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import StepIndicator from '@/components/StepIndicator';
 import BomUpload from '@/components/BomUpload';
 import ProjectInfoForm from '@/components/ProjectInfoForm';
@@ -22,6 +22,22 @@ const Index = () => {
     SOW_SUB_Quoting: null,
     SOW_SUB_Project: null,
   });
+
+  // Auto-load embedded templates on mount
+  useEffect(() => {
+    const docTypes: DocumentType[] = ['SOW_Customer', 'SOW_SUB_Quoting', 'SOW_SUB_Project'];
+    docTypes.forEach(async (docType) => {
+      try {
+        const res = await fetch(`/templates/${docType}.docx`);
+        if (res.ok) {
+          const buffer = await res.arrayBuffer();
+          setTemplateFiles(prev => ({ ...prev, [docType]: buffer }));
+        }
+      } catch (e) {
+        console.error(`Failed to load template ${docType}:`, e);
+      }
+    });
+  }, []);
 
   const completeStep = useCallback((step: number) => {
     setCompletedSteps(prev => new Set([...prev, step]));
