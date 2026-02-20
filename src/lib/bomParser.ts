@@ -261,9 +261,9 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
               item.partNumber || '',
               item.description,
             ].filter(Boolean);
-            return parts.join(' - ');
+            return `• ${parts.join(' - ')}`;
           })
-          .join(', ');
+          .join('\n');
 
         resolve({ items: bestItems, scopeText, projectInfo: extractedInfo });
       } catch (err) {
