@@ -34,7 +34,7 @@ const fieldLabels: Record<string, string> = {
   Customer_Contact: 'Customer Contact',
   Customer_Phone: 'Customer Phone',
   SOLUTION_ARCHITECT: 'Solution Architect',
-  SCOPE: 'Scope',
+  SCOPE: 'Material List',
   Notes: 'Notes',
 };
 

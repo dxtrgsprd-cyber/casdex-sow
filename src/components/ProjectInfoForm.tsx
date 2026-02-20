@@ -24,7 +24,7 @@ const fields: { key: keyof ProjectInfo; label: string; section: string; type?: '
   { key: 'customerContact', label: 'Customer Contact', section: 'Customer' },
   { key: 'customerPhone', label: 'Customer Phone', section: 'Customer' },
   { key: 'solutionArchitect', label: 'Solution Architect', section: 'HTS' },
-  { key: 'scope', label: 'Scope (Equipment & Materials)', section: 'Scope', type: 'textarea' },
+  { key: 'scope', label: 'Material List', section: 'Material List', type: 'textarea' },
   { key: 'notes', label: 'Additional Notes', section: 'Other', type: 'textarea' },
 ];
 
@@ -40,8 +40,8 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
       {sections.map(section => (
         <Card key={section}>
           <CardHeader>
-            <CardTitle className="text-lg">{section} Information</CardTitle>
-            {section === 'Scope' && (
+            <CardTitle className="text-lg">{section === 'Material List' ? section : `${section} Information`}</CardTitle>
+            {section === 'Material List' && (
               <CardDescription>Auto-populated from BOM. Edit as needed.</CardDescription>
             )}
           </CardHeader>
