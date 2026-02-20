@@ -61,8 +61,6 @@ export interface AppState {
   bomItems: BomItem[];
   bomFileName: string | null;
   projectInfo: ProjectInfo;
-  hardwareScheduleFile: File | null;
-  hardwareScheduleFileName: string | null;
   documentOverrides: DocumentOverrides;
   templateFiles: Record<DocumentType, ArrayBuffer | null>;
 }

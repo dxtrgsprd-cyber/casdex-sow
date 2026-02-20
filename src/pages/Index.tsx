@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import StepIndicator from '@/components/StepIndicator';
 import BomUpload from '@/components/BomUpload';
 import ProjectInfoForm from '@/components/ProjectInfoForm';
-import AppendixUpload from '@/components/HardwareScheduleUpload';
+import AppendixUpload from '@/components/AppendixUpload';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
 import SavedProjects from '@/components/SavedProjects';
