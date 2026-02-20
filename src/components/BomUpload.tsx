@@ -108,19 +108,21 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
             <div className="max-h-80 overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="w-20 text-right">Qty</TableHead>
-                    <TableHead className="w-32">Part #</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bomItems.map((item, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{item.description}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.partNumber || '—'}</TableCell>
-                    </TableRow>
+                   <TableRow>
+                     <TableHead className="w-20 text-right">Qty</TableHead>
+                     <TableHead className="w-32">Vendor</TableHead>
+                     <TableHead className="w-32">P/N</TableHead>
+                     <TableHead>Description</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {bomItems.map((item, i) => (
+                     <TableRow key={i}>
+                       <TableCell className="text-right">{item.quantity}</TableCell>
+                       <TableCell className="text-muted-foreground">{item.vendor || '—'}</TableCell>
+                       <TableCell className="text-muted-foreground">{item.partNumber || '—'}</TableCell>
+                       <TableCell className="font-medium">{item.description}</TableCell>
+                     </TableRow>
                   ))}
                 </TableBody>
               </Table>

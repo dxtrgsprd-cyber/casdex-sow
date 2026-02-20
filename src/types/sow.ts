@@ -2,6 +2,7 @@ export interface BomItem {
   description: string;
   quantity: number;
   partNumber?: string;
+  vendor?: string;
   unitPrice?: number;
   totalPrice?: number;
   category?: string;
