@@ -17,7 +17,6 @@ export interface ProjectInfo {
   companyAddress: string;
   cityStateZip: string;
   customerName: string;
-  customerContact: string;
   customerPhone: string;
   solutionArchitect: string;
   scope: string;
@@ -34,7 +33,6 @@ export const defaultProjectInfo: ProjectInfo = {
   companyAddress: '',
   cityStateZip: '',
   customerName: '',
-  customerContact: '',
   customerPhone: '',
   solutionArchitect: '',
   scope: '',

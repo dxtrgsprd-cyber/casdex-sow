@@ -23,7 +23,6 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     'City / State / Zip': merged.cityStateZip,
     Customer_Name: merged.customerName,
     'Point of Contact': merged.customerName,
-    Customer_Contact: merged.customerContact,
     Customer_Phone: merged.customerPhone,
     'Customer Phone': merged.customerPhone,
     Customer: merged.companyName,

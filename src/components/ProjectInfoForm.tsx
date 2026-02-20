@@ -21,7 +21,6 @@ const fields: { key: keyof ProjectInfo; label: string; section: string; type?: '
   { key: 'companyAddress', label: 'Project Location', section: 'Customer' },
   { key: 'cityStateZip', label: 'City / State / Zip', section: 'Customer' },
   { key: 'customerName', label: 'Point of Contact', section: 'Customer' },
-  { key: 'customerContact', label: 'Customer Contact', section: 'Customer' },
   { key: 'customerPhone', label: 'Customer Phone', section: 'Customer' },
   { key: 'solutionArchitect', label: 'Solution Architect', section: 'HTS' },
   { key: 'scope', label: 'Material List', section: 'Material List', type: 'textarea' },
