@@ -60,10 +60,12 @@ export async function downloadAllAsZip(
   templates: Record<DocumentType, ArrayBuffer | null>,
   info: ProjectInfo,
   overrides: DocumentOverrides,
-  hardwareScheduleFile: File | null
+  hardwareScheduleFile: File | null,
+  folderName?: string
 ) {
   const zip = new JSZip();
-  const folder = zip.folder(info.projectName || 'SOW_Documents')!;
+  const name = folderName || info.projectName || 'SOW_Documents';
+  const folder = zip.folder(name)!;
 
   const docTypes: DocumentType[] = ['SOW_Customer', 'SOW_SUB_Quoting', 'SOW_SUB_Project'];
 
@@ -81,7 +83,7 @@ export async function downloadAllAsZip(
   }
 
   const content = await zip.generateAsync({ type: 'blob' });
-  saveAs(content, `${info.projectName || 'SOW_Documents'}.zip`);
+  saveAs(content, `${name}.zip`);
 }
 
 export function getResolvedFields(

@@ -102,19 +102,28 @@ export function parseBomFile(file: File): Promise<{ items: BomItem[]; scopeText:
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
 
-        // Try each sheet until we find data
+        // Material list starts at row 20 (0-indexed: row 19), column B (col 1)
+        // Only process if B20 has data
         let bestItems: BomItem[] = [];
+        const DATA_START_ROW = 19; // row 20 in 0-indexed
+        const COL_B = 1; // column B
 
         for (const sheetName of workbook.SheetNames) {
           const sheet = workbook.Sheets[sheetName];
+          const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+
+          // Check if B20 has data — skip sheet if not
+          const b20Addr = XLSX.utils.encode_cell({ r: DATA_START_ROW, c: COL_B });
+          const b20Cell = sheet[b20Addr];
+          if (!b20Cell || !String(b20Cell.v).trim()) continue;
+
+          // Try to detect column mapping from headers (row 19 = row index 18, or nearby)
           const colMap = buildColumnMap(sheet);
 
-          if (!colMap) continue;
-
-          const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
           const items: BomItem[] = [];
+          const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
 
-          for (let row = colMap.headerRow + 1; row <= range.e.r; row++) {
+          for (let row = startRow; row <= range.e.r; row++) {
             const getCellValue = (col: number): unknown => {
               if (col < 0) return '';
               const cellAddr = XLSX.utils.encode_cell({ r: row, c: col });
@@ -122,19 +131,30 @@ export function parseBomFile(file: File): Promise<{ items: BomItem[]; scopeText:
               return cell ? cell.v : '';
             };
 
-            const descRaw = String(getCellValue(colMap.description)).trim();
+            // Skip rows where column B is empty
+            const colBValue = String(getCellValue(COL_B)).trim();
+            if (!colBValue || colBValue === '' || colBValue === 'undefined') continue;
+
+            // Use column map if found, otherwise use positional defaults
+            const descCol = colMap && colMap.description >= 0 ? colMap.description : COL_B;
+            const qtyCol = colMap && colMap.quantity >= 0 ? colMap.quantity : 2; // C
+            const partCol = colMap && colMap.partNumber >= 0 ? colMap.partNumber : -1;
+            const unitPriceCol = colMap && colMap.unitPrice >= 0 ? colMap.unitPrice : -1;
+            const totalPriceCol = colMap && colMap.totalPrice >= 0 ? colMap.totalPrice : -1;
+
+            const descRaw = String(getCellValue(descCol)).trim();
             if (!descRaw || descRaw === '' || descRaw === 'undefined') continue;
 
-            // Skip rows that look like subtotals or headers
+            // Skip subtotal/total rows
             const descLower = descRaw.toLowerCase();
             if (descLower.includes('total') && descLower.length < 20) continue;
             if (descLower === 'subtotal' || descLower === 'grand total') continue;
 
-            const qty = parseNumericValue(getCellValue(colMap.quantity));
-            const unitPrice = parseNumericValue(getCellValue(colMap.unitPrice));
-            const totalPrice = parseNumericValue(getCellValue(colMap.totalPrice));
-            const partNumber = colMap.partNumber >= 0
-              ? String(getCellValue(colMap.partNumber)).trim()
+            const qty = parseNumericValue(getCellValue(qtyCol));
+            const unitPrice = parseNumericValue(getCellValue(unitPriceCol));
+            const totalPrice = parseNumericValue(getCellValue(totalPriceCol));
+            const partNumber = partCol >= 0
+              ? String(getCellValue(partCol)).trim()
               : undefined;
 
             items.push({
@@ -147,28 +167,6 @@ export function parseBomFile(file: File): Promise<{ items: BomItem[]; scopeText:
           }
 
           if (items.length > bestItems.length) {
-            bestItems = items;
-          }
-        }
-
-        if (bestItems.length === 0) {
-          // Fallback: try raw JSON parse of first sheet
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
-          
-          if (jsonData.length > 0) {
-            const items = jsonData
-              .filter(row => {
-                const vals = Object.values(row).map(v => String(v).trim());
-                return vals.some(v => v.length > 2);
-              })
-              .map(row => {
-                const vals = Object.values(row).map(v => String(v).trim());
-                return {
-                  description: vals.find(v => v.length > 3 && isNaN(Number(v))) || vals[0] || 'Unknown',
-                  quantity: parseNumericValue(vals.find(v => !isNaN(Number(v)) && Number(v) > 0)) ?? 1,
-                };
-              });
             bestItems = items;
           }
         }
