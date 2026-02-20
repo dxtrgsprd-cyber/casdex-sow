@@ -1,54 +1,54 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import StepIndicator from '@/components/StepIndicator';
 import BomUpload from '@/components/BomUpload';
 import ProjectInfoForm from '@/components/ProjectInfoForm';
 import HardwareScheduleUpload from '@/components/HardwareScheduleUpload';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
+import SavedProjects from '@/components/SavedProjects';
 import { Button } from '@/components/ui/button';
 import { defaultProjectInfo, defaultOverrides } from '@/types/sow';
 import type { ProjectInfo, BomItem, DocumentOverrides, DocumentType } from '@/types/sow';
+import {
+  getProjectIndex,
+  getActiveProjectId,
+  loadProjectData,
+  saveProjectData,
+  deleteProject,
+  createNewProject,
+  migrateIfNeeded,
+} from '@/lib/projectStorage';
+import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
 
-const STORAGE_KEY = 'sow-generator-state';
-
-interface SavedState {
-  currentStep: number;
-  bomItems: BomItem[];
-  bomFileName: string | null;
-  projectInfo: ProjectInfo;
-  hardwareScheduleFileName: string | null;
-  overrides: DocumentOverrides;
-}
-
-function loadSavedState(): Partial<SavedState> | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveState(state: SavedState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // storage full, ignore
-  }
-}
-
 const Index = () => {
-  const saved = loadSavedState();
-  const [currentStep, setCurrentStep] = useState(saved?.currentStep ?? 1);
+  // Run migration once
+  const migrated = useRef(false);
+  if (!migrated.current) {
+    migrateIfNeeded();
+    migrated.current = true;
+  }
+
+  // Initialize: load active project or create one
+  const [projectId, setProjectId] = useState<string>(() => {
+    const activeId = getActiveProjectId();
+    if (activeId && loadProjectData(activeId)) return activeId;
+    const index = getProjectIndex();
+    if (index.length > 0) return index[0].id;
+    return createNewProject().id;
+  });
+
+  const [projectIndex, setProjectIndex] = useState<ProjectIndexEntry[]>(getProjectIndex);
+
+  const loadedData = loadProjectData(projectId);
+  const [currentStep, setCurrentStep] = useState(loadedData?.currentStep ?? 1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [bomItems, setBomItems] = useState<BomItem[]>(saved?.bomItems ?? []);
-  const [bomFileName, setBomFileName] = useState<string | null>(saved?.bomFileName ?? null);
-  const [projectInfo, setProjectInfo] = useState<ProjectInfo>({ ...defaultProjectInfo, ...saved?.projectInfo });
+  const [bomItems, setBomItems] = useState<BomItem[]>(loadedData?.bomItems ?? []);
+  const [bomFileName, setBomFileName] = useState<string | null>(loadedData?.bomFileName ?? null);
+  const [projectInfo, setProjectInfo] = useState<ProjectInfo>({ ...defaultProjectInfo, ...loadedData?.projectInfo });
   const [hardwareScheduleFile, setHardwareScheduleFile] = useState<File | null>(null);
-  const [hardwareScheduleFileName, setHardwareScheduleFileName] = useState<string | null>(saved?.hardwareScheduleFileName ?? null);
-  const [overrides, setOverrides] = useState<DocumentOverrides>({ ...defaultOverrides, ...saved?.overrides });
+  const [hardwareScheduleFileName, setHardwareScheduleFileName] = useState<string | null>(loadedData?.hardwareScheduleFileName ?? null);
+  const [overrides, setOverrides] = useState<DocumentOverrides>({ ...defaultOverrides, ...loadedData?.overrides });
   const [templateFiles, setTemplateFiles] = useState<Record<DocumentType, ArrayBuffer | null>>({
     SOW_Customer: null,
     SOW_SUB_Quoting: null,
@@ -57,7 +57,7 @@ const Index = () => {
 
   // Auto-save on state changes
   useEffect(() => {
-    saveState({
+    saveProjectData(projectId, {
       currentStep,
       bomItems,
       bomFileName,
@@ -65,20 +65,47 @@ const Index = () => {
       hardwareScheduleFileName,
       overrides,
     });
-  }, [currentStep, bomItems, bomFileName, projectInfo, hardwareScheduleFileName, overrides]);
+    setProjectIndex(getProjectIndex());
+  }, [projectId, currentStep, bomItems, bomFileName, projectInfo, hardwareScheduleFileName, overrides]);
 
-  const handleClearSaved = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setCurrentStep(1);
+  // Load a different project
+  const handleLoadProject = useCallback((id: string) => {
+    const data = loadProjectData(id);
+    if (!data) return;
+    setProjectId(id);
+    setCurrentStep(data.currentStep);
     setCompletedSteps(new Set());
-    setBomItems([]);
-    setBomFileName(null);
-    setProjectInfo(defaultProjectInfo);
+    setBomItems(data.bomItems);
+    setBomFileName(data.bomFileName);
+    setProjectInfo({ ...defaultProjectInfo, ...data.projectInfo });
     setHardwareScheduleFile(null);
-    setHardwareScheduleFileName(null);
-    setOverrides(defaultOverrides);
-    toast.success('Session cleared — starting fresh');
+    setHardwareScheduleFileName(data.hardwareScheduleFileName);
+    setOverrides({ ...defaultOverrides, ...data.overrides });
+    toast.success(`Loaded project: ${data.projectInfo.oppNumber || 'Untitled'}`);
   }, []);
+
+  const handleDeleteProject = useCallback((id: string) => {
+    deleteProject(id);
+    const remaining = getProjectIndex();
+    setProjectIndex(remaining);
+    if (id === projectId) {
+      if (remaining.length > 0) {
+        handleLoadProject(remaining[0].id);
+      } else {
+        const { id: newId } = createNewProject();
+        setProjectIndex(getProjectIndex());
+        handleLoadProject(newId);
+      }
+    }
+    toast.success('Project deleted');
+  }, [projectId, handleLoadProject]);
+
+  const handleNewProject = useCallback(() => {
+    const { id } = createNewProject();
+    setProjectIndex(getProjectIndex());
+    handleLoadProject(id);
+    toast.success('New project created');
+  }, [handleLoadProject]);
 
   // Auto-load embedded templates on mount
   useEffect(() => {
@@ -112,7 +139,6 @@ const Index = () => {
   const handleBomParsed = useCallback((items: BomItem[], scopeText: string, fileName: string, parsedInfo: Partial<ProjectInfo>) => {
     setBomItems(items);
     setBomFileName(fileName);
-    // Merge parsed project info into current state, only filling empty fields
     setProjectInfo(prev => {
       const merged = { ...prev, scope: scopeText };
       for (const [key, value] of Object.entries(parsedInfo)) {
@@ -131,21 +157,27 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-foreground">SOW Document Generator</h1>
             <p className="text-sm text-muted-foreground">Howard Technology Solutions</p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleClearSaved}>
-            Start New
+          <Button variant="outline" size="sm" onClick={handleNewProject}>
+            + New Project
           </Button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        <SavedProjects
+          projects={projectIndex}
+          activeProjectId={projectId}
+          onLoad={handleLoadProject}
+          onDelete={handleDeleteProject}
+          onNew={handleNewProject}
+        />
+
         <StepIndicator
           currentStep={currentStep}
           onStepClick={goToStep}
