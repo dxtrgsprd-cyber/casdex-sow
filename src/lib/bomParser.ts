@@ -35,7 +35,7 @@ function parseNumericValue(value: unknown): number | null {
 const FIELD_KEYWORDS: Record<string, string[]> = {
   description: ['description', 'desc', 'item', 'name', 'product', 'material', 'equipment', 'component', 'line item'],
   quantity: ['quantity', 'qty', 'count', 'amount', 'units'],
-  partNumber: ['part', 'part number', 'pn', 'sku', 'model', 'part#', 'catalog', 'mfr', 'manufacturer'],
+  partNumber: ['part', 'part number', 'p/n', 'pn', 'sku', 'model', 'part#', 'catalog', 'mfr', 'manufacturer'],
   unitPrice: ['unit price', 'price', 'unit cost', 'cost', 'each'],
   totalPrice: ['total', 'total price', 'ext price', 'extended', 'line total', 'ext cost', 'extended price'],
 };
@@ -177,16 +177,27 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
             console.log(`[BOM] Row ${r+1}: ${rowData.join(' | ')}`);
           }
 
-          // Check if B20 has data — skip sheet for material list if not
+          const colMap = buildColumnMap(sheet);
+          console.log(`[BOM] Column map:`, JSON.stringify(colMap));
+
+          // Determine which column to use for "has data" check
+          const descCol = colMap && colMap.description >= 0 ? colMap.description : COL_B;
+          const qtyCol = colMap && colMap.quantity >= 0 ? colMap.quantity : 2;
+          const partCol = colMap && colMap.partNumber >= 0 ? colMap.partNumber : -1;
+          const unitPriceCol = colMap && colMap.unitPrice >= 0 ? colMap.unitPrice : -1;
+          const totalPriceCol = colMap && colMap.totalPrice >= 0 ? colMap.totalPrice : -1;
+
+          // Check if the data start row has content in the description column
+          const checkAddr = XLSX.utils.encode_cell({ r: DATA_START_ROW, c: descCol });
+          const checkCell = sheet[checkAddr];
+          // Also check column B as fallback (some sheets put data there)
           const b20Addr = XLSX.utils.encode_cell({ r: DATA_START_ROW, c: COL_B });
           const b20Cell = sheet[b20Addr];
-          if (!b20Cell || !String(b20Cell.v).trim()) {
-            console.log(`[BOM] Sheet "${sheetName}" skipped: B20 is empty`);
+          const hasDataAtStart = (checkCell && String(checkCell.v).trim()) || (b20Cell && String(b20Cell.v).trim());
+          if (!hasDataAtStart) {
+            console.log(`[BOM] Sheet "${sheetName}" skipped: no data at row 20 in desc col ${descCol} or col B`);
             continue;
           }
-
-          const colMap = buildColumnMap(sheet);
-          console.log(`[BOM] Column map:`, colMap);
 
           const items: BomItem[] = [];
           const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
@@ -199,15 +210,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
               return cell ? cell.v : '';
             };
 
-            const colBValue = String(getCellValue(COL_B)).trim();
-            if (!colBValue || colBValue === '' || colBValue === 'undefined') continue;
-
-            const descCol = colMap && colMap.description >= 0 ? colMap.description : COL_B;
-            const qtyCol = colMap && colMap.quantity >= 0 ? colMap.quantity : 2;
-            const partCol = colMap && colMap.partNumber >= 0 ? colMap.partNumber : -1;
-            const unitPriceCol = colMap && colMap.unitPrice >= 0 ? colMap.unitPrice : -1;
-            const totalPriceCol = colMap && colMap.totalPrice >= 0 ? colMap.totalPrice : -1;
-
+            // Check description column for data (not hardcoded column B)
             const descRaw = String(getCellValue(descCol)).trim();
             if (!descRaw || descRaw === '' || descRaw === 'undefined') continue;
 
@@ -231,6 +234,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
             });
           }
 
+          console.log(`[BOM] Sheet "${sheetName}" extracted ${items.length} items. First 3:`, items.slice(0, 3));
           if (items.length > bestItems.length) {
             bestItems = items;
           }
