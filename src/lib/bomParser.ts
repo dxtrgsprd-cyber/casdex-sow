@@ -156,13 +156,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
         const DATA_START_ROW = 19;
         const COL_B = 1;
 
-        // Extract project info from the first sheet (NOTES or similar)
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        if (firstSheet) {
-          extractedInfo = extractProjectInfo(firstSheet);
-        }
-
-        // Only parse items from the "Equipment" sheet
+        // Only use the "Equipment" sheet for everything
         const equipmentSheetName = workbook.SheetNames.find(s => s.toLowerCase() === 'equipment');
         if (!equipmentSheetName) {
           reject(new Error('No "Equipment" sheet found in workbook'));
@@ -176,11 +170,8 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
 
           console.log(`[BOM] Processing sheet: "${sheetName}", range: ${sheet['!ref']}`);
 
-          // Extract project info from the first sheet that has header data
-          const sheetInfo = extractProjectInfo(sheet);
-          if (Object.keys(sheetInfo).length > Object.keys(extractedInfo).length) {
-            extractedInfo = { ...extractedInfo, ...sheetInfo };
-          }
+          // Extract project info from Equipment sheet
+          extractedInfo = extractProjectInfo(sheet);
 
           // Log rows 18-21 columns A-K to understand structure
           for (let r = 17; r <= 21; r++) {
