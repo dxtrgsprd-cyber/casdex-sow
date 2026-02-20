@@ -219,7 +219,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           }
         }
 
-        const scopeText = bestItems
+        const scopeText = 'Material List\n' + bestItems
           .map(item => `• ${item.quantity}x ${item.description}${item.partNumber ? ` (${item.partNumber})` : ''}`)
           .join('\n');
 
