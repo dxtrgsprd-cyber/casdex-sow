@@ -253,7 +253,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           }
         }
 
-        const scopeText = 'Material List\n' + bestItems
+        const scopeText = bestItems
           .map(item => {
             const parts = [
               `${item.quantity}x`,
@@ -261,9 +261,9 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
               item.partNumber || '',
               item.description,
             ].filter(Boolean);
-            return `• ${parts.join(' - ')}`;
+            return parts.join(' - ');
           })
-          .join('\n');
+          .join(', ');
 
         resolve({ items: bestItems, scopeText, projectInfo: extractedInfo });
       } catch (err) {
