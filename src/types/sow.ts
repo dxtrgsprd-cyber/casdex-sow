@@ -20,6 +20,7 @@ export interface ProjectInfo {
   customerPhone: string;
   solutionArchitect: string;
   scope: string;
+  scopeOfWork: string;
   notes: string;
 }
 
@@ -36,6 +37,7 @@ export const defaultProjectInfo: ProjectInfo = {
   customerPhone: '',
   solutionArchitect: '',
   scope: '',
+  scopeOfWork: '',
   notes: '',
 };
 

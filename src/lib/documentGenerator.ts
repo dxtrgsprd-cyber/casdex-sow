@@ -20,6 +20,7 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     Customer_Phone: merged.customerPhone,
     SOLUTION_ARCHITECT: merged.solutionArchitect,
     SCOPE: merged.scope,
+    SCOPE_OF_WORK: merged.scopeOfWork,
     Notes: merged.notes,
   };
 }

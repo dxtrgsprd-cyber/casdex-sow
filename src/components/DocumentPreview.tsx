@@ -35,6 +35,7 @@ const fieldLabels: Record<string, string> = {
   Customer_Phone: 'Customer Phone',
   SOLUTION_ARCHITECT: 'Solution Architect',
   SCOPE: 'Material List',
+  SCOPE_OF_WORK: 'Scope of Work',
   Notes: 'Notes',
 };
 
@@ -51,6 +52,7 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
   Customer_Phone: 'customerPhone',
   SOLUTION_ARCHITECT: 'solutionArchitect',
   SCOPE: 'scope',
+  SCOPE_OF_WORK: 'scopeOfWork',
   Notes: 'notes',
 };
 
