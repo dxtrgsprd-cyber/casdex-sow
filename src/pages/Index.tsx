@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import StepIndicator from '@/components/StepIndicator';
 import BomUpload from '@/components/BomUpload';
 import ProjectInfoForm from '@/components/ProjectInfoForm';
-import HardwareScheduleUpload from '@/components/HardwareScheduleUpload';
+import AppendixUpload from '@/components/HardwareScheduleUpload';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
 import SavedProjects from '@/components/SavedProjects';
@@ -44,8 +44,6 @@ const Index = () => {
   const [bomItems, setBomItems] = useState<BomItem[]>(loadedData?.bomItems ?? []);
   const [bomFileName, setBomFileName] = useState<string | null>(loadedData?.bomFileName ?? null);
   const [projectInfo, setProjectInfo] = useState<ProjectInfo>({ ...defaultProjectInfo, ...loadedData?.projectInfo });
-  const [hardwareScheduleFile, setHardwareScheduleFile] = useState<File | null>(null);
-  const [hardwareScheduleFileName, setHardwareScheduleFileName] = useState<string | null>(loadedData?.hardwareScheduleFileName ?? null);
   const [appendixFile, setAppendixFile] = useState<File | null>(null);
   const [appendixFileName, setAppendixFileName] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<DocumentOverrides>({ ...defaultOverrides, ...loadedData?.overrides });
@@ -61,11 +59,10 @@ const Index = () => {
       bomItems,
       bomFileName,
       projectInfo,
-      hardwareScheduleFileName,
       overrides,
     });
     setProjectIndex(getProjectIndex());
-  }, [projectId, currentStep, bomItems, bomFileName, projectInfo, hardwareScheduleFileName, overrides]);
+  }, [projectId, currentStep, bomItems, bomFileName, projectInfo, overrides]);
 
   const handleLoadProject = useCallback((id: string) => {
     const data = loadProjectData(id);
@@ -76,8 +73,6 @@ const Index = () => {
     setBomItems(data.bomItems);
     setBomFileName(data.bomFileName);
     setProjectInfo({ ...defaultProjectInfo, ...data.projectInfo });
-    setHardwareScheduleFile(null);
-    setHardwareScheduleFileName(data.hardwareScheduleFileName);
     setAppendixFile(null);
     setAppendixFileName(null);
     setOverrides({ ...defaultOverrides, ...data.overrides });
@@ -149,11 +144,6 @@ const Index = () => {
     });
   }, []);
 
-  const handleHardwareSchedule = useCallback((file: File | null, name: string | null) => {
-    setHardwareScheduleFile(file);
-    setHardwareScheduleFileName(name);
-  }, []);
-
   const handleAppendix = useCallback((file: File | null, name: string | null) => {
     setAppendixFile(file);
     setAppendixFileName(name);
@@ -207,9 +197,7 @@ const Index = () => {
         )}
 
         {currentStep === 3 && (
-          <HardwareScheduleUpload
-            fileName={hardwareScheduleFileName}
-            onFileSelected={handleHardwareSchedule}
+          <AppendixUpload
             appendixFileName={appendixFileName}
             onAppendixSelected={handleAppendix}
             onNext={() => nextStep(3)}
@@ -232,7 +220,6 @@ const Index = () => {
             info={projectInfo}
             overrides={overrides}
             templateFiles={templateFiles}
-            hardwareScheduleFile={hardwareScheduleFile}
             appendixFile={appendixFile}
             onBack={() => goToStep(4)}
           />

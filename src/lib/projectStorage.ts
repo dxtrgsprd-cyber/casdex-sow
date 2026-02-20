@@ -13,7 +13,6 @@ export interface ProjectData {
   bomItems: BomItem[];
   bomFileName: string | null;
   projectInfo: ProjectInfo;
-  hardwareScheduleFileName: string | null;
   overrides: DocumentOverrides;
 }
 
@@ -104,7 +103,6 @@ export function createNewProject(): { id: string; data: ProjectData } {
     bomItems: [],
     bomFileName: null,
     projectInfo: { ...defaultProjectInfo },
-    hardwareScheduleFileName: null,
     overrides: { ...defaultOverrides },
   };
   saveProjectData(id, data);
@@ -125,7 +123,6 @@ export function migrateIfNeeded() {
       bomItems: parsed.bomItems ?? [],
       bomFileName: parsed.bomFileName ?? null,
       projectInfo: { ...defaultProjectInfo, ...parsed.projectInfo },
-      hardwareScheduleFileName: parsed.hardwareScheduleFileName ?? null,
       overrides: { ...defaultOverrides, ...parsed.overrides },
     };
     saveProjectData(id, data);
