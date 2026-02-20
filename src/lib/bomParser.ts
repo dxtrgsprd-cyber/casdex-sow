@@ -41,6 +41,8 @@ const FIELD_KEYWORDS: Record<string, string[]> = {
 };
 
 function matchesField(normalizedHeader: string, fieldKeywords: string[]): boolean {
+  // Headers should be short labels, not long descriptions
+  if (normalizedHeader.length > 25) return false;
   return fieldKeywords.some(k => normalizedHeader.includes(k));
 }
 
