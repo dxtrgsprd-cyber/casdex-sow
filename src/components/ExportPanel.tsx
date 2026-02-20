@@ -3,7 +3,7 @@ import { Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { generateDocx } from '@/lib/documentGenerator';
-import { injectHardwareSchedule } from '@/lib/hardwareScheduleInjector';
+import { bundleWithHardwareSchedule } from '@/lib/hardwareScheduleInjector';
 import { saveAs } from 'file-saver';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
@@ -27,16 +27,17 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
   const handleExportSingle = useCallback(async (docType: DocumentType) => {
     const template = templateFiles[docType];
     if (!template) return;
-    let docBlob = generateDocx(template, info, overrides[docType]);
+
+    const docBlob = generateDocx(template, info, overrides[docType]);
+    const docxFileName = `${docType}.docx`;
 
     if (hardwareScheduleFile) {
-      docBlob = await injectHardwareSchedule(docBlob, hardwareScheduleFile);
+      const { blob, fileName } = await bundleWithHardwareSchedule(docBlob, docxFileName, hardwareScheduleFile);
+      saveAs(blob, fileName);
+    } else {
+      saveAs(docBlob, docxFileName);
     }
-
-    saveAs(docBlob, `${docType}.docx`);
   }, [templateFiles, info, overrides, hardwareScheduleFile]);
-
-
 
   return (
     <div className="space-y-6">
@@ -48,7 +49,7 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
           </CardTitle>
           <CardDescription>
             Templates are pre-loaded — just download your documents
-            {hardwareScheduleFile && ' (hardware schedule will be included)'}
+            {hardwareScheduleFile && ' (hardware schedule will be bundled in a ZIP)'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -68,14 +69,11 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
                   disabled={!templateFiles[type]}
                 >
                   <FileText className="w-4 h-4 mr-1.5" />
-                  {label} (.docx)
+                  {label} {hardwareScheduleFile ? '(.zip)' : '(.docx)'}
                 </Button>
               ))}
             </div>
           </div>
-
-
-
         </CardContent>
       </Card>
 
