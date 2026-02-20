@@ -156,7 +156,21 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
         const DATA_START_ROW = 19;
         const COL_B = 1;
 
-        for (const sheetName of workbook.SheetNames) {
+        // Extract project info from the first sheet (NOTES or similar)
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        if (firstSheet) {
+          extractedInfo = extractProjectInfo(firstSheet);
+        }
+
+        // Only parse items from the "Equipment" sheet
+        const equipmentSheetName = workbook.SheetNames.find(s => s.toLowerCase() === 'equipment');
+        if (!equipmentSheetName) {
+          reject(new Error('No "Equipment" sheet found in workbook'));
+          return;
+        }
+
+        {
+          const sheetName = equipmentSheetName;
           const sheet = workbook.Sheets[sheetName];
           const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
 
@@ -198,8 +212,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const hasDataAtStart = (checkCell && String(checkCell.v).trim()) || (b20Cell && String(b20Cell.v).trim());
           if (!hasDataAtStart) {
             console.log(`[BOM] Sheet "${sheetName}" skipped: no data at row 20 in desc col ${descCol} or col B`);
-            continue;
-          }
+          } else {
 
           const items: BomItem[] = [];
           const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
@@ -237,8 +250,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           }
 
           console.log(`[BOM] Sheet "${sheetName}" extracted ${items.length} items. First 3:`, items.slice(0, 3));
-          if (items.length > bestItems.length) {
-            bestItems = items;
+          bestItems = items;
           }
         }
 
