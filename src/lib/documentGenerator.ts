@@ -63,6 +63,8 @@ export function generateDocx(
   const out = doc.getZip().generate({
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
   });
   return out;
 }

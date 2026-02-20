@@ -103,6 +103,8 @@ async function appendDocx(mainBlob: Blob, appendixFile: File): Promise<Blob> {
   return mainZip.generate({
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
   });
 }
 
@@ -206,5 +208,7 @@ async function appendImage(mainBlob: Blob, imageFile: File, ext: string): Promis
   return mainZip.generate({
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
   });
 }
