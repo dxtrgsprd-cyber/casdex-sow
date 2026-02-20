@@ -52,9 +52,10 @@ export function generateDocx(
   });
 
   const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
+    paragraphLoop: false,
+    linebreaks: false,
     delimiters: { start: '{{', end: '}}' },
+    nullGetter: () => '',
   });
 
   const data = getTemplateData(info, overrides);
