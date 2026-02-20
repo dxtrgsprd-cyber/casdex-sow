@@ -3,8 +3,8 @@ import { Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { generateDocx } from '@/lib/documentGenerator';
+import { injectHardwareSchedule } from '@/lib/hardwareScheduleInjector';
 import { saveAs } from 'file-saver';
-import JSZip from 'jszip';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
 interface ExportPanelProps {
@@ -27,37 +27,16 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
   const handleExportSingle = useCallback(async (docType: DocumentType) => {
     const template = templateFiles[docType];
     if (!template) return;
-    const docBlob = generateDocx(template, info, overrides[docType]);
+    let docBlob = generateDocx(template, info, overrides[docType]);
 
     if (hardwareScheduleFile) {
-      const zip = new JSZip();
-      zip.file(`${docType}.docx`, docBlob);
-      const hsBuffer = await hardwareScheduleFile.arrayBuffer();
-      zip.file(hardwareScheduleFile.name, hsBuffer);
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      saveAs(zipBlob, `${docType}.zip`);
-    } else {
-      saveAs(docBlob, `${docType}.docx`);
+      docBlob = await injectHardwareSchedule(docBlob, hardwareScheduleFile);
     }
+
+    saveAs(docBlob, `${docType}.docx`);
   }, [templateFiles, info, overrides, hardwareScheduleFile]);
 
-  const handleExportAll = useCallback(async () => {
-    const zip = new JSZip();
-    for (const { type } of docTypes) {
-      const template = templateFiles[type];
-      if (template) {
-        const blob = generateDocx(template, info, overrides[type]);
-        zip.file(`${type}.docx`, blob);
-      }
-    }
-    if (hardwareScheduleFile) {
-      const hsBuffer = await hardwareScheduleFile.arrayBuffer();
-      zip.file(hardwareScheduleFile.name, hsBuffer);
-    }
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
-    const name = info.projectName || 'SOW_Documents';
-    saveAs(zipBlob, `${name}.zip`);
-  }, [templateFiles, info, overrides, hardwareScheduleFile]);
+
 
   return (
     <div className="space-y-6">
@@ -89,7 +68,7 @@ export default function ExportPanel({ info, overrides, templateFiles, hardwareSc
                   disabled={!templateFiles[type]}
                 >
                   <FileText className="w-4 h-4 mr-1.5" />
-                  {label} {hardwareScheduleFile ? '(.zip)' : '(.docx)'}
+                  {label} (.docx)
                 </Button>
               ))}
             </div>
