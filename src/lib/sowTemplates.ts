@@ -161,7 +161,7 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'MOUNT_COUNT', label: 'Mount/Accessory Count', autoFillable: true },
   { key: 'SERVER_TOTAL', label: 'Server/NVR Total', autoFillable: true },
   { key: 'SERVER_BRAND', label: 'Server Brand', autoFillable: true },
-  { key: 'NVR_COUNT', label: 'NVR/VMS Count', autoFillable: true },
+  
   { key: 'VMS_PLATFORM', label: 'VMS Platform', autoFillable: true },
   { key: 'CAMERA_LICENSES', label: 'Camera Licenses', autoFillable: true },
   { key: 'CAMERA_COUNT', label: 'Camera Count', autoFillable: true },
