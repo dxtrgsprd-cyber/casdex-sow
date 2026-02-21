@@ -20,6 +20,7 @@ import {
 '@/lib/projectStorage';
 import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
+import dexcoreLogo from '@/assets/dexcore-scope-logo.png';
 
 const Index = () => {
   const migrated = useRef(false);
@@ -151,11 +152,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">DexCore Scope</h1>
-            <p className="text-sm text-muted-foreground">Precision-Driven SOW Automation</p>
+      <header className="border-b bg-card shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={dexcoreLogo} alt="Dexcore Scope" className="h-10 w-auto" />
           </div>
           <Button variant="outline" size="sm" onClick={handleNewProject}>
             + New Project

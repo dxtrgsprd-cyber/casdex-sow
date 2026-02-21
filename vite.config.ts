@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "placeholder.svg", "templates/**/*"],
       manifest: {
-        name: "SOW Generator",
-        short_name: "SOW Gen",
-        description: "Generate Statements of Work offline",
+        name: "Dexcore Scope",
+        short_name: "Dexcore",
+        description: "Precision-Driven Scope Automation",
         theme_color: "#1e293b",
         background_color: "#ffffff",
         display: "standalone",
