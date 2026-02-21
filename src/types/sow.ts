@@ -75,13 +75,11 @@ export const defaultSowBuilderState: SowBuilderState = {
     'poe_injectors',
     'mounts_accessories',
     'testing_commissioning',
-    'materials_responsibility',
   ],
   enabledSections: [
     'install_cameras',
     'provide_cabling',
     'testing_commissioning',
-    'materials_responsibility',
   ],
   variables: {},
 };
