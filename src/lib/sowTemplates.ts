@@ -55,17 +55,42 @@ Approximate conduit length: {{CONDUIT_FOOTAGE}} ft.`,
     title: 'Testing and Commissioning',
     template: `Test all newly installed and/or relocated cables.
 
+Set IP addresses of Cameras and equipment
+
 Verify operational status of all cameras.
 
 Verify all cameras power on
 
 Confirm live video stream
 
-Confirm proper focus and framing
+Confirm proper focus and framing`,
+  },
+  {
+    id: 'server_nvr',
+    title: 'Server / NVR',
+    template: `Install {{SERVER_TOTAL}} new {{SERVER_BRAND}} Server/NVR
 
-Verify recording functionality
+Install {{NVR_COUNT}} NVR/VMS server(s).
 
-Coordinate with HTS and/or Customer for network configuration and final system verification.`,
+Mount hardware and connect to power/UPS.
+
+Connect and configure network settings.
+
+Install/configure {{VMS_PLATFORM}}
+
+Setup User access configuration
+
+Apply {{CAMERA_LICENSES}}
+
+Enroll up to {{CAMERA_COUNT}} cameras.
+
+Configure Motion, object detection, AI tools etc.
+
+Configure Recording profile
+
+Configure retention for approximately {{RETENTION_DAYS}} days.
+
+Test live view, recording, and playback.`,
   },
   {
     id: 'wireless_ptp',
@@ -134,6 +159,13 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'POE_SWITCH_COUNT', label: 'PoE Switch Count', autoFillable: true },
   { key: 'POE_INJECTOR_COUNT', label: 'PoE Injector Count', autoFillable: true },
   { key: 'MOUNT_COUNT', label: 'Mount/Accessory Count', autoFillable: true },
+  { key: 'SERVER_TOTAL', label: 'Server/NVR Total', autoFillable: true },
+  { key: 'SERVER_BRAND', label: 'Server Brand', autoFillable: true },
+  { key: 'NVR_COUNT', label: 'NVR/VMS Count', autoFillable: true },
+  { key: 'VMS_PLATFORM', label: 'VMS Platform', autoFillable: true },
+  { key: 'CAMERA_LICENSES', label: 'Camera Licenses', autoFillable: true },
+  { key: 'CAMERA_COUNT', label: 'Camera Count', autoFillable: true },
+  { key: 'RETENTION_DAYS', label: 'Retention Days', autoFillable: false },
 ];
 
 /** Extract variable values from BOM items */
@@ -200,6 +232,35 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // Mounts & Accessories
   const mountTotal = sumQty(matchItems(mountKeywords));
   if (mountTotal > 0) vars['MOUNT_COUNT'] = String(mountTotal);
+
+  // Server/NVR
+  const serverKeywords = ['server', 'nvr', 'recorder', 'recording server'];
+  const serverItems = matchItems(serverKeywords);
+  const serverTotal = sumQty(serverItems);
+  if (serverTotal > 0) vars['SERVER_TOTAL'] = String(serverTotal);
+  if (serverTotal > 0) vars['NVR_COUNT'] = String(serverTotal);
+
+  // Server brand
+  const serverVendorCounts: Record<string, number> = {};
+  serverItems.forEach(item => {
+    if (item.vendor) serverVendorCounts[item.vendor] = (serverVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topServerVendor = Object.entries(serverVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topServerVendor) vars['SERVER_BRAND'] = topServerVendor[0];
+
+  // VMS Platform
+  const vmsKeywords = ['vms', 'milestone', 'genetec', 'exacq', 'wisenet wave', 'nx witness', 'video management'];
+  const vmsItems = matchItems(vmsKeywords);
+  if (vmsItems.length > 0) vars['VMS_PLATFORM'] = vmsItems[0].description || vmsItems[0].vendor || '';
+
+  // Camera Licenses
+  const camLicKeywords = ['camera license', 'channel license', 'cam license', 'device license'];
+  const camLicItems = matchItems(camLicKeywords);
+  const camLicTotal = sumQty(camLicItems);
+  if (camLicTotal > 0) vars['CAMERA_LICENSES'] = String(camLicTotal);
+
+  // Camera count (reuse camera total)
+  if (cameraTotal > 0) vars['CAMERA_COUNT'] = String(cameraTotal);
 
   return vars;
 }
