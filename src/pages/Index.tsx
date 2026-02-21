@@ -16,8 +16,8 @@ import {
   saveProjectData,
   deleteProject,
   createNewProject,
-  migrateIfNeeded,
-} from '@/lib/projectStorage';
+  migrateIfNeeded } from
+'@/lib/projectStorage';
 import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
 
@@ -50,7 +50,7 @@ const Index = () => {
   const [templateFiles, setTemplateFiles] = useState<Record<DocumentType, ArrayBuffer | null>>({
     SOW_Customer: null,
     SOW_SUB_Quoting: null,
-    SOW_SUB_Project: null,
+    SOW_SUB_Project: null
   });
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const Index = () => {
       bomItems,
       bomFileName,
       projectInfo,
-      overrides,
+      overrides
     });
     setProjectIndex(getProjectIndex());
   }, [projectId, currentStep, bomItems, bomFileName, projectInfo, overrides]);
@@ -109,7 +109,7 @@ const Index = () => {
         const res = await fetch(`/templates/${docType}.docx`);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
-          setTemplateFiles(prev => ({ ...prev, [docType]: buffer }));
+          setTemplateFiles((prev) => ({ ...prev, [docType]: buffer }));
         }
       } catch (e) {
         console.error(`Failed to load template ${docType}:`, e);
@@ -118,7 +118,7 @@ const Index = () => {
   }, []);
 
   const completeStep = useCallback((step: number) => {
-    setCompletedSteps(prev => new Set([...prev, step]));
+    setCompletedSteps((prev) => new Set([...prev, step]));
   }, []);
 
   const goToStep = useCallback((step: number) => {
@@ -133,7 +133,7 @@ const Index = () => {
   const handleBomParsed = useCallback((items: BomItem[], scopeText: string, fileName: string, parsedInfo: Partial<ProjectInfo>) => {
     setBomItems(items);
     setBomFileName(fileName);
-    setProjectInfo(prev => {
+    setProjectInfo((prev) => {
       const merged = { ...prev, scope: scopeText };
       for (const [key, value] of Object.entries(parsedInfo)) {
         if (value && !prev[key as keyof ProjectInfo]) {
@@ -154,8 +154,8 @@ const Index = () => {
       <header className="border-b bg-card">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-foreground">SOW Document Generator</h1>
-            <p className="text-sm text-muted-foreground">Howard Technology Solutions</p>
+            <h1 className="text-xl font-bold text-foreground">DexCore Scope</h1>
+            <p className="text-sm text-muted-foreground">Precision-Driven SOW Automation</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleNewProject}>
             + New Project
@@ -169,64 +169,64 @@ const Index = () => {
           activeProjectId={projectId}
           onLoad={handleLoadProject}
           onDelete={handleDeleteProject}
-          onNew={handleNewProject}
-        />
+          onNew={handleNewProject} />
+
 
         <StepIndicator
           currentStep={currentStep}
           onStepClick={goToStep}
-          completedSteps={completedSteps}
-        />
+          completedSteps={completedSteps} />
 
-        {currentStep === 1 && (
-          <BomUpload
-            bomItems={bomItems}
-            bomFileName={bomFileName}
-            onBomParsed={handleBomParsed}
-            onNext={() => nextStep(1)}
-          />
-        )}
 
-        {currentStep === 2 && (
-          <ProjectInfoForm
-            info={projectInfo}
-            onChange={setProjectInfo}
-            onNext={() => nextStep(2)}
-            onBack={() => goToStep(1)}
-          />
-        )}
+        {currentStep === 1 &&
+        <BomUpload
+          bomItems={bomItems}
+          bomFileName={bomFileName}
+          onBomParsed={handleBomParsed}
+          onNext={() => nextStep(1)} />
 
-        {currentStep === 3 && (
-          <AppendixUpload
-            appendixFileName={appendixFileName}
-            onAppendixSelected={handleAppendix}
-            onNext={() => nextStep(3)}
-            onBack={() => goToStep(2)}
-          />
-        )}
+        }
 
-        {currentStep === 4 && (
-          <DocumentPreview
-            info={projectInfo}
-            overrides={overrides}
-            onOverridesChange={setOverrides}
-            onNext={() => nextStep(4)}
-            onBack={() => goToStep(3)}
-          />
-        )}
+        {currentStep === 2 &&
+        <ProjectInfoForm
+          info={projectInfo}
+          onChange={setProjectInfo}
+          onNext={() => nextStep(2)}
+          onBack={() => goToStep(1)} />
 
-        {currentStep === 5 && (
-          <ExportPanel
-            info={projectInfo}
-            overrides={overrides}
-            templateFiles={templateFiles}
-            appendixFile={appendixFile}
-            onBack={() => goToStep(4)}
-          />
-        )}
+        }
+
+        {currentStep === 3 &&
+        <AppendixUpload
+          appendixFileName={appendixFileName}
+          onAppendixSelected={handleAppendix}
+          onNext={() => nextStep(3)}
+          onBack={() => goToStep(2)} />
+
+        }
+
+        {currentStep === 4 &&
+        <DocumentPreview
+          info={projectInfo}
+          overrides={overrides}
+          onOverridesChange={setOverrides}
+          onNext={() => nextStep(4)}
+          onBack={() => goToStep(3)} />
+
+        }
+
+        {currentStep === 5 &&
+        <ExportPanel
+          info={projectInfo}
+          overrides={overrides}
+          templateFiles={templateFiles}
+          appendixFile={appendixFile}
+          onBack={() => goToStep(4)} />
+
+        }
       </main>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Index;
