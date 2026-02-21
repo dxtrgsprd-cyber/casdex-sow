@@ -43,13 +43,13 @@ interface SowBuilderProps {
 function SortableSection({
   id,
   title,
-  template,
+  index,
   enabled,
   onToggle,
 }: {
   id: string;
   title: string;
-  template: string;
+  index: number;
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
 }) {
@@ -65,27 +65,22 @@ function SortableSection({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${
         enabled ? 'bg-card border-border' : 'bg-muted/30 border-border/50 opacity-60'
       }`}
     >
       <button
         {...attributes}
         {...listeners}
-        className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
       >
         <GripVertical className="w-4 h-4" />
       </button>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <h4 className="font-semibold text-sm text-foreground">{title}</h4>
-          <Switch checked={enabled} onCheckedChange={onToggle} />
-        </div>
-        {enabled && (
-          <p className="mt-1.5 text-xs text-muted-foreground whitespace-pre-line line-clamp-3">
-            {template}
-          </p>
-        )}
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+        <h4 className="font-semibold text-sm text-foreground">
+          {index}. {title}
+        </h4>
+        <Switch checked={enabled} onCheckedChange={onToggle} />
       </div>
     </div>
   );
