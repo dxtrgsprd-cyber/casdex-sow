@@ -210,8 +210,9 @@ const Index = () => {
           sowState={sowState}
           onSowStateChange={setSowState}
           onNext={() => {
-            const enabled = new Set(sowState.enabledSections);
-            const sowText = generateSowText(sowState.sectionOrder, enabled, sowState.variables);
+            const sowText = sowState.customSowText ?? generateSowText(
+              sowState.sectionOrder, new Set(sowState.enabledSections), sowState.variables
+            );
             setProjectInfo(prev => ({ ...prev, scopeOfWork: sowText }));
             setOverrides(prev => ({
               ...prev,

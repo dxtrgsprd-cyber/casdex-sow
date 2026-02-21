@@ -60,6 +60,7 @@ export interface SowBuilderState {
   sectionOrder: string[];
   enabledSections: string[];
   variables: Record<string, string>;
+  customSowText: string | null;
 }
 
 export const defaultSowBuilderState: SowBuilderState = {
@@ -93,6 +94,7 @@ export const defaultSowBuilderState: SowBuilderState = {
     'testing_commissioning',
   ],
   variables: {},
+  customSowText: null,
 };
 
 export interface AppState {
