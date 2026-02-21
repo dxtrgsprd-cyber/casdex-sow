@@ -17,7 +17,7 @@ Seal all exterior penetrations`,
   },
   {
     id: 'provide_cabling',
-    title: 'Provide Cabling',
+    title: 'Provide Cat6 Cabling',
     template: `Provide and install {{CAT6_COUNT}} new Cat6 data cables.
 Properly support cabling (no ceiling grid support)
 Label both ends of all cables
