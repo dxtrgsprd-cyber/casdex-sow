@@ -21,7 +21,7 @@ import {
 '@/lib/projectStorage';
 import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
-import dexcoreLogo from '@/assets/dexcore-scope-logo.png';
+import casdexIcon from '@/assets/casdex-icon.png';
 
 const Index = () => {
   const migrated = useRef(false);
@@ -156,7 +156,8 @@ const Index = () => {
       <header className="border-b bg-card shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-lg font-bold text-foreground tracking-tight">Precision-Driven SOW Automation</span>
+            <img src={casdexIcon} alt="Casdex logo" className="h-8 w-8 rounded-md" />
+            <span className="text-lg font-bold text-foreground tracking-tight">Casdex</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
