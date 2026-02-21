@@ -250,7 +250,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const ptpKeywords = ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'];
   const licenseKeywords = ['license', 'licence', 'subscription', 'lic'];
   const poeSwitchKeywords = ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch'];
-  const poeInjectorKeywords = ['poe injector', 'poe adapter', 'midspan', 'poe+'];
+  const poeInjectorKeywords = ['poe injector', 'poe adapter', 'midspan', 'injector', 'u-poe', 'ins-3af', 'poe-24', 'poe-48', 'poe-54'];
   const mountKeywords = ['mount', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'wall mount', 'corner', 'gooseneck', 'parapet'];
 
   const matchItems = (keywords: string[]) => bomItems.filter(item => {
@@ -297,7 +297,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // PoE Injectors
   const poeInjectorItems = bomItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
-    return poeInjectorKeywords.some(k => desc.includes(k)) && !desc.includes('switch');
+    const pn = (item.partNumber || '').toLowerCase();
+    return (poeInjectorKeywords.some(k => desc.includes(k) || pn.includes(k))) && !desc.includes('switch');
   });
   const poeInjectorTotal = sumQty(poeInjectorItems);
   if (poeInjectorTotal > 0) vars['POE_INJECTOR_COUNT'] = String(poeInjectorTotal);
