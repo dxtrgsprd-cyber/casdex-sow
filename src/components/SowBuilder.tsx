@@ -199,7 +199,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
-                {sectionOrder.map((id) => {
+                {sectionOrder.map((id, idx) => {
                   const tmpl = templateMap.get(id);
                   if (!tmpl) return null;
                   return (
@@ -207,7 +207,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
                       key={id}
                       id={id}
                       title={tmpl.title}
-                      template={tmpl.template}
+                      index={idx + 1}
                       enabled={enabledSections.has(id)}
                       onToggle={(enabled) => handleToggle(id, enabled)}
                     />
