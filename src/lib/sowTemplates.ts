@@ -101,6 +101,93 @@ Verify proper power delivery to connected devices.`,
 Wall-mount arms, corner brackets, pendant mounts, pole adapters, and junction boxes as specified in the BOM.
 All mounts shall be installed securely per manufacturer specifications.`,
   },
+  {
+    id: 'ac_install',
+    title: 'Install Access Control',
+    template: `Install access control hardware on {{DOOR_TOTAL}} doors:
+{{RIP_REPLACE_COUNT}} rip-and-replace
+{{NEW_DOOR_COUNT}} new door(s)`,
+  },
+  {
+    id: 'ac_composite_cabling',
+    title: 'Provide Composite Cabling',
+    template: `Provide and install {{COMPOSITE_COUNT}} composite/multi conductor cable run(s) (approx. {{COMPOSITE_FOOTAGE}} ft total)
+Provide and run {{CAT6_COUNT}} Cat6 cable run(s) for intercom/network devices
+Use proper cable supports and label both ends of all cabling
+Maintain separation from high-voltage wiring`,
+  },
+  {
+    id: 'ac_controller',
+    title: 'Controller Installation',
+    template: `Install {{CONTROLLER_COUNT}} new {{CONTROLLER_BRAND}} door controllers
+Secure controllers in accordance with manufacturer installation guidelines.
+Connect Controller(s) to Fire Alarm Panel (if Applicable)`,
+  },
+  {
+    id: 'ac_intercom',
+    title: 'Intercom Installation',
+    template: `Install {{INTERCOM_TOTAL}} new {{INTERCOM_BRAND}} intercom device(s).
+Mount intercom units secure and level.`,
+  },
+  {
+    id: 'ac_locking',
+    title: 'Electric Locking Installation',
+    template: `Provide and install {{LOCK_TOTAL}} new locking hardware device(s), consisting of:
+{{ELECTRIC_STRIKE_COUNT}} electric strike(s)
+{{MAGLOCK_COUNT}} magnetic lock(s)
+{{MOTORIZED_LATCH_COUNT}} electrified latch release exit device(s)
+{{OTHER_LOCK_COUNT}} other electrified locking device(s)
+Remove existing hardware where required.
+Prep door/frame as necessary for proper fit and operation.
+Install {{POWER_TRANSFER_COUNT}} devices (hinge/loop) where required.
+Verify proper mechanical operation prior to energizing.
+Test fail-safe / fail-secure functionality.
+Verify proper door alignment and latch engagement/disengagement`,
+  },
+  {
+    id: 'ac_readers',
+    title: 'Reader Installation',
+    template: `Remove {{EXISTING_READER_COUNT}} existing readers
+Install {{NEW_READER_COUNT}} new {{READER_BRAND}} readers`,
+  },
+  {
+    id: 'ac_dps_rex',
+    title: 'DPS, REX, Push Button Installation',
+    template: `Install {{DPS_COUNT}} Door Position Sensors
+Install {{REX_COUNT}} request to exits
+Install {{PUSH_COUNTS}} push to exit buttons`,
+  },
+  {
+    id: 'ac_power',
+    title: 'Power & Batteries',
+    template: `Mount {{POWER_SUPPLY_COUNT}} power supplies
+Install batteries in {{POWER_SUPPLY_COUNT}} power supplies and {{CONTROLLER_COUNT}} new controllers
+Verify correct charging voltage and backup operation.`,
+  },
+  {
+    id: 'ac_termination',
+    title: 'Cable Termination (Access Control)',
+    template: `Terminate {{COMPOSITE_COUNT}} composite cables and {{CAT6_COUNT}} Cat6 cables using approved termination hardware
+Label all field wiring within enclosures for serviceability.
+Confirm controller, lock, REX, DPS, and reader connections as applicable.`,
+  },
+  {
+    id: 'ac_testing',
+    title: 'Testing & Commissioning (Access Control)',
+    template: `Test all newly installed cabling
+Configure panel settings and network parameters
+Confirm system communication and operational status
+Verify lock/unlock operation at all {{DOOR_TOTAL}} doors
+Verify reader credential functionality
+Verify DPS and REX operation
+Verify intercom communication
+Verify proper ADA compliance where required.
+Confirm system communication and operational status
+Ensure all devices are securely mounted
+Verify proper reader mounting height
+Ensure proper locking hardware alignment
+Confirm fire marshal free egress compliance`,
+  },
 ];
 
 export interface SowVariable {
@@ -130,6 +217,28 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'CAMERA_LICENSES', label: 'Camera Licenses', autoFillable: true },
   { key: 'CAMERA_COUNT', label: 'Camera Count', autoFillable: true },
   { key: 'RETENTION_DAYS', label: 'Retention Days', autoFillable: false },
+  { key: 'DOOR_TOTAL', label: 'Door Total', autoFillable: false },
+  { key: 'RIP_REPLACE_COUNT', label: 'Rip & Replace Count', autoFillable: false },
+  { key: 'NEW_DOOR_COUNT', label: 'New Door Count', autoFillable: false },
+  { key: 'COMPOSITE_COUNT', label: 'Composite Cable Count', autoFillable: false },
+  { key: 'COMPOSITE_FOOTAGE', label: 'Composite Footage', autoFillable: false },
+  { key: 'CONTROLLER_COUNT', label: 'Controller Count', autoFillable: true },
+  { key: 'CONTROLLER_BRAND', label: 'Controller Brand', autoFillable: true },
+  { key: 'INTERCOM_TOTAL', label: 'Intercom Total', autoFillable: true },
+  { key: 'INTERCOM_BRAND', label: 'Intercom Brand', autoFillable: true },
+  { key: 'LOCK_TOTAL', label: 'Lock Total', autoFillable: true },
+  { key: 'ELECTRIC_STRIKE_COUNT', label: 'Electric Strike Count', autoFillable: true },
+  { key: 'MAGLOCK_COUNT', label: 'Maglock Count', autoFillable: true },
+  { key: 'MOTORIZED_LATCH_COUNT', label: 'Motorized Latch Count', autoFillable: true },
+  { key: 'OTHER_LOCK_COUNT', label: 'Other Lock Count', autoFillable: false },
+  { key: 'POWER_TRANSFER_COUNT', label: 'Power Transfer Count', autoFillable: true },
+  { key: 'EXISTING_READER_COUNT', label: 'Existing Reader Count', autoFillable: false },
+  { key: 'NEW_READER_COUNT', label: 'New Reader Count', autoFillable: true },
+  { key: 'READER_BRAND', label: 'Reader Brand', autoFillable: true },
+  { key: 'DPS_COUNT', label: 'DPS Count', autoFillable: true },
+  { key: 'REX_COUNT', label: 'REX Count', autoFillable: true },
+  { key: 'PUSH_COUNTS', label: 'Push Button Count', autoFillable: true },
+  { key: 'POWER_SUPPLY_COUNT', label: 'Power Supply Count', autoFillable: true },
 ];
 
 /** Extract variable values from BOM items */
