@@ -17,7 +17,7 @@ const fields: { key: keyof ProjectInfo; label: string; section: string; type?: '
   { key: 'oppNumber', label: 'OPP Number', section: 'Project' },
   { key: 'projectNumber', label: 'Project Number', section: 'Project' },
   { key: 'date', label: 'Date', section: 'Project' },
-  { key: 'companyName', label: 'Company Name', section: 'Customer' },
+  { key: 'companyName', label: 'Customer Name', section: 'Customer' },
   { key: 'companyAddress', label: 'Project Location', section: 'Customer' },
   { key: 'cityStateZip', label: 'City / State / Zip', section: 'Customer' },
   { key: 'customerName', label: 'Point of Contact', section: 'Customer' },
