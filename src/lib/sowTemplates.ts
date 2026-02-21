@@ -137,30 +137,72 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   return vars;
 }
 
+/** Document-type-specific headers and endings */
+export const DOC_TYPE_WRAPPERS: Record<import('@/types/sow').DocumentType, { header: string; ending: string }> = {
+  SOW_Customer: {
+    header: '',
+    ending: '',
+  },
+  SOW_SUB_Quoting: {
+    header: `Proposed Scope for Labor Quoting
+
+Subcontractor shall provide labor pricing based on the following assumed scope of work:`,
+    ending: `Materials Assumption
+
+Subcontractor shall furnish all labor, supervision, tools, equipment, consumables, and incidental materials necessary to install, terminate, test, label, and commission a complete and fully operational CCTV system according to the above scope unless otherwise specified in writing by HTS.
+
+This scope is for labor pricing purposes only. Final execution scope will be governed by the issued HTS Purchase Order and Execution SOW. (Provide meaning Furnish and installation of)`,
+  },
+  SOW_SUB_Project: {
+    header: `The Subcontractor is authorized to perform the following work in accordance with the HTS-approved hardware schedule, drawings, and project documentation:`,
+    ending: `Coordinate with HTS and/or Customer for network configuration and final system verification.
+
+Materials Responsibility
+
+Subcontractor shall furnish all labor, supervision, tools, equipment, consumables, and incidental materials necessary to install, terminate, test, label, and commission a complete and fully operational CCTV system according to the above scope unless otherwise specified in writing by HTS.
+
+All work shall comply with manufacturer specifications, applicable codes, and HTS installation standards. Deviations from this authorized scope require written approval from the HTS Project Manager prior to execution.`,
+  },
+};
+
 /** Generate scope of work text from enabled sections with variables filled in */
 export function generateSowText(
   sectionOrder: string[],
   enabledSections: Set<string>,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  docType?: import('@/types/sow').DocumentType
 ): string {
   const templates = new Map(SOW_SECTION_TEMPLATES.map(s => [s.id, s]));
+
+  // Filter out "materials_responsibility" and "testing_commissioning" for Labor/Project docs
+  // since they have their own endings
+  const skipForWrapped = docType && docType !== 'SOW_Customer'
+    ? new Set(['materials_responsibility'])
+    : new Set<string>();
 
   const parts: string[] = [];
   for (const id of sectionOrder) {
     if (!enabledSections.has(id)) continue;
+    if (skipForWrapped.has(id)) continue;
     const tmpl = templates.get(id);
     if (!tmpl) continue;
 
     let text = tmpl.template;
-    // Replace variables
     for (const [key, value] of Object.entries(variables)) {
       text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || `[${key}]`);
     }
-    // Replace any remaining unfilled variables with placeholder
     text = text.replace(/\{\{(\w+)\}\}/g, '[$1]');
 
     parts.push(`${tmpl.title}\n\n${text}`);
   }
 
-  return parts.join('\n\n');
+  const body = parts.join('\n\n');
+
+  if (docType && DOC_TYPE_WRAPPERS[docType]) {
+    const { header, ending } = DOC_TYPE_WRAPPERS[docType];
+    const sections = [header, body, ending].filter(Boolean);
+    return sections.join('\n\n');
+  }
+
+  return body;
 }

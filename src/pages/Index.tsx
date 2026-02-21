@@ -210,12 +210,18 @@ const Index = () => {
           sowState={sowState}
           onSowStateChange={setSowState}
           onNext={() => {
-            const text = generateSowText(
-              sowState.sectionOrder,
-              new Set(sowState.enabledSections),
-              sowState.variables
-            );
-            setProjectInfo(prev => ({ ...prev, scopeOfWork: text }));
+            const enabled = new Set(sowState.enabledSections);
+            // Customer SOW gets the raw sections
+            const customerText = generateSowText(sowState.sectionOrder, enabled, sowState.variables, 'SOW_Customer');
+            // Labor and Project SOWs get their own headers/endings
+            const laborText = generateSowText(sowState.sectionOrder, enabled, sowState.variables, 'SOW_SUB_Quoting');
+            const projectText = generateSowText(sowState.sectionOrder, enabled, sowState.variables, 'SOW_SUB_Project');
+            setProjectInfo(prev => ({ ...prev, scopeOfWork: customerText }));
+            setOverrides(prev => ({
+              ...prev,
+              SOW_SUB_Quoting: { ...prev.SOW_SUB_Quoting, scopeOfWork: laborText },
+              SOW_SUB_Project: { ...prev.SOW_SUB_Project, scopeOfWork: projectText },
+            }));
             nextStep(3);
           }}
           onBack={() => goToStep(2)} />
