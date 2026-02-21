@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { GripVertical, Wrench, Zap, Settings2 } from 'lucide-react';
@@ -271,16 +272,31 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
         </Card>
       )}
 
-      {/* Preview */}
+      {/* Editable Preview */}
       {previewText && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Generated Scope of Work Preview</CardTitle>
+            <CardDescription>
+              Edit the text below to customize the final output. Changes here override the generated content.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-muted/50 rounded-lg p-4 text-sm whitespace-pre-line text-foreground max-h-96 overflow-auto">
-              {previewText}
-            </div>
+            <Textarea
+              value={sowState.customSowText ?? previewText}
+              onChange={(e) => onSowStateChange({ ...sowState, customSowText: e.target.value })}
+              className="min-h-[24rem] text-sm font-mono whitespace-pre"
+            />
+            {sowState.customSowText !== null && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 text-muted-foreground"
+                onClick={() => onSowStateChange({ ...sowState, customSowText: null })}
+              >
+                Reset to generated
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
