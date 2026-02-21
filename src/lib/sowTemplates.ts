@@ -9,28 +9,19 @@ export const SOW_SECTION_TEMPLATES: SowSectionTemplate[] = [
     id: 'install_cameras',
     title: 'Install New Cameras',
     template: `Mount {{NEW_CAMERA_TOTAL}} new {{CAMERA_BRAND}} cameras, consisting of:
-
 {{EXTERIOR_CAMERA_COUNT}} exterior cameras
-
 {{INTERIOR_CAMERA_COUNT}} interior cameras
-
 Mounting should be secure and level
-
 Install approved junction boxes where required
-
 Seal all exterior penetrations`,
   },
   {
     id: 'provide_cabling',
     title: 'Provide Cabling',
     template: `Provide and install {{CAT6_COUNT}} new Cat6 data cables.
-
 Properly support cabling (no ceiling grid support)
-
 Label both ends of all cables
-
 Maintain separation from high-voltage wiring
-
 Approximate total cable length: {{CAT6_FOOTAGE}} ft.`,
   },
   {
@@ -42,7 +33,6 @@ Approximate total cable length: {{CAT6_FOOTAGE}} ft.`,
     id: 'conduit_installation',
     title: 'Conduit Installation',
     template: `Provide and install conduit to protect exposed cabling where required.
-
 Approximate conduit length: {{CONDUIT_FOOTAGE}} ft.`,
   },
   {
@@ -54,87 +44,61 @@ Approximate conduit length: {{CONDUIT_FOOTAGE}} ft.`,
     id: 'testing_commissioning',
     title: 'Testing and Commissioning',
     template: `Test all newly installed and/or relocated cables.
-
 Set IP addresses of Cameras and equipment
-
 Verify operational status of all cameras.
-
 Verify all cameras power on
-
 Confirm live video stream
-
 Confirm proper focus and framing`,
   },
   {
     id: 'server_nvr',
     title: 'Server / NVR',
     template: `Install {{SERVER_TOTAL}} new {{SERVER_BRAND}} Server/NVR
-
 Install {{NVR_COUNT}} NVR/VMS server(s).
-
 Mount hardware and connect to power/UPS.
-
 Connect and configure network settings.
-
 Install/configure {{VMS_PLATFORM}}
-
 Setup User access configuration
-
 Apply {{CAMERA_LICENSES}} Camera Licenses
-
 Enroll up to {{CAMERA_COUNT}} cameras.
-
 Configure Motion, object detection, AI tools etc.
-
 Configure Recording profile
-
 Configure retention for approximately {{RETENTION_DAYS}} days.
-
 Test live view, recording, and playback.`,
   },
   {
     id: 'wireless_ptp',
     title: 'Wireless Point-to-Point',
     template: `Provide and install {{PTP_COUNT}} wireless point-to-point bridge(s).
-
 Mount radios securely at designated locations with proper alignment and weatherproofing.
-
 Configure and test wireless link(s) for connectivity and throughput.`,
   },
   {
     id: 'licenses',
     title: 'Licenses',
     template: `Provide and apply {{LICENSE_COUNT}} software/hardware license(s) as specified in the BOM.
-
 Verify license activation and proper system registration.`,
   },
   {
     id: 'poe_switches',
     title: 'PoE Switches',
     template: `Provide and install {{POE_SWITCH_COUNT}} PoE network switch(es).
-
 Rack-mount or surface-mount switches as directed.
-
 Connect and configure switch ports for all PoE-powered devices.
-
 Verify power delivery and network connectivity on all ports.`,
   },
   {
     id: 'poe_injectors',
     title: 'PoE Injectors',
     template: `Provide and install {{POE_INJECTOR_COUNT}} PoE injector(s) where dedicated PoE switch ports are not available.
-
 Mount injectors in a secure, accessible location.
-
 Verify proper power delivery to connected devices.`,
   },
   {
     id: 'mounts_accessories',
     title: 'Mounts & Accessories',
     template: `Provide and install {{MOUNT_COUNT}} mounting accessory(ies), including but not limited to:
-
 Wall-mount arms, corner brackets, pendant mounts, pole adapters, and junction boxes as specified in the BOM.
-
 All mounts shall be installed securely per manufacturer specifications.`,
   },
 ];
