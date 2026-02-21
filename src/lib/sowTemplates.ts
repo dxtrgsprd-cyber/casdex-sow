@@ -274,18 +274,20 @@ export function generateSowText(
   const templates = new Map(SOW_SECTION_TEMPLATES.map(s => [s.id, s]));
 
   const parts: string[] = [];
+  let num = 0;
   for (const id of sectionOrder) {
     if (!enabledSections.has(id)) continue;
     const tmpl = templates.get(id);
     if (!tmpl) continue;
 
+    num++;
     let text = tmpl.template;
     for (const [key, value] of Object.entries(variables)) {
       text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || `[${key}]`);
     }
     text = text.replace(/\{\{(\w+)\}\}/g, '[$1]');
 
-    parts.push(`${tmpl.title}\n\n${text}`);
+    parts.push(`${num}. ${tmpl.title}\n\n${text}`);
   }
 
   return parts.join('\n\n');
