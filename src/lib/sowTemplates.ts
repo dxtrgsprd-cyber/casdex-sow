@@ -37,12 +37,12 @@ Approximate conduit length: {{CONDUIT_FOOTAGE}} ft.`,
   },
   {
     id: 'cable_termination',
-    title: 'Cable Termination',
+    title: 'Cable Termination (CCTV)',
     template: `Terminate {{CAT6_COUNT}} Cat6 cables at designated network/camera locations using punchdowns, keystone jacks, or approved termination hardware.`,
   },
   {
     id: 'testing_commissioning',
-    title: 'Testing and Commissioning',
+    title: 'Testing and Commissioning (CCTV)',
     template: `Test all newly installed and/or relocated cables.
 Set IP addresses of Cameras and equipment
 Verify operational status of all cameras.
