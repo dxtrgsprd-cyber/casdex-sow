@@ -80,7 +80,7 @@ Install/configure {{VMS_PLATFORM}}
 
 Setup User access configuration
 
-Apply {{CAMERA_LICENSES}}
+Apply {{CAMERA_LICENSES}} Camera Licenses
 
 Enroll up to {{CAMERA_COUNT}} cameras.
 
