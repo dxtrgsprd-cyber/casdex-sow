@@ -137,7 +137,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       const oldIndex = sectionOrder.indexOf(active.id as string);
       const newIndex = sectionOrder.indexOf(over.id as string);
       const newOrder = arrayMove(sectionOrder, oldIndex, newIndex);
-      onSowStateChange({ ...sowState, sectionOrder: newOrder });
+      onSowStateChange({ ...sowState, sectionOrder: newOrder, customSowText: null });
     },
     [sectionOrder, sowState, onSowStateChange]
   );
@@ -150,7 +150,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       } else {
         newEnabled.delete(id);
       }
-      onSowStateChange({ ...sowState, enabledSections: Array.from(newEnabled) });
+      onSowStateChange({ ...sowState, enabledSections: Array.from(newEnabled), customSowText: null });
     },
     [enabledSections, sowState, onSowStateChange]
   );
@@ -160,6 +160,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       onSowStateChange({
         ...sowState,
         variables: { ...sowState.variables, [key]: value },
+        customSowText: null,
       });
     },
     [sowState, onSowStateChange]
