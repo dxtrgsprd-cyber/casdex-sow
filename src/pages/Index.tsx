@@ -157,7 +157,10 @@ const Index = () => {
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={casdexIcon} alt="Casdex logo" className="h-8 w-8 rounded-md" />
-            <span className="text-lg font-bold text-foreground tracking-tight">Casdex</span>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-foreground tracking-tight leading-tight">CASDEX</span>
+              <span className="text-xs text-muted-foreground tracking-wide">Precision-Driven SOW Automation</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
