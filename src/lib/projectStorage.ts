@@ -1,5 +1,5 @@
-import type { ProjectInfo, BomItem, DocumentOverrides } from '@/types/sow';
-import { defaultProjectInfo, defaultOverrides } from '@/types/sow';
+import type { ProjectInfo, BomItem, DocumentOverrides, SowBuilderState } from '@/types/sow';
+import { defaultProjectInfo, defaultOverrides, defaultSowBuilderState } from '@/types/sow';
 
 const PROJECTS_INDEX_KEY = 'sow-projects-index';
 const PROJECT_DATA_PREFIX = 'sow-project-';
@@ -14,6 +14,7 @@ export interface ProjectData {
   bomFileName: string | null;
   projectInfo: ProjectInfo;
   overrides: DocumentOverrides;
+  sowBuilderState: SowBuilderState;
 }
 
 export interface ProjectIndexEntry {
@@ -104,6 +105,7 @@ export function createNewProject(): { id: string; data: ProjectData } {
     bomFileName: null,
     projectInfo: { ...defaultProjectInfo },
     overrides: { ...defaultOverrides },
+    sowBuilderState: { ...defaultSowBuilderState },
   };
   saveProjectData(id, data);
   return { id, data };
@@ -124,6 +126,7 @@ export function migrateIfNeeded() {
       bomFileName: parsed.bomFileName ?? null,
       projectInfo: { ...defaultProjectInfo, ...parsed.projectInfo },
       overrides: { ...defaultOverrides, ...parsed.overrides },
+      sowBuilderState: { ...defaultSowBuilderState },
     };
     saveProjectData(id, data);
     localStorage.removeItem(OLD_STORAGE_KEY);

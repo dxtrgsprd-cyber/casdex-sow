@@ -2,14 +2,15 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import StepIndicator from '@/components/StepIndicator';
 import BomUpload from '@/components/BomUpload';
 import ProjectInfoForm from '@/components/ProjectInfoForm';
-import AppendixUpload from '@/components/AppendixUpload';
+import SowBuilder from '@/components/SowBuilder';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
+import { generateSowText } from '@/lib/sowTemplates';
 import SavedProjects from '@/components/SavedProjects';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
-import { defaultProjectInfo, defaultOverrides } from '@/types/sow';
-import type { ProjectInfo, BomItem, DocumentOverrides, DocumentType } from '@/types/sow';
+import { defaultProjectInfo, defaultOverrides, defaultSowBuilderState } from '@/types/sow';
+import type { ProjectInfo, BomItem, DocumentOverrides, DocumentType, SowBuilderState } from '@/types/sow';
 import {
   getProjectIndex,
   getActiveProjectId,
@@ -46,8 +47,11 @@ const Index = () => {
   const [bomItems, setBomItems] = useState<BomItem[]>(loadedData?.bomItems ?? []);
   const [bomFileName, setBomFileName] = useState<string | null>(loadedData?.bomFileName ?? null);
   const [projectInfo, setProjectInfo] = useState<ProjectInfo>({ ...defaultProjectInfo, ...loadedData?.projectInfo });
+  const [sowState, setSowState] = useState<SowBuilderState>(() => ({
+    ...defaultSowBuilderState,
+    ...loadedData?.sowBuilderState,
+  }));
   const [appendixFile, setAppendixFile] = useState<File | null>(null);
-  const [appendixFileName, setAppendixFileName] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<DocumentOverrides>({ ...defaultOverrides, ...loadedData?.overrides });
   const [templateFiles, setTemplateFiles] = useState<Record<DocumentType, ArrayBuffer | null>>({
     SOW_Customer: null,
@@ -61,10 +65,11 @@ const Index = () => {
       bomItems,
       bomFileName,
       projectInfo,
-      overrides
+      overrides,
+      sowBuilderState: sowState,
     });
     setProjectIndex(getProjectIndex());
-  }, [projectId, currentStep, bomItems, bomFileName, projectInfo, overrides]);
+  }, [projectId, currentStep, bomItems, bomFileName, projectInfo, overrides, sowState]);
 
   const handleLoadProject = useCallback((id: string) => {
     const data = loadProjectData(id);
@@ -76,7 +81,7 @@ const Index = () => {
     setBomFileName(data.bomFileName);
     setProjectInfo({ ...defaultProjectInfo, ...data.projectInfo });
     setAppendixFile(null);
-    setAppendixFileName(null);
+    setSowState({ ...defaultSowBuilderState, ...data.sowBuilderState });
     setOverrides({ ...defaultOverrides, ...data.overrides });
     toast.success(`Loaded project: ${data.projectInfo.oppNumber || 'Untitled'}`);
   }, []);
@@ -146,11 +151,6 @@ const Index = () => {
     });
   }, []);
 
-  const handleAppendix = useCallback((file: File | null, name: string | null) => {
-    setAppendixFile(file);
-    setAppendixFileName(name);
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
@@ -205,12 +205,20 @@ const Index = () => {
         }
 
         {currentStep === 3 &&
-        <AppendixUpload
-          appendixFileName={appendixFileName}
-          onAppendixSelected={handleAppendix}
-          onNext={() => nextStep(3)}
+        <SowBuilder
+          bomItems={bomItems}
+          sowState={sowState}
+          onSowStateChange={setSowState}
+          onNext={() => {
+            const text = generateSowText(
+              sowState.sectionOrder,
+              new Set(sowState.enabledSections),
+              sowState.variables
+            );
+            setProjectInfo(prev => ({ ...prev, scopeOfWork: text }));
+            nextStep(3);
+          }}
           onBack={() => goToStep(2)} />
-
         }
 
         {currentStep === 4 &&

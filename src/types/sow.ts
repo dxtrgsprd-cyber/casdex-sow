@@ -56,6 +56,31 @@ export const defaultOverrides: DocumentOverrides = {
   SOW_SUB_Project: {},
 };
 
+export interface SowBuilderState {
+  sectionOrder: string[];
+  enabledSections: string[];
+  variables: Record<string, string>;
+}
+
+export const defaultSowBuilderState: SowBuilderState = {
+  sectionOrder: [
+    'install_cameras',
+    'provide_cabling',
+    'relocate_cameras',
+    'conduit_installation',
+    'cable_termination',
+    'testing_commissioning',
+    'materials_responsibility',
+  ],
+  enabledSections: [
+    'install_cameras',
+    'provide_cabling',
+    'testing_commissioning',
+    'materials_responsibility',
+  ],
+  variables: {},
+};
+
 export interface AppState {
   currentStep: number;
   bomItems: BomItem[];
