@@ -68,6 +68,51 @@ Verify recording functionality
 Coordinate with HTS and/or Customer for network configuration and final system verification.`,
   },
   {
+    id: 'wireless_ptp',
+    title: 'Wireless Point-to-Point',
+    template: `Provide and install {{PTP_COUNT}} wireless point-to-point bridge(s).
+
+Mount radios securely at designated locations with proper alignment and weatherproofing.
+
+Configure and test wireless link(s) for connectivity and throughput.`,
+  },
+  {
+    id: 'licenses',
+    title: 'Licenses',
+    template: `Provide and apply {{LICENSE_COUNT}} software/hardware license(s) as specified in the BOM.
+
+Verify license activation and proper system registration.`,
+  },
+  {
+    id: 'poe_switches',
+    title: 'PoE Switches',
+    template: `Provide and install {{POE_SWITCH_COUNT}} PoE network switch(es).
+
+Rack-mount or surface-mount switches as directed.
+
+Connect and configure switch ports for all PoE-powered devices.
+
+Verify power delivery and network connectivity on all ports.`,
+  },
+  {
+    id: 'poe_injectors',
+    title: 'PoE Injectors',
+    template: `Provide and install {{POE_INJECTOR_COUNT}} PoE injector(s) where dedicated PoE switch ports are not available.
+
+Mount injectors in a secure, accessible location.
+
+Verify proper power delivery to connected devices.`,
+  },
+  {
+    id: 'mounts_accessories',
+    title: 'Mounts & Accessories',
+    template: `Provide and install {{MOUNT_COUNT}} mounting accessory(ies), including but not limited to:
+
+Wall-mount arms, corner brackets, pendant mounts, pole adapters, and junction boxes as specified in the BOM.
+
+All mounts shall be installed securely per manufacturer specifications.`,
+  },
+  {
     id: 'materials_responsibility',
     title: 'Materials Responsibility',
     template: `Subcontractor shall furnish all labor, supervision, tools, equipment, consumables, and incidental materials necessary to install, terminate, test, label, and commission a complete and fully operational CCTV system according to the above scope unless otherwise specified in writing by HTS.`,
@@ -89,50 +134,77 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'CAT6_FOOTAGE', label: 'Cat6 Total Footage', autoFillable: false },
   { key: 'RELOCATE_COUNT', label: 'Relocate Count', autoFillable: false },
   { key: 'CONDUIT_FOOTAGE', label: 'Conduit Footage', autoFillable: false },
+  { key: 'PTP_COUNT', label: 'Point-to-Point Count', autoFillable: true },
+  { key: 'LICENSE_COUNT', label: 'License Count', autoFillable: true },
+  { key: 'POE_SWITCH_COUNT', label: 'PoE Switch Count', autoFillable: true },
+  { key: 'POE_INJECTOR_COUNT', label: 'PoE Injector Count', autoFillable: true },
+  { key: 'MOUNT_COUNT', label: 'Mount/Accessory Count', autoFillable: true },
 ];
 
 /** Extract variable values from BOM items */
 export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Record<string, string> {
   const vars: Record<string, string> = {};
 
-  // Camera detection keywords
-  const cameraKeywords = ['camera', 'dome', 'bullet', 'turret', 'ptz', 'ip cam', 'nvr'];
+  const cameraKeywords = ['camera', 'dome', 'bullet', 'turret', 'ptz', 'ip cam'];
   const cableKeywords = ['cat6', 'cat 6', 'cable', 'cat5', 'cat 5', 'utp', 'ethernet'];
+  const ptpKeywords = ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'];
+  const licenseKeywords = ['license', 'licence', 'subscription', 'lic'];
+  const poeSwitchKeywords = ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch'];
+  const poeInjectorKeywords = ['poe injector', 'poe adapter', 'midspan', 'poe+'];
+  const mountKeywords = ['mount', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'wall mount', 'corner', 'gooseneck', 'parapet'];
 
-  const cameraItems = bomItems.filter(item => {
+  const matchItems = (keywords: string[]) => bomItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
-    return cameraKeywords.some(k => desc.includes(k) || pn.includes(k));
+    return keywords.some(k => desc.includes(k) || pn.includes(k));
   });
 
-  const cableItems = bomItems.filter(item => {
-    const desc = (item.description || '').toLowerCase();
-    return cableKeywords.some(k => desc.includes(k));
-  });
+  const sumQty = (items: typeof bomItems) => items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
-  // Camera total
-  const cameraTotal = cameraItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
-  if (cameraTotal > 0) {
-    vars['NEW_CAMERA_TOTAL'] = String(cameraTotal);
-  }
+  // Cameras
+  const cameraItems = matchItems(cameraKeywords);
+  const cameraTotal = sumQty(cameraItems);
+  if (cameraTotal > 0) vars['NEW_CAMERA_TOTAL'] = String(cameraTotal);
 
-  // Camera brand - most common vendor among camera items
+  // Camera brand
   const vendorCounts: Record<string, number> = {};
   cameraItems.forEach(item => {
-    if (item.vendor) {
-      vendorCounts[item.vendor] = (vendorCounts[item.vendor] || 0) + item.quantity;
-    }
+    if (item.vendor) vendorCounts[item.vendor] = (vendorCounts[item.vendor] || 0) + item.quantity;
   });
   const topVendor = Object.entries(vendorCounts).sort((a, b) => b[1] - a[1])[0];
-  if (topVendor) {
-    vars['CAMERA_BRAND'] = topVendor[0];
-  }
+  if (topVendor) vars['CAMERA_BRAND'] = topVendor[0];
 
-  // Cat6 count
-  const cat6Total = cableItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
-  if (cat6Total > 0) {
-    vars['CAT6_COUNT'] = String(cat6Total);
-  }
+  // Cables
+  const cat6Total = sumQty(matchItems(cableKeywords));
+  if (cat6Total > 0) vars['CAT6_COUNT'] = String(cat6Total);
+
+  // Point-to-Point
+  const ptpTotal = sumQty(matchItems(ptpKeywords));
+  if (ptpTotal > 0) vars['PTP_COUNT'] = String(ptpTotal);
+
+  // Licenses
+  const licenseTotal = sumQty(matchItems(licenseKeywords));
+  if (licenseTotal > 0) vars['LICENSE_COUNT'] = String(licenseTotal);
+
+  // PoE Switches (must match "switch" to avoid catching injectors)
+  const poeSwitchItems = bomItems.filter(item => {
+    const desc = (item.description || '').toLowerCase();
+    return poeSwitchKeywords.some(k => desc.includes(k)) || (desc.includes('switch') && desc.includes('poe'));
+  });
+  const poeSwitchTotal = sumQty(poeSwitchItems);
+  if (poeSwitchTotal > 0) vars['POE_SWITCH_COUNT'] = String(poeSwitchTotal);
+
+  // PoE Injectors
+  const poeInjectorItems = bomItems.filter(item => {
+    const desc = (item.description || '').toLowerCase();
+    return poeInjectorKeywords.some(k => desc.includes(k)) && !desc.includes('switch');
+  });
+  const poeInjectorTotal = sumQty(poeInjectorItems);
+  if (poeInjectorTotal > 0) vars['POE_INJECTOR_COUNT'] = String(poeInjectorTotal);
+
+  // Mounts & Accessories
+  const mountTotal = sumQty(matchItems(mountKeywords));
+  if (mountTotal > 0) vars['MOUNT_COUNT'] = String(mountTotal);
 
   return vars;
 }
