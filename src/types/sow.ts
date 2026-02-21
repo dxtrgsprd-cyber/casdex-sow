@@ -65,27 +65,33 @@ export interface SowBuilderState {
 
 export const defaultSowBuilderState: SowBuilderState = {
   sectionOrder: [
+    // Hardware installs first
     'install_cameras',
-    'provide_cabling',
     'relocate_cameras',
-    'conduit_installation',
-    'cable_termination',
-    'testing_commissioning',
-    'server_nvr',
-    'wireless_ptp',
-    'licenses',
     'poe_switches',
     'poe_injectors',
     'mounts_accessories',
     'ac_install',
-    'ac_composite_cabling',
     'ac_controller',
     'ac_intercom',
     'ac_locking',
     'ac_readers',
     'ac_dps_rex',
     'ac_power',
+    // Cabling
+    'provide_cabling',
+    'ac_composite_cabling',
+    'conduit_installation',
+    // Terminations
+    'cable_termination',
     'ac_termination',
+    // Licensing
+    'licenses',
+    'wireless_ptp',
+    // Server
+    'server_nvr',
+    // Testing always last
+    'testing_commissioning',
     'ac_testing',
   ],
   enabledSections: [
