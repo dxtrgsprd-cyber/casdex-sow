@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 const steps = [
   { label: 'Upload BOM', number: 1 },
   { label: 'Project Info', number: 2 },
-  { label: 'Appendix', number: 3 },
+  { label: 'Scope of Work', number: 3 },
   { label: 'Preview & Edit', number: 4 },
   { label: 'Export', number: 5 },
 ];
