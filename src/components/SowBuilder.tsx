@@ -87,6 +87,18 @@ function SortableSection({
 }
 
 export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNext, onBack }: SowBuilderProps) {
+  // Ensure any new template sections are present in sectionOrder
+  useEffect(() => {
+    const allIds = SOW_SECTION_TEMPLATES.map(s => s.id);
+    const missing = allIds.filter(id => !sowState.sectionOrder.includes(id));
+    if (missing.length > 0) {
+      onSowStateChange({
+        ...sowState,
+        sectionOrder: [...sowState.sectionOrder, ...missing],
+      });
+    }
+  }, []); // run once on mount
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
