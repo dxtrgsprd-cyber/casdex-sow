@@ -287,7 +287,13 @@ export function generateSowText(
     }
     text = text.replace(/\{\{(\w+)\}\}/g, '[$1]');
 
-    parts.push(`${num}. ${tmpl.title}\n\n${text}`);
+    // Indent all body lines under the header
+    const indentedBody = text
+      .split('\n')
+      .map(line => (line.trim() ? `    ${line}` : ''))
+      .join('\n');
+
+    parts.push(`${num}. ${tmpl.title}\n\n${indentedBody}`);
   }
 
   return parts.join('\n\n');
