@@ -7,6 +7,7 @@ import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
 import SavedProjects from '@/components/SavedProjects';
 import { Button } from '@/components/ui/button';
+import ThemeToggle from '@/components/ThemeToggle';
 import { defaultProjectInfo, defaultOverrides } from '@/types/sow';
 import type { ProjectInfo, BomItem, DocumentOverrides, DocumentType } from '@/types/sow';
 import {
@@ -157,9 +158,12 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <img src={dexcoreLogo} alt="Dexcore Scope" className="h-10 w-auto" />
           </div>
-          <Button variant="outline" size="sm" onClick={handleNewProject}>
-            + New Project
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={handleNewProject}>
+              + New Project
+            </Button>
+          </div>
         </div>
       </header>
 
