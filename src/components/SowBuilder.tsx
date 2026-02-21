@@ -43,13 +43,13 @@ interface SowBuilderProps {
 function SortableSection({
   id,
   title,
-  index,
+  number,
   enabled,
   onToggle,
 }: {
   id: string;
   title: string;
-  index: number;
+  number: number | null;
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
 }) {
@@ -78,7 +78,7 @@ function SortableSection({
       </button>
       <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         <h4 className="font-semibold text-sm text-foreground">
-          {index}. {title}
+          {number !== null ? `${number}. ` : ''}{title}
         </h4>
         <Switch checked={enabled} onCheckedChange={onToggle} />
       </div>
@@ -199,20 +199,25 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
-                {sectionOrder.map((id, idx) => {
-                  const tmpl = templateMap.get(id);
-                  if (!tmpl) return null;
-                  return (
-                    <SortableSection
-                      key={id}
-                      id={id}
-                      title={tmpl.title}
-                      index={idx + 1}
-                      enabled={enabledSections.has(id)}
-                      onToggle={(enabled) => handleToggle(id, enabled)}
-                    />
-                  );
-                })}
+                {(() => {
+                  let enabledIdx = 0;
+                  return sectionOrder.map((id) => {
+                    const tmpl = templateMap.get(id);
+                    if (!tmpl) return null;
+                    const isEnabled = enabledSections.has(id);
+                    const num = isEnabled ? ++enabledIdx : null;
+                    return (
+                      <SortableSection
+                        key={id}
+                        id={id}
+                        title={tmpl.title}
+                        number={num}
+                        enabled={isEnabled}
+                        onToggle={(enabled) => handleToggle(id, enabled)}
+                      />
+                    );
+                  });
+                })()}
               </div>
             </SortableContext>
           </DndContext>
