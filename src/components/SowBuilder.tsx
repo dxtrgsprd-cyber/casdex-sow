@@ -28,9 +28,11 @@ import {
   SOW_VARIABLES,
   autoFillFromBom,
   generateSowText,
+  DOC_TYPE_WRAPPERS,
 } from '@/lib/sowTemplates';
-import type { BomItem } from '@/types/sow';
+import type { BomItem, DocumentType } from '@/types/sow';
 import type { SowBuilderState } from '@/types/sow';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SowBuilderProps {
   bomItems: BomItem[];
@@ -182,11 +184,14 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     return new Set<string>(Object.keys(auto).filter(k => auto[k]));
   }, [bomItems]);
 
-  // Preview of generated text
-  const previewText = useMemo(
-    () => generateSowText(sectionOrder, enabledSections, sowState.variables),
-    [sectionOrder, enabledSections, sowState.variables]
-  );
+  const previewTexts = useMemo(() => {
+    const enabled = new Set(sowState.enabledSections);
+    return {
+      SOW_Customer: generateSowText(sectionOrder, enabled, sowState.variables, 'SOW_Customer'),
+      SOW_SUB_Quoting: generateSowText(sectionOrder, enabled, sowState.variables, 'SOW_SUB_Quoting'),
+      SOW_SUB_Project: generateSowText(sectionOrder, enabled, sowState.variables, 'SOW_SUB_Project'),
+    };
+  }, [sectionOrder, enabledSections, sowState.variables, sowState.enabledSections]);
 
   return (
     <div className="space-y-6">
@@ -261,15 +266,26 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       )}
 
       {/* Preview */}
-      {previewText && (
+      {previewTexts.SOW_Customer && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Generated Scope of Work Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-muted/50 rounded-lg p-4 text-sm whitespace-pre-line text-foreground max-h-96 overflow-auto">
-              {previewText}
-            </div>
+            <Tabs defaultValue="SOW_Customer">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="SOW_Customer">Customer</TabsTrigger>
+                <TabsTrigger value="SOW_SUB_Quoting">Labor</TabsTrigger>
+                <TabsTrigger value="SOW_SUB_Project">Project</TabsTrigger>
+              </TabsList>
+              {(Object.entries(previewTexts) as [DocumentType, string][]).map(([docType, text]) => (
+                <TabsContent key={docType} value={docType}>
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm whitespace-pre-line text-foreground max-h-96 overflow-auto">
+                    {text}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
           </CardContent>
         </Card>
       )}
