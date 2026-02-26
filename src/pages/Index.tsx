@@ -7,6 +7,7 @@ import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
 import { generateSowText } from '@/lib/sowTemplates';
 import SavedProjects from '@/components/SavedProjects';
+import { loadTemplate } from '@/lib/templateStorage';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
 import { defaultProjectInfo, defaultOverrides, defaultSowBuilderState } from '@/types/sow';
@@ -113,6 +114,13 @@ const Index = () => {
     const docTypes: DocumentType[] = ['SOW_Customer', 'SOW_SUB_Quoting', 'SOW_SUB_Project'];
     docTypes.forEach(async (docType) => {
       try {
+        // Check IndexedDB for custom template first
+        const custom = await loadTemplate(docType);
+        if (custom) {
+          setTemplateFiles((prev) => ({ ...prev, [docType]: custom }));
+          return;
+        }
+        // Fall back to default
         const res = await fetch(`/templates/${docType}.docx`);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
@@ -122,6 +130,10 @@ const Index = () => {
         console.error(`Failed to load template ${docType}:`, e);
       }
     });
+  }, []);
+
+  const handleTemplateChange = useCallback((type: DocumentType, buffer: ArrayBuffer | null) => {
+    setTemplateFiles(prev => ({ ...prev, [type]: buffer }));
   }, []);
 
   const completeStep = useCallback((step: number) => {
@@ -239,9 +251,9 @@ const Index = () => {
           info={projectInfo}
           overrides={overrides}
           templateFiles={templateFiles}
+          onTemplateChange={handleTemplateChange}
           appendixFile={appendixFile}
           onBack={() => goToStep(4)} />
-
         }
       </main>
     </div>);

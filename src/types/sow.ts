@@ -19,6 +19,10 @@ export interface ProjectInfo {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  subcontractorName: string;
+  subcontractorPoC: string;
+  subcontractorEmail: string;
+  subcontractorPhone: string;
   solutionArchitect: string;
   scope: string;
   scopeOfWork: string;
@@ -36,6 +40,10 @@ export const defaultProjectInfo: ProjectInfo = {
   customerName: '',
   customerEmail: '',
   customerPhone: '',
+  subcontractorName: '',
+  subcontractorPoC: '',
+  subcontractorEmail: '',
+  subcontractorPhone: '',
   solutionArchitect: '',
   scope: '',
   scopeOfWork: '',
