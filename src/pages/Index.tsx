@@ -19,10 +19,13 @@ import {
   saveProjectData,
   deleteProject,
   createNewProject,
-  migrateIfNeeded } from
-'@/lib/projectStorage';
+  migrateIfNeeded,
+  exportProjectAsFile,
+} from '@/lib/projectStorage';
 import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
+import { AlertTriangle, Download } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import casdexIcon from '@/assets/casdex-icon.png';
 
 const Index = () => {
@@ -176,6 +179,10 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={() => exportProjectAsFile(projectId)}>
+              <Download className="w-4 h-4 mr-1" />
+              Export
+            </Button>
             <Button variant="outline" size="sm" onClick={handleNewProject}>
               + New Project
             </Button>
@@ -183,7 +190,16 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 pt-3">
+        <Alert className="border-destructive/30 bg-muted">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertDescription className="text-muted-foreground text-xs">
+            Your projects are stored in your web browser's local storage. To avoid data loss, please back up your projects regularly by exporting them as files.
+          </AlertDescription>
+        </Alert>
+      </div>
+
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <SavedProjects
           projects={projectIndex}
           activeProjectId={projectId}

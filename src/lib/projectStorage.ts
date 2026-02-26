@@ -111,6 +111,48 @@ export function createNewProject(): { id: string; data: ProjectData } {
   return { id, data };
 }
 
+/** Export the current project as a downloadable JSON file */
+export function exportProjectAsFile(id: string) {
+  const data = loadProjectData(id);
+  if (!data) return;
+  const exportPayload = { id, ...data, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const name = data.projectInfo.oppNumber || data.projectInfo.projectName || 'project';
+  a.href = url;
+  a.download = `casdex-project-${name}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Import a project from a JSON file */
+export function importProjectFromFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string);
+        const id = generateId();
+        const data: ProjectData = {
+          currentStep: parsed.currentStep ?? 1,
+          bomItems: parsed.bomItems ?? [],
+          bomFileName: parsed.bomFileName ?? null,
+          projectInfo: { ...defaultProjectInfo, ...parsed.projectInfo },
+          overrides: { ...defaultOverrides, ...parsed.overrides },
+          sowBuilderState: { ...defaultSowBuilderState, ...parsed.sowBuilderState },
+        };
+        saveProjectData(id, data);
+        resolve(id);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+}
+
 /** Migrate legacy single-project storage to multi-project format */
 export function migrateIfNeeded() {
   try {
