@@ -170,7 +170,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <img src={casdexScopeLogo} alt="CASDEX Scope" className="h-14" />
+          <img src={casdexScopeLogo} alt="CASDEX Scope" className="h-[168px]" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => exportProjectAsFile(projectId)}>
