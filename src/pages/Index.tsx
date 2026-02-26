@@ -26,7 +26,7 @@ import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
 import { AlertTriangle, Download } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import casdexIcon from '@/assets/casdex-icon.png';
+import casdexScopeLogo from '@/assets/casdex-scope-logo.png';
 
 const Index = () => {
   const migrated = useRef(false);
@@ -170,13 +170,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={casdexIcon} alt="Casdex logo" className="h-8 w-8 rounded-md" />
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-foreground tracking-tight leading-tight">CASDEX SCOPE</span>
-              <span className="text-xs text-muted-foreground tracking-wide">Precision-Driven SOW Automation</span>
-            </div>
-          </div>
+          <img src={casdexScopeLogo} alt="CASDEX Scope" className="h-10" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => exportProjectAsFile(projectId)}>
