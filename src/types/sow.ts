@@ -105,7 +105,6 @@ export const defaultSowBuilderState: SowBuilderState = {
     'server_nvr',
     'programming_cctv',
     'programming_ac',
-    'programming',
     'testing_commissioning',
     'ac_testing',
   ],

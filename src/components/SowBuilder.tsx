@@ -57,18 +57,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     }
   }, [bomItems]);
 
-  // Sync programming notes into the PROGRAMMING_DETAILS variable
-  useEffect(() => {
-    const current = sowState.variables['PROGRAMMING_DETAILS'] ?? '';
-    const notes = sowState.programmingNotes ?? '';
-    if (current !== notes) {
-      onSowStateChange({
-        ...sowState,
-        variables: { ...sowState.variables, PROGRAMMING_DETAILS: notes },
-        customSowText: null,
-      });
-    }
-  }, [sowState.programmingNotes]);
 
   const enabledSections = new Set(sowState.enabledSections);
 
@@ -150,7 +138,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     return new Set<string>(Object.keys(auto).filter(k => auto[k]));
   }, [bomItems]);
 
-  const programmingEnabled = enabledSections.has('programming');
+  
 
   const previewText = useMemo(() => {
     const enabled = new Set(sowState.enabledSections);
@@ -214,12 +202,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
                 Programming Notes
               </CardTitle>
               <CardDescription className="text-xs">
-                Enter programming details below. These will be inserted into the SOW under the "Programming" section.
-                {!programmingEnabled && (
-                  <span className="block mt-1 text-muted-foreground font-medium">
-                    ℹ The "Programming" section is not enabled in the SOW narrative preview. These notes will still be exported to the document template via {'{{PROGRAMMING_DETAILS}}'}.
-                  </span>
-                )}
+                Programming notes are exported separately — they are not part of the SOW narrative. These notes populate the {'{{PROGRAMMING_DETAILS}}'} field in the SOW SUB Project document only.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -229,16 +212,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
                 placeholder={`Enter programming details, e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels\nEnroll credentials and set schedules\nConfigure VMS recording profiles`}
                 className="min-h-[14rem] text-sm font-mono whitespace-pre"
               />
-              {!programmingEnabled && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 text-xs"
-                  onClick={() => handleEnabledSectionsChange([...sowState.enabledSections, 'programming'])}
-                >
-                  Enable Programming Section
-                </Button>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
