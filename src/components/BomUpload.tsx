@@ -102,7 +102,7 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
       {bomItems.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Parsed Items ({bomItems.length})</CardTitle>
+            <CardTitle className="text-lg">Material List from BOM ({bomItems.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="max-h-80 overflow-auto">
