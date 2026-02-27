@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { generateDocx } from '@/lib/documentGenerator';
 import { appendToDocs } from '@/lib/appendixInjector';
+import { appendVerticalNotes } from '@/lib/verticalAppendix';
 import { saveTemplate, deleteTemplate } from '@/lib/templateStorage';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
@@ -32,6 +33,11 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
     if (!template) return;
 
     let docBlob = generateDocx(template, info, overrides[docType]);
+
+    // Append vertical-specific site requirements
+    if (info.vertical) {
+      docBlob = await appendVerticalNotes(docBlob, info.vertical);
+    }
 
     if (appendixFile) {
       docBlob = await appendToDocs(docBlob, appendixFile);
