@@ -155,7 +155,7 @@ export default function SowSectionSelector({
             In Use ({inUseItems.length})
           </h4>
           <div className="border rounded-lg bg-muted/10">
-            <ScrollArea className="max-h-[280px]">
+            <ScrollArea className="h-[280px]">
               <div className="p-2 space-y-1.5 min-h-[80px]">
                 {inUseItems.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-4">
@@ -191,7 +191,7 @@ export default function SowSectionSelector({
             Available ({availableItems.length})
           </h4>
           <div className="border rounded-lg bg-muted/10">
-            <ScrollArea className="max-h-[280px]">
+            <ScrollArea className="h-[280px]">
               <div className="p-2 space-y-1.5 min-h-[80px]">
                 {availableItems.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-4">
