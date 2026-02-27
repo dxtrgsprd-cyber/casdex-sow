@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { getResolvedFields } from '@/lib/documentGenerator';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
@@ -12,6 +13,7 @@ interface DocumentPreviewProps {
   info: ProjectInfo;
   overrides: DocumentOverrides;
   onOverridesChange: (overrides: DocumentOverrides) => void;
+  onProgrammingToggle?: (enabled: boolean) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -72,7 +74,7 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
   Notes: 'notes',
 };
 
-export default function DocumentPreview({ info, overrides, onOverridesChange, onNext, onBack }: DocumentPreviewProps) {
+export default function DocumentPreview({ info, overrides, onOverridesChange, onProgrammingToggle, onNext, onBack }: DocumentPreviewProps) {
   const [activeTab, setActiveTab] = useState<DocumentType>('SOW_SUB_Quoting');
 
   const handleOverride = (docType: DocumentType, templateField: string, value: string) => {
@@ -153,6 +155,39 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
           );
         })}
       </Tabs>
+
+      {/* Programming Notes Toggle */}
+      {info.programmingNotes?.trim() && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="include-programming"
+                checked={info.programmingRequired}
+                onCheckedChange={(checked) => {
+                  // This triggers a projectInfo change via the parent
+                  const syntheticInfo = { ...info, programmingRequired: !!checked };
+                  // We use override mechanism to signal this back
+                  onOverridesChange({
+                    ...overrides,
+                    // Store the flag - we pass it through info directly
+                  });
+                  // Notify parent of the toggle
+                  onProgrammingToggle?.(!!checked);
+                }}
+              />
+              <div className="grid gap-1 leading-none">
+                <Label htmlFor="include-programming" className="font-semibold cursor-pointer">
+                  Include Programming Notes in SOW
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Programming notes will be appended as a separate appendix page at the end of the document.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>← Back</Button>

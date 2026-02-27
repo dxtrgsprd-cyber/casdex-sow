@@ -275,6 +275,7 @@ const Index = () => {
           info={projectInfo}
           overrides={overrides}
           onOverridesChange={setOverrides}
+          onProgrammingToggle={(enabled) => setProjectInfo(prev => ({ ...prev, programmingRequired: enabled }))}
           onNext={() => nextStep(4)}
           onBack={() => goToStep(3)} />
         }
@@ -286,6 +287,7 @@ const Index = () => {
           templateFiles={templateFiles}
           onTemplateChange={handleTemplateChange}
           appendixFile={appendixFile}
+          onProgrammingToggle={(enabled) => setProjectInfo(prev => ({ ...prev, programmingRequired: enabled }))}
           onBack={() => goToStep(4)} />
         }
       </main>
