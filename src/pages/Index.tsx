@@ -199,7 +199,10 @@ const Index = () => {
           activeProjectId={projectId}
           onLoad={handleLoadProject}
           onDelete={handleDeleteProject}
-          onNew={handleNewProject} />
+          onNew={handleNewProject}
+          onContinue={() => nextStep(0)}
+          onBack={() => goToStep(currentStep - 1)}
+          showBack={currentStep > 1} />
 
 
         <StepIndicator

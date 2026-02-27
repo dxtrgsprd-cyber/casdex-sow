@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FolderOpen, Trash2, Plus } from 'lucide-react';
@@ -17,6 +16,7 @@ import {
 export interface SavedProject {
   id: string;
   oppNumber: string;
+  customerName: string;
   projectName: string;
   lastModified: string;
   currentStep: number;
@@ -28,12 +28,20 @@ interface SavedProjectsProps {
   onLoad: (id: string) => void;
   onDelete: (id: string) => void;
   onNew: () => void;
+  onContinue: () => void;
+  onBack: () => void;
+  showBack: boolean;
 }
 
-export default function SavedProjects({ projects, activeProjectId, onLoad, onDelete, onNew }: SavedProjectsProps) {
+export default function SavedProjects({ projects, activeProjectId, onLoad, onDelete, onNew, onContinue, onBack, showBack }: SavedProjectsProps) {
   if (projects.length === 0) {
     return null;
   }
+
+  const formatProjectName = (project: SavedProject) => {
+    const parts = [project.oppNumber, project.customerName, project.projectName].filter(Boolean);
+    return parts.length > 0 ? parts.join(' — ') : 'Untitled Project';
+  };
 
   return (
     <Card>
@@ -46,7 +54,7 @@ export default function SavedProjects({ projects, activeProjectId, onLoad, onDel
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <div className="divide-y divide-border">
           {projects.map((project) => (
             <div
@@ -57,12 +65,7 @@ export default function SavedProjects({ projects, activeProjectId, onLoad, onDel
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate text-foreground">
-                  {project.oppNumber || 'No OPP #'}
-                  {project.projectName && (
-                    <span className="text-muted-foreground font-normal ml-1.5">
-                      — {project.projectName}
-                    </span>
-                  )}
+                  {formatProjectName(project)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Step {project.currentStep} · {project.lastModified}
@@ -89,7 +92,7 @@ export default function SavedProjects({ projects, activeProjectId, onLoad, onDel
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete project?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete the saved data for "{project.oppNumber || 'this project'}".
+                        This will permanently delete the saved data for "{formatProjectName(project)}".
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -101,6 +104,14 @@ export default function SavedProjects({ projects, activeProjectId, onLoad, onDel
               </div>
             </div>
           ))}
+        </div>
+        <div className="flex justify-between pt-2 border-t border-border">
+          {showBack ? (
+            <Button variant="outline" onClick={onBack}>Back</Button>
+          ) : (
+            <div />
+          )}
+          <Button onClick={onContinue}>Continue</Button>
         </div>
       </CardContent>
     </Card>
