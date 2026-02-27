@@ -3,6 +3,24 @@ import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
 
+const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+  'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+function numberToWords(n: number): string {
+  if (n < 0) return 'negative ' + numberToWords(-n);
+  if (n < 20) return ones[n];
+  if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? '-' + ones[n % 10] : '');
+  if (n < 1000) return ones[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' ' + numberToWords(n % 100) : '');
+  return String(n);
+}
+
+function formatNumericSpelling(value: string): string {
+  const num = parseInt(value, 10);
+  if (isNaN(num) || value.trim() === '') return value;
+  return `${numberToWords(num)} (${num})`;
+}
+
 function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Record<string, string> {
   const merged = { ...info, ...overrides };
   return {
@@ -14,8 +32,8 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     Project_Number: merged.projectNumber,
     Date: merged.date,
     DATE: merged.date,
-    project_days: merged.numberOfWorkDays,
-    'Number of Work Days': merged.numberOfWorkDays,
+    project_days: formatNumericSpelling(merged.numberOfWorkDays),
+    'Number of Work Days': formatNumericSpelling(merged.numberOfWorkDays),
     Company_Name: merged.companyName,
     'Customer Name': merged.companyName,
     Company_Address: merged.companyAddress,
