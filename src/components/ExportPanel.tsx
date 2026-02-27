@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { generateDocx } from '@/lib/documentGenerator';
 import { appendToDocs } from '@/lib/appendixInjector';
 import { appendProgrammingNotes } from '@/lib/programmingAppendix';
+import { appendLiftNotes } from '@/lib/liftAppendix';
 import {
   appendVerticalNotes,
   DEFAULT_VERTICAL_NOTES,
@@ -28,6 +29,7 @@ interface ExportPanelProps {
   onTemplateChange: (type: DocumentType, buffer: ArrayBuffer | null) => void;
   appendixFile: File | null;
   onProgrammingToggle?: (enabled: boolean) => void;
+  onLiftToggle?: (enabled: boolean) => void;
   onBack: () => void;
 }
 
@@ -39,7 +41,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
 
 const VERTICAL_ORDER = ['K12', 'HEW', 'MED', 'BIZ', 'GOV'];
 
-export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onProgrammingToggle, onBack }: ExportPanelProps) {
+export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onProgrammingToggle, onLiftToggle, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
   // Appendix overrides state
@@ -94,10 +96,16 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
         console.log('[export] After appendToDocs, blob size:', docBlob.size);
       }
 
-      // Append programming notes last (after all other appendices)
+      // Append programming notes (after all other appendices)
       if (info.programmingRequired && info.programmingNotes?.trim()) {
         docBlob = await appendProgrammingNotes(docBlob, info.programmingNotes);
         console.log('[export] After appendProgrammingNotes, blob size:', docBlob.size);
+      }
+
+      // Append lift requirements last
+      if (info.liftNeeded) {
+        docBlob = await appendLiftNotes(docBlob, info.liftHeight, info.liftEnvironment);
+        console.log('[export] After appendLiftNotes, blob size:', docBlob.size);
       }
 
       saveAs(docBlob, fileName);
@@ -198,6 +206,23 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
               </div>
             </div>
           )}
+
+          {/* Lift Requirements Toggle */}
+          <div className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+            <Checkbox
+              id="export-include-lift"
+              checked={info.liftNeeded}
+              onCheckedChange={(checked) => onLiftToggle?.(!!checked)}
+            />
+            <div className="grid gap-1 leading-none">
+              <Label htmlFor="export-include-lift" className="font-semibold cursor-pointer">
+                Include Lift Requirements
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Appends lift / equipment requirements ({info.liftHeight ? `${info.liftHeight} ft` : 'height TBD'}{info.liftEnvironment ? `, ${info.liftEnvironment}` : ''}) as a separate page.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
