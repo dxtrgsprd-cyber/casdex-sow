@@ -76,11 +76,11 @@ export interface SowBuilderState {
   variables: Record<string, string>;
   customSowText: string | null;
   programmingNotes: string;
+  customTemplates: Record<string, string>;
 }
 
 export const defaultSowBuilderState: SowBuilderState = {
   sectionOrder: [
-    // Hardware installs first
     'install_cameras',
     'relocate_cameras',
     'poe_switches',
@@ -93,21 +93,15 @@ export const defaultSowBuilderState: SowBuilderState = {
     'ac_readers',
     'ac_dps_rex',
     'ac_power',
-    // Cabling
     'provide_cabling',
     'ac_composite_cabling',
     'conduit_installation',
-    // Terminations
     'cable_termination',
     'ac_termination',
-    // Licensing
     'licenses',
     'wireless_ptp',
-    // Server
     'server_nvr',
-    // Programming
     'programming',
-    // Testing always last
     'testing_commissioning',
     'ac_testing',
   ],
@@ -119,6 +113,7 @@ export const defaultSowBuilderState: SowBuilderState = {
   variables: {},
   customSowText: null,
   programmingNotes: '',
+  customTemplates: {},
 };
 
 export interface AppState {
