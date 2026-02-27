@@ -35,9 +35,7 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     project_days: formatNumericSpelling(merged.numberOfWorkDays),
     'Number of Work Days': formatNumericSpelling(merged.numberOfWorkDays),
     Customer_Name: merged.companyName,
-    'Customer Name': merged.companyName,
     Address: merged.companyAddress,
-    Company_Address: merged.companyAddress,
     'Project Location': merged.companyAddress,
     City_State_Zip: merged.cityStateZip,
     'City / State / Zip': merged.cityStateZip,
@@ -51,7 +49,6 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     'Customer Email': merged.customerEmail,
     Customer_Phone: merged.customerPhone,
     'Customer Phone': merged.customerPhone,
-    Customer: merged.companyName,
     // Subcontractor fields
     Subcontractor: merged.subcontractorName,
     Subcontractor_Name: merged.subcontractorName,
