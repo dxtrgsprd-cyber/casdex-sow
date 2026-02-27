@@ -70,17 +70,26 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
     const template = templateFiles[docType];
     if (!template) return;
 
-    let docBlob = generateDocx(template, info, overrides[docType]);
+    const label = docTypes.find(d => d.type === docType)?.label ?? docType;
+    const projectName = info.projectName?.trim() || info.oppNumber?.trim() || 'Document';
+    const fileName = `${projectName} - ${label}.docx`;
 
-    if (info.vertical) {
-      docBlob = await appendVerticalNotes(docBlob, info.vertical);
+    try {
+      let docBlob = generateDocx(template, info, overrides[docType]);
+
+      if (info.vertical) {
+        docBlob = await appendVerticalNotes(docBlob, info.vertical);
+      }
+
+      if (appendixFile) {
+        docBlob = await appendToDocs(docBlob, appendixFile);
+      }
+
+      saveAs(docBlob, fileName);
+    } catch (e) {
+      console.error('Export failed:', e);
+      toast.error(`Export failed for ${label}`);
     }
-
-    if (appendixFile) {
-      docBlob = await appendToDocs(docBlob, appendixFile);
-    }
-
-    saveAs(docBlob, `${docType}.docx`);
   }, [templateFiles, info, overrides, appendixFile]);
 
   const handleUploadTemplate = useCallback(async (docType: DocumentType) => {
