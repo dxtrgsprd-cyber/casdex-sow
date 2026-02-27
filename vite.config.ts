@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "placeholder.svg", "templates/**/*"],
       manifest: {
-        name: "Dexcore Scope",
-        short_name: "Dexcore",
-        description: "Precision-Driven Scope Automation",
+        name: "CASDEX Scope",
+        short_name: "CASDEX",
+        description: "Precision-Driven SOW Automation",
         theme_color: "#1e293b",
         background_color: "#ffffff",
         display: "standalone",
