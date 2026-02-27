@@ -213,8 +213,8 @@ const Index = () => {
           bomItems={bomItems}
           bomFileName={bomFileName}
           onBomParsed={handleBomParsed}
-          onNext={() => nextStep(1)}
-          onBack={() => goToStep(5)} />
+          onNext={() => nextStep(1)} />
+
         }
 
         {currentStep === 2 &&
@@ -265,8 +265,7 @@ const Index = () => {
           templateFiles={templateFiles}
           onTemplateChange={handleTemplateChange}
           appendixFile={appendixFile}
-          onBack={() => goToStep(4)}
-          onNext={() => goToStep(1)} />
+          onBack={() => goToStep(4)} />
         }
       </main>
     </div>);

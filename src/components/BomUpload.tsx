@@ -11,10 +11,9 @@ interface BomUploadProps {
   bomFileName: string | null;
   onBomParsed: (items: BomItem[], scopeText: string, fileName: string, projectInfo: Partial<ProjectInfo>) => void;
   onNext: () => void;
-  onBack: () => void;
 }
 
-export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext, onBack }: BomUploadProps) {
+export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }: BomUploadProps) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -128,8 +127,7 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext, 
                 </TableBody>
               </Table>
             </div>
-            <div className="mt-4 flex justify-between">
-              <Button variant="outline" onClick={onBack}>← Back to Export</Button>
+            <div className="mt-4 flex justify-end">
               <Button onClick={onNext}>Continue to Project Info →</Button>
             </div>
           </CardContent>

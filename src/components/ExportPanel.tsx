@@ -16,7 +16,6 @@ interface ExportPanelProps {
   onTemplateChange: (type: DocumentType, buffer: ArrayBuffer | null) => void;
   appendixFile: File | null;
   onBack: () => void;
-  onNext: () => void;
 }
 
 const docTypes: { type: DocumentType; label: string }[] = [
@@ -25,7 +24,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_Customer', label: 'Customer SOW' },
 ];
 
-export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onBack, onNext }: ExportPanelProps) {
+export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
   const handleExportSingle = useCallback(async (docType: DocumentType) => {
@@ -155,9 +154,8 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
         </CardContent>
       </Card>
 
-      <div className="flex justify-between">
+      <div className="flex justify-start">
         <Button variant="outline" onClick={onBack}>← Back to Preview</Button>
-        <Button onClick={onNext}>Continue to BOM →</Button>
       </div>
     </div>
   );
