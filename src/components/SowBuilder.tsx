@@ -1,29 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { GripVertical, Wrench, Zap, Settings2 } from 'lucide-react';
+import { Wrench, Zap, Settings2 } from 'lucide-react';
 import {
   SOW_SECTION_TEMPLATES,
   SOW_VARIABLES,
@@ -32,6 +13,7 @@ import {
 } from '@/lib/sowTemplates';
 import type { BomItem } from '@/types/sow';
 import type { SowBuilderState } from '@/types/sow';
+import SowSectionSelector from '@/components/SowSectionSelector';
 
 interface SowBuilderProps {
   bomItems: BomItem[];
@@ -39,52 +21,6 @@ interface SowBuilderProps {
   onSowStateChange: (state: SowBuilderState) => void;
   onNext: () => void;
   onBack: () => void;
-}
-
-function SortableSection({
-  id,
-  title,
-  number,
-  enabled,
-  onToggle,
-}: {
-  id: string;
-  title: string;
-  number: number | null;
-  enabled: boolean;
-  onToggle: (enabled: boolean) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${
-        enabled ? 'bg-card border-border' : 'bg-muted/30 border-border/50 opacity-60'
-      }`}
-    >
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
-      <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-        <h4 className="font-semibold text-sm text-foreground">
-          {number !== null ? `${number}. ` : ''}{title}
-        </h4>
-        <Switch checked={enabled} onCheckedChange={onToggle} />
-      </div>
-    </div>
-  );
 }
 
 export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNext, onBack }: SowBuilderProps) {
@@ -100,11 +36,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     }
   }, []); // run once on mount
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
   // Auto-fill from BOM on mount or when BOM changes
   useEffect(() => {
     if (bomItems.length === 0) return;
@@ -112,7 +43,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     const hasAnyAutoFilled = Object.keys(autoVars).some(k => autoVars[k]);
     if (!hasAnyAutoFilled) return;
 
-    // Only auto-fill empty values
     const merged = { ...sowState.variables };
     let changed = false;
     for (const [key, value] of Object.entries(autoVars)) {
@@ -124,35 +54,22 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     if (changed) {
       onSowStateChange({ ...sowState, variables: merged });
     }
-  }, [bomItems]); // intentionally only on bomItems change
+  }, [bomItems]);
 
-  const sectionOrder = sowState.sectionOrder;
   const enabledSections = new Set(sowState.enabledSections);
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-
-      const oldIndex = sectionOrder.indexOf(active.id as string);
-      const newIndex = sectionOrder.indexOf(over.id as string);
-      const newOrder = arrayMove(sectionOrder, oldIndex, newIndex);
+  const handleSectionOrderChange = useCallback(
+    (newOrder: string[]) => {
       onSowStateChange({ ...sowState, sectionOrder: newOrder, customSowText: null });
     },
-    [sectionOrder, sowState, onSowStateChange]
+    [sowState, onSowStateChange]
   );
 
-  const handleToggle = useCallback(
-    (id: string, enabled: boolean) => {
-      const newEnabled = new Set(enabledSections);
-      if (enabled) {
-        newEnabled.add(id);
-      } else {
-        newEnabled.delete(id);
-      }
-      onSowStateChange({ ...sowState, enabledSections: Array.from(newEnabled), customSowText: null });
+  const handleEnabledSectionsChange = useCallback(
+    (newEnabled: string[]) => {
+      onSowStateChange({ ...sowState, enabledSections: newEnabled, customSowText: null });
     },
-    [enabledSections, sowState, onSowStateChange]
+    [sowState, onSowStateChange]
   );
 
   const handleVariableChange = useCallback(
@@ -171,7 +88,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     []
   );
 
-  // Determine which variables are used in enabled sections
   const usedVariables = useMemo(() => {
     const used = new Set<string>();
     for (const id of enabledSections) {
@@ -193,68 +109,49 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const previewText = useMemo(() => {
     const enabled = new Set(sowState.enabledSections);
-    return generateSowText(sectionOrder, enabled, sowState.variables);
-  }, [sectionOrder, enabledSections, sowState.variables, sowState.enabledSections]);
+    return generateSowText(sowState.sectionOrder, enabled, sowState.variables);
+  }, [sowState.sectionOrder, sowState.enabledSections, sowState.variables]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Section Selector */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings2 className="w-5 h-5 text-primary" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Settings2 className="w-4 h-4 text-primary" />
             Scope of Work Sections
           </CardTitle>
-          <CardDescription>
-            Toggle and drag to reorder the SOW sections. Enabled sections will be included in the generated document.
+          <CardDescription className="text-xs">
+            Click to add sections. Drag to reorder in-use items.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
-                {(() => {
-                  let enabledIdx = 0;
-                  return sectionOrder.map((id) => {
-                    const tmpl = templateMap.get(id);
-                    if (!tmpl) return null;
-                    const isEnabled = enabledSections.has(id);
-                    const num = isEnabled ? ++enabledIdx : null;
-                    return (
-                      <SortableSection
-                        key={id}
-                        id={id}
-                        title={tmpl.title}
-                        number={num}
-                        enabled={isEnabled}
-                        onToggle={(enabled) => handleToggle(id, enabled)}
-                      />
-                    );
-                  });
-                })()}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <SowSectionSelector
+            sectionOrder={sowState.sectionOrder}
+            enabledSections={sowState.enabledSections}
+            onSectionOrderChange={handleSectionOrderChange}
+            onEnabledSectionsChange={handleEnabledSectionsChange}
+          />
         </CardContent>
       </Card>
 
       {/* Variables */}
       {usedVariables.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-primary" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wrench className="w-4 h-4 text-primary" />
               SOW Variables
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               Values auto-filled from your BOM are marked with ⚡. You can override any value.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {usedVariables.map((v) => (
                 <div key={v.key}>
-                  <Label className="flex items-center gap-1.5 text-sm">
+                  <Label className="flex items-center gap-1.5 text-xs">
                     {v.label}
                     {autoFilledKeys.has(v.key) && (
                       <Zap className="w-3 h-3 text-primary" />
@@ -264,7 +161,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
                     value={sowState.variables[v.key] || ''}
                     onChange={(e) => handleVariableChange(v.key, e.target.value)}
                     placeholder={`Enter ${v.label.toLowerCase()}`}
-                    className="mt-1.5"
+                    className="mt-1 h-8 text-sm"
                   />
                 </div>
               ))}
@@ -276,23 +173,23 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       {/* Editable Preview */}
       {previewText && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Generated Scope of Work Preview</CardTitle>
-            <CardDescription>
-              Edit the text below to customize the final output. Changes here override the generated content.
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Generated Scope of Work Preview</CardTitle>
+            <CardDescription className="text-xs">
+              Edit below to customize. Changes override the generated content.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
               value={sowState.customSowText ?? previewText}
               onChange={(e) => onSowStateChange({ ...sowState, customSowText: e.target.value })}
-              className="min-h-[24rem] text-sm font-mono whitespace-pre"
+              className="min-h-[20rem] text-sm font-mono whitespace-pre"
             />
             {sowState.customSowText !== null && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="mt-2 text-muted-foreground"
+                className="mt-2 text-muted-foreground text-xs"
                 onClick={() => onSowStateChange({ ...sowState, customSowText: null })}
               >
                 Reset to generated
