@@ -31,6 +31,67 @@ function compactMultiline(value: string): string {
     .trim();
 }
 
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function normalizeForMatch(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function stripBoldFromRun(runXml: string): string {
+  return runXml
+    .replace(/<w:b(?:\s+[^>]*)?\s*\/>/g, '')
+    .replace(/<w:bCs(?:\s+[^>]*)?\s*\/>/g, '');
+}
+
+function removeBoldFromTargetLines(documentXml: string, targetLines: string[]): { xml: string; updatedRuns: number } {
+  const targets = new Set(targetLines.map(normalizeForMatch).filter(Boolean));
+  if (targets.size === 0) return { xml: documentXml, updatedRuns: 0 };
+
+  let updatedRuns = 0;
+  const xml = documentXml.replace(/<w:r\b[\s\S]*?<\/w:r>/g, (runXml) => {
+    const texts = Array.from(runXml.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)).map((m) => decodeXmlEntities(m[1]));
+    if (texts.length === 0) return runXml;
+
+    const runText = normalizeForMatch(texts.join(''));
+    if (!targets.has(runText)) return runXml;
+
+    const stripped = stripBoldFromRun(runXml);
+    if (stripped !== runXml) updatedRuns += 1;
+    return stripped;
+  });
+
+  return { xml, updatedRuns };
+}
+
+function applyMultilineFieldFormattingFix(zip: PizZip, data: Record<string, string>): void {
+  const materialLines = compactMultiline(data.Material_List || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const programmingLines = compactMultiline(data.PROGRAMMING_DETAILS || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const scopeBodyLines = compactMultiline(data.SCOPE_OF_WORK || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !/^\d+\.\s+/.test(l));
+
+  const targetLines = [...materialLines, ...programmingLines, ...scopeBodyLines];
+  if (targetLines.length === 0) return;
+
+  const docPath = 'word/document.xml';
+  const documentXml = zip.file(docPath)?.asText();
+  if (!documentXml) return;
+
+  const { xml, updatedRuns } = removeBoldFromTargetLines(documentXml, targetLines);
+  if (updatedRuns > 0) {
+    zip.file(docPath, xml);
+    console.log('[docgen] Removed bold from multiline body runs:', updatedRuns);
+  }
+}
+
 function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Record<string, string> {
   const merged = { ...info, ...overrides };
   const materialList = compactMultiline(merged.scope || '');
@@ -190,7 +251,10 @@ export function generateDocx(
   const data = getTemplateData(info, overrides);
   doc.render(data);
 
-  const out = doc.getZip().generate({
+  const renderedZip = doc.getZip();
+  applyMultilineFieldFormattingFix(renderedZip, data);
+
+  const out = renderedZip.generate({
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     compression: 'DEFLATE',
