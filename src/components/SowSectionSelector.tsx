@@ -193,7 +193,7 @@ export default function SowSectionSelector({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-[2fr_1fr] gap-3">
         {/* In Use */}
         <div>
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
