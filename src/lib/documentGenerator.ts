@@ -21,8 +21,22 @@ function formatNumericSpelling(value: string): string {
   return `${numberToWords(num)} (${num})`;
 }
 
+function compactMultiline(value: string): string {
+  return value
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+$/g, ''))
+    .filter((line) => line.trim() !== '')
+    .join('\n')
+    .trim();
+}
+
 function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Record<string, string> {
   const merged = { ...info, ...overrides };
+  const materialList = compactMultiline(merged.scope || '');
+  const scopeOfWork = compactMultiline(merged.scopeOfWork || '');
+  const programmingDetails = compactMultiline(merged.programmingNotes || '');
+
   return {
     Project_Name: merged.projectName,
     'Project Name': merged.projectName,
@@ -81,27 +95,27 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     Solution_Architect: merged.solutionArchitect,
     solution_architect: merged.solutionArchitect,
     // Scope & Material
-    SCOPE: merged.scope,
-    Scope: merged.scope,
-    scope: merged.scope,
-    Material_List: merged.scope,
-    material_list: merged.scope,
-    'Material List': merged.scope,
+    SCOPE: materialList,
+    Scope: materialList,
+    scope: materialList,
+    Material_List: materialList,
+    material_list: materialList,
+    'Material List': materialList,
     // Scope of Work
-    SCOPE_OF_WORK: merged.scopeOfWork,
-    Scope_of_Work: merged.scopeOfWork,
-    scope_of_work: merged.scopeOfWork,
-    'Scope of Work': merged.scopeOfWork,
-    Scope_Of_Work: merged.scopeOfWork,
+    SCOPE_OF_WORK: scopeOfWork,
+    Scope_of_Work: scopeOfWork,
+    scope_of_work: scopeOfWork,
+    'Scope of Work': scopeOfWork,
+    Scope_Of_Work: scopeOfWork,
     // Notes
     Notes: merged.notes,
     notes: merged.notes,
     NOTES: merged.notes,
     // Programming Details
-    PROGRAMMING_DETAILS: merged.programmingNotes,
-    Programming_Details: merged.programmingNotes,
-    programming_details: merged.programmingNotes,
-    'Programming Details': merged.programmingNotes,
+    PROGRAMMING_DETAILS: programmingDetails,
+    Programming_Details: programmingDetails,
+    programming_details: programmingDetails,
+    'Programming Details': programmingDetails,
   };
 }
 
