@@ -75,19 +75,25 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
     const fileName = `${opp} - ${label}.docx`;
 
     try {
+      console.log('[export] Starting export for', docType, 'template size:', template.byteLength);
+      
       let docBlob = generateDocx(template, info, overrides[docType]);
+      console.log('[export] After generateDocx, blob size:', docBlob.size);
 
       if (info.vertical) {
         docBlob = await appendVerticalNotes(docBlob, info.vertical);
+        console.log('[export] After appendVerticalNotes, blob size:', docBlob.size);
       }
 
       if (appendixFile) {
         docBlob = await appendToDocs(docBlob, appendixFile);
+        console.log('[export] After appendToDocs, blob size:', docBlob.size);
       }
 
       saveAs(docBlob, fileName);
+      console.log('[export] File saved:', fileName);
     } catch (e) {
-      console.error('Export failed:', e);
+      console.error('[export] Export failed:', e);
       toast.error(`Export failed for ${label}`);
     }
   }, [templateFiles, info, overrides, appendixFile]);
