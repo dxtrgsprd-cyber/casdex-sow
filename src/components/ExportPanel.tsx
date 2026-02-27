@@ -1,10 +1,18 @@
-import { useCallback } from 'react';
-import { Download, FileText, Upload, RotateCcw } from 'lucide-react';
+import { useCallback, useState, useEffect } from 'react';
+import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { generateDocx } from '@/lib/documentGenerator';
 import { appendToDocs } from '@/lib/appendixInjector';
-import { appendVerticalNotes } from '@/lib/verticalAppendix';
+import {
+  appendVerticalNotes,
+  DEFAULT_VERTICAL_NOTES,
+  loadVerticalOverrides,
+  saveVerticalOverrides,
+  type VerticalEntry,
+} from '@/lib/verticalAppendix';
 import { saveTemplate, deleteTemplate } from '@/lib/templateStorage';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
@@ -25,8 +33,38 @@ const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_Customer', label: 'Customer SOW' },
 ];
 
+const VERTICAL_ORDER = ['K12', 'HEW', 'MED', 'BIZ', 'GOV'];
+
 export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
+
+  // Appendix overrides state
+  const [appendixOverrides, setAppendixOverrides] = useState<Record<string, VerticalEntry>>({});
+
+  useEffect(() => {
+    setAppendixOverrides(loadVerticalOverrides());
+  }, []);
+
+  const getEffective = (key: string): VerticalEntry =>
+    appendixOverrides[key] ?? DEFAULT_VERTICAL_NOTES[key];
+
+  const handleAppendixChange = useCallback((key: string, bullets: string) => {
+    const entry = getEffective(key);
+    const updated = {
+      ...appendixOverrides,
+      [key]: { ...entry, bullets: bullets.split('\n').filter(l => l.trim()) },
+    };
+    setAppendixOverrides(updated);
+    saveVerticalOverrides(updated);
+  }, [appendixOverrides]);
+
+  const handleAppendixReset = useCallback((key: string) => {
+    const updated = { ...appendixOverrides };
+    delete updated[key];
+    setAppendixOverrides(updated);
+    saveVerticalOverrides(updated);
+    toast.success(`${key} appendix reset to default`);
+  }, [appendixOverrides]);
 
   const handleExportSingle = useCallback(async (docType: DocumentType) => {
     const template = templateFiles[docType];
@@ -34,7 +72,6 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
 
     let docBlob = generateDocx(template, info, overrides[docType]);
 
-    // Append vertical-specific site requirements
     if (info.vertical) {
       docBlob = await appendVerticalNotes(docBlob, info.vertical);
     }
@@ -156,6 +193,70 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Manage Appendix */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-primary" />
+            Manage Appendix
+          </CardTitle>
+          <CardDescription>
+            Site requirement notes appended to each SOW based on the selected vertical. Click to expand and edit.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {VERTICAL_ORDER.map((key) => {
+              const entry = getEffective(key);
+              const isOverridden = key in appendixOverrides;
+              return (
+                <Collapsible key={key}>
+                  <div className="rounded-lg border bg-card">
+                    <CollapsibleTrigger asChild>
+                      <button className="flex items-center justify-between w-full p-3 text-left hover:bg-muted/40 transition-colors rounded-lg group">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
+                            {key}
+                          </span>
+                          <span className="text-sm font-medium truncate">{entry.title}</span>
+                          {isOverridden && (
+                            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                              customized
+                            </span>
+                          )}
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="px-3 pb-3 space-y-2">
+                        <Textarea
+                          value={entry.bullets.join('\n')}
+                          onChange={(e) => handleAppendixChange(key, e.target.value)}
+                          className="text-xs font-mono min-h-[8rem] whitespace-pre"
+                          placeholder="One bullet point per line"
+                        />
+                        {isOverridden && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs text-muted-foreground"
+                            onClick={() => handleAppendixReset(key)}
+                          >
+                            <RotateCcw className="w-3 h-3 mr-1" />
+                            Reset to default
+                          </Button>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

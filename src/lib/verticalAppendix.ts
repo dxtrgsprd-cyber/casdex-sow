@@ -1,7 +1,12 @@
 import PizZip from 'pizzip';
 
-/** Vertical-specific site requirement notes appended to each SOW. */
-const verticalNotes: Record<string, { title: string; bullets: string[] }> = {
+export interface VerticalEntry {
+  title: string;
+  bullets: string[];
+}
+
+/** Default vertical-specific site requirement notes. */
+export const DEFAULT_VERTICAL_NOTES: Record<string, VerticalEntry> = {
   K12: {
     title: 'K-12 / SCHOOL CAMPUSES',
     bullets: [
@@ -50,12 +55,44 @@ const verticalNotes: Record<string, { title: string; bullets: string[] }> = {
   },
 };
 
+const STORAGE_KEY = 'vertical_appendix_overrides';
+
+/** Load user overrides from localStorage. */
+export function loadVerticalOverrides(): Record<string, VerticalEntry> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Save user overrides to localStorage. */
+export function saveVerticalOverrides(overrides: Record<string, VerticalEntry>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+}
+
+/** Get the effective notes for a vertical (override or default). */
+export function getVerticalNotes(vertical: string, overrides?: Record<string, VerticalEntry>): VerticalEntry | undefined {
+  const ov = overrides ?? loadVerticalOverrides();
+  return ov[vertical] ?? DEFAULT_VERTICAL_NOTES[vertical];
+}
+
+/** Get all verticals with effective notes. */
+export function getAllVerticalNotes(overrides?: Record<string, VerticalEntry>): Record<string, VerticalEntry> {
+  const ov = overrides ?? loadVerticalOverrides();
+  const result: Record<string, VerticalEntry> = {};
+  for (const key of Object.keys(DEFAULT_VERTICAL_NOTES)) {
+    result[key] = ov[key] ?? DEFAULT_VERTICAL_NOTES[key];
+  }
+  return result;
+}
+
 /**
  * Appends a vertical-specific site requirements appendix page to a generated .docx Blob.
- * Returns the original blob unchanged if no vertical is selected or no notes exist.
  */
 export function appendVerticalNotes(docxBlob: Blob, vertical: string): Promise<Blob> {
-  const entry = verticalNotes[vertical];
+  const entry = getVerticalNotes(vertical);
   if (!entry) return Promise.resolve(docxBlob);
 
   return docxBlob.arrayBuffer().then((buf) => {
@@ -66,7 +103,6 @@ export function appendVerticalNotes(docxBlob: Blob, vertical: string): Promise<B
     const closingIdx = docXml.lastIndexOf('</w:body>');
     if (closingIdx === -1) return docxBlob;
 
-    // Build XML: page break, title, then bullet paragraphs
     const bulletXml = entry.bullets
       .map(
         (b) => `<w:p>
