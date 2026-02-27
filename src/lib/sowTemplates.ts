@@ -347,6 +347,24 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   return vars;
 }
 
+const onesWords = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+  'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const tensWords = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+function numberToWords(n: number): string {
+  if (n < 0) return 'negative ' + numberToWords(-n);
+  if (n < 20) return onesWords[n];
+  if (n < 100) return tensWords[Math.floor(n / 10)] + (n % 10 ? '-' + onesWords[n % 10] : '');
+  if (n < 1000) return onesWords[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' ' + numberToWords(n % 100) : '');
+  return String(n);
+}
+
+function formatNumericSpelling(value: string): string {
+  const num = parseInt(value, 10);
+  if (isNaN(num) || value.trim() === '' || String(num) !== value.trim()) return value;
+  return `${numberToWords(num)} (${num})`;
+}
+
 /** Generate scope of work text from enabled sections with variables filled in */
 export function generateSowText(
   sectionOrder: string[],
@@ -366,7 +384,8 @@ export function generateSowText(
     num++;
     let text = customTemplates?.[id] ?? tmpl.template;
     for (const [key, value] of Object.entries(variables)) {
-      text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || `[${key}]`);
+      const display = formatNumericSpelling(value || '') || `[${key}]`;
+      text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), display);
     }
     text = text.replace(/\\{\\{(\w+)\\}\}/g, '[$1]');
 
