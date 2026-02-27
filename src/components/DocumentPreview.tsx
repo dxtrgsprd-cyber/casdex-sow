@@ -47,6 +47,7 @@ const fieldLabels: Record<string, string> = {
   SOLUTION_ARCHITECT: 'Solution Architect',
   Material_List: 'Material List',
   SCOPE_OF_WORK: 'Scope of Work',
+  PROGRAMMING_DETAILS: 'Programming Details',
   Notes: 'Notes',
 };
 
@@ -67,6 +68,7 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
   SOLUTION_ARCHITECT: 'solutionArchitect',
   Material_List: 'scope',
   SCOPE_OF_WORK: 'scopeOfWork',
+  PROGRAMMING_DETAILS: 'programmingNotes',
   Notes: 'notes',
 };
 
@@ -111,11 +113,11 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
                       const infoKey = fieldToInfoKey[templateField];
                       const value = resolved[templateField] || '';
                       const isOverridden = infoKey && overrides[docType][infoKey] !== undefined;
-                      const isLong = templateField === 'SCOPE' || templateField === 'Notes';
+                      const isLong = templateField === 'SCOPE_OF_WORK' || templateField === 'Material_List' || templateField === 'PROGRAMMING_DETAILS' || templateField === 'Notes';
 
                       return (
                         <div key={templateField} className={isLong ? 'sm:col-span-2' : ''}>
-                          <Label className="flex items-center gap-1.5">
+                          <Label className="flex items-center gap-1.5 font-semibold">
                             {label}
                             {isOverridden && (
                               <span className="text-xs bg-accent text-accent-foreground px-1.5 py-0.5 rounded">
@@ -127,14 +129,14 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
                             <Textarea
                               value={value}
                               onChange={e => handleOverride(docType, templateField, e.target.value)}
-                              rows={4}
-                              className="mt-1.5"
+                              rows={5}
+                              className="mt-1 text-sm font-normal leading-tight"
                             />
                           ) : (
                             <Input
                               value={value}
                               onChange={e => handleOverride(docType, templateField, e.target.value)}
-                              className="mt-1.5"
+                              className="mt-1 font-normal"
                             />
                           )}
                         </div>
