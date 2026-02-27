@@ -21,10 +21,11 @@ import {
   createNewProject,
   migrateIfNeeded,
   exportProjectAsFile,
+  importProjectFromFile,
 } from '@/lib/projectStorage';
 import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
-import { AlertTriangle, Download } from 'lucide-react';
+import { AlertTriangle, Download, Upload } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import casdexScopeLogo from '@/assets/casdex-scope-logo.webp';
 
@@ -113,6 +114,25 @@ const Index = () => {
     toast.success('New project created');
   }, [handleLoadProject]);
 
+  const handleImportProject = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const id = await importProjectFromFile(file);
+        setProjectIndex(getProjectIndex());
+        handleLoadProject(id);
+        toast.success('Project imported successfully');
+      } catch {
+        toast.error('Failed to import project file');
+      }
+    };
+    input.click();
+  }, [handleLoadProject]);
+
   useEffect(() => {
     const docTypes: DocumentType[] = ['SOW_Customer', 'SOW_SUB_Quoting', 'SOW_SUB_Project'];
     docTypes.forEach(async (docType) => {
@@ -173,6 +193,10 @@ const Index = () => {
           <img src={casdexScopeLogo} alt="CASDEX Scope" className="h-[112px]" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={handleImportProject}>
+              <Upload className="w-4 h-4 mr-1" />
+              Import
+            </Button>
             <Button variant="outline" size="sm" onClick={() => exportProjectAsFile(projectId)}>
               <Download className="w-4 h-4 mr-1" />
               Export
