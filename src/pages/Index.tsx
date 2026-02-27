@@ -184,7 +184,7 @@ const Index = () => {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 pt-3">
+      <div className="max-w-5xl mx-auto px-4 pt-2">
         <Alert className="border-destructive/30 bg-muted">
           <AlertTriangle className="h-4 w-4 text-destructive" />
           <AlertDescription className="text-muted-foreground text-xs">
@@ -193,7 +193,7 @@ const Index = () => {
         </Alert>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 py-3 space-y-4">
         <SavedProjects
           projects={projectIndex}
           activeProjectId={projectId}
