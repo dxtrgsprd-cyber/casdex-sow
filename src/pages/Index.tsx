@@ -240,7 +240,7 @@ const Index = () => {
             const sowText = sowState.customSowText ?? generateSowText(
               sowState.sectionOrder, new Set(sowState.enabledSections), sowState.variables, sowState.customTemplates
             );
-            setProjectInfo(prev => ({ ...prev, scopeOfWork: sowText }));
+            setProjectInfo(prev => ({ ...prev, scopeOfWork: sowText, programmingNotes: sowState.programmingNotes }));
             setOverrides(prev => ({
               ...prev,
               SOW_SUB_Quoting: { ...prev.SOW_SUB_Quoting, scopeOfWork: sowText },

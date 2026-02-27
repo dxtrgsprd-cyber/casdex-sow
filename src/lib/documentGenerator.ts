@@ -97,6 +97,11 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
     Notes: merged.notes,
     notes: merged.notes,
     NOTES: merged.notes,
+    // Programming Details
+    PROGRAMMING_DETAILS: merged.programmingNotes,
+    Programming_Details: merged.programmingNotes,
+    programming_details: merged.programmingNotes,
+    'Programming Details': merged.programmingNotes,
   };
 }
 
