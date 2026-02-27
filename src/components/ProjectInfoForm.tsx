@@ -232,13 +232,16 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
           Notes entered here will populate the Programming tab in Step 3 (Scope of Work).
         </p>
         <Textarea
-          value={sowState.programmingNotes ?? ''}
-          onChange={e => onSowStateChange({
-            ...sowState,
-            programmingNotes: e.target.value,
-            variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
-            customSowText: null,
-          })}
+          value={sowState?.programmingNotes ?? ''}
+          onChange={e => {
+            if (!sowState || !onSowStateChange) return;
+            onSowStateChange({
+              ...sowState,
+              programmingNotes: e.target.value,
+              variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
+              customSowText: null,
+            });
+          }}
           placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels`}
           rows={4}
           className="text-sm font-mono"
