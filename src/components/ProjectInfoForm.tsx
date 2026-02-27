@@ -56,7 +56,14 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
   const [subSuggestions, setSubSuggestions] = useState<SubcontractorContact[]>([]);
 
   const update = (key: keyof ProjectInfo, value: string) => {
-    onChange({ ...info, [key]: value });
+    const updated = { ...info, [key]: value };
+    // Auto-populate Install Location from Address + City/State/Zip
+    if (key === 'companyAddress' || key === 'cityStateZip') {
+      const addr = key === 'companyAddress' ? value : info.companyAddress;
+      const city = key === 'cityStateZip' ? value : info.cityStateZip;
+      updated.installLocation = [addr, city].filter(Boolean).join(', ');
+    }
+    onChange(updated);
   };
 
   const saveContacts = useCallback(() => {
