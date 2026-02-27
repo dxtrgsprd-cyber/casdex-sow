@@ -6,7 +6,8 @@ import SowBuilder from '@/components/SowBuilder';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
 import { generateSowText } from '@/lib/sowTemplates';
-import SavedProjects from '@/components/SavedProjects';
+import SavedProjectsDialog from '@/components/SavedProjectsDialog';
+import ContactManagerDialog from '@/components/ContactManagerDialog';
 import { loadTemplate } from '@/lib/templateStorage';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -25,7 +26,7 @@ import {
 } from '@/lib/projectStorage';
 import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
-import { AlertTriangle, Download, Upload } from 'lucide-react';
+import { AlertTriangle, Download, Upload, FolderOpen, Users } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import casdexScopeLogo from '@/assets/casdex-scope-logo.webp';
 
@@ -45,6 +46,8 @@ const Index = () => {
   });
 
   const [projectIndex, setProjectIndex] = useState<ProjectIndexEntry[]>(getProjectIndex);
+  const [projectsOpen, setProjectsOpen] = useState(false);
+  const [contactsOpen, setContactsOpen] = useState(false);
 
   const loadedData = loadProjectData(projectId);
   const [currentStep, setCurrentStep] = useState(loadedData?.currentStep ?? 1);
@@ -137,13 +140,11 @@ const Index = () => {
     const docTypes: DocumentType[] = ['SOW_Customer', 'SOW_SUB_Quoting', 'SOW_SUB_Project'];
     docTypes.forEach(async (docType) => {
       try {
-        // Check IndexedDB for custom template first
         const custom = await loadTemplate(docType);
         if (custom) {
           setTemplateFiles((prev) => ({ ...prev, [docType]: custom }));
           return;
         }
-        // Fall back to default
         const res = await fetch(`/templates/${docType}.docx`);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
@@ -193,6 +194,14 @@ const Index = () => {
           <img src={casdexScopeLogo} alt="CASDEX Scope" className="h-[112px]" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={() => setContactsOpen(true)}>
+              <Users className="w-4 h-4 mr-1" />
+              Contacts
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setProjectsOpen(true)}>
+              <FolderOpen className="w-4 h-4 mr-1" />
+              Projects
+            </Button>
             <Button variant="outline" size="sm" onClick={handleImportProject}>
               <Upload className="w-4 h-4 mr-1" />
               Import
@@ -218,22 +227,10 @@ const Index = () => {
       </div>
 
       <main className="max-w-5xl mx-auto px-4 py-3 space-y-4">
-        <SavedProjects
-          projects={projectIndex}
-          activeProjectId={projectId}
-          onLoad={handleLoadProject}
-          onDelete={handleDeleteProject}
-          onNew={handleNewProject}
-          onContinue={() => nextStep(currentStep)}
-          onBack={() => goToStep(currentStep - 1)}
-          showBack={currentStep > 1} />
-
-
         <StepIndicator
           currentStep={currentStep}
           onStepClick={goToStep}
           completedSteps={completedSteps} />
-
 
         {currentStep === 1 &&
         <BomUpload
@@ -241,7 +238,6 @@ const Index = () => {
           bomFileName={bomFileName}
           onBomParsed={handleBomParsed}
           onNext={() => nextStep(1)} />
-
         }
 
         {currentStep === 2 &&
@@ -252,7 +248,6 @@ const Index = () => {
           onSowStateChange={setSowState}
           onNext={() => nextStep(2)}
           onBack={() => goToStep(1)} />
-
         }
 
         {currentStep === 3 &&
@@ -282,7 +277,6 @@ const Index = () => {
           onOverridesChange={setOverrides}
           onNext={() => nextStep(4)}
           onBack={() => goToStep(3)} />
-
         }
 
         {currentStep === 5 &&
@@ -295,8 +289,22 @@ const Index = () => {
           onBack={() => goToStep(4)} />
         }
       </main>
-    </div>);
 
+      <SavedProjectsDialog
+        open={projectsOpen}
+        onOpenChange={setProjectsOpen}
+        projects={projectIndex}
+        activeProjectId={projectId}
+        onLoad={handleLoadProject}
+        onDelete={handleDeleteProject}
+        onNew={handleNewProject}
+      />
+      <ContactManagerDialog
+        open={contactsOpen}
+        onOpenChange={setContactsOpen}
+      />
+    </div>
+  );
 };
 
 export default Index;
