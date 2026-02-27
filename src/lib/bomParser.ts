@@ -123,33 +123,13 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
   const sa = cellVal('C7');
   if (sa) info.solutionArchitect = sa;
 
-  // Address → C8, City/State/Zip → C9
-  // Handle merged cells: if C8:C9 are merged, XLSX stores value only in C8
-  const merges = sheet['!merges'] || [];
-  const c8c9Merged = merges.some(m =>
-    m.s.r <= 7 && m.e.r >= 8 && m.s.c <= 2 && m.e.c >= 2
-  );
-
+  // City/State/Zip → C8 + C9 combined (BOM splits city and state across two cells)
   const rawC8 = cellVal('C8');
   const rawC9 = cellVal('C9');
+  const cityStateZip = [rawC8, rawC9].filter(Boolean).join(', ');
+  if (cityStateZip) info.cityStateZip = cityStateZip;
 
-  if (c8c9Merged && rawC8 && !rawC9) {
-    // Merged cell: try to split address from city/state/zip
-    // Look for pattern like "123 Main St, City, ST 12345" or newline-separated
-    const lines = rawC8.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if (lines.length >= 2) {
-      info.companyAddress = lines[0];
-      info.cityStateZip = lines.slice(1).join(', ');
-    } else {
-      // Single line — put it all in address
-      info.companyAddress = rawC8;
-    }
-  } else {
-    if (rawC8) info.companyAddress = rawC8;
-    if (rawC9) info.cityStateZip = rawC9;
-  }
-
-  console.log(`[BOM] Address fields: C8="${rawC8}", C9="${rawC9}", merged=${c8c9Merged}, result: address="${info.companyAddress}", csz="${info.cityStateZip}"`);
+  console.log(`[BOM] City/State/Zip: C8="${rawC8}", C9="${rawC9}", result="${info.cityStateZip}"`);
 
   // Date → K5, fallback to today
   const dateVal = cellVal('K5');
