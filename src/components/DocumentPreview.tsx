@@ -104,7 +104,7 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
         </TabsList>
 
         {docOrder.map(docType => {
-          const resolved = getResolvedFields(info, overrides[docType]);
+          const resolved = getResolvedFields(info, overrides[docType], docType);
           return (
             <TabsContent key={docType} value={docType}>
               <Card>
