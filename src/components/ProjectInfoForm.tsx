@@ -250,7 +250,7 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
 
       <div className="flex justify-between pt-1">
         <Button variant="outline" onClick={onBack}>← Back</Button>
-        <Button onClick={handleNext}>Continue to Appendix →</Button>
+        <Button onClick={handleNext}>Continue to SOW →</Button>
       </div>
     </div>
   );
