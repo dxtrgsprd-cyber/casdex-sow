@@ -198,8 +198,7 @@ Configure motion detection zones and sensitivity
 Configure AI/analytics features as specified
 Set up recording profiles (continuous, motion, schedule)
 Configure video stream settings (resolution, frame rate, bitrate)
-Verify live view, recording, and playback functionality
-{{PROGRAMMING_CCTV_DETAILS}}`,
+Verify live view, recording, and playback functionality`,
   },
   {
     id: 'programming_ac',
@@ -211,8 +210,7 @@ Program REX, DPS, and lock timing parameters
 Configure intercom call stations and directory
 Set up alarm monitoring and event notifications
 Configure fire alarm integration and emergency unlock sequences
-Verify all programmed functions at each door
-{{PROGRAMMING_AC_DETAILS}}`,
+Verify all programmed functions at each door`,
   },
 ];
 
