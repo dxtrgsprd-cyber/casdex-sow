@@ -133,6 +133,9 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-start">
+        <Button variant="outline" onClick={onBack}>← Back to Preview</Button>
+      </div>
       {/* Export */}
       <Card>
         <CardHeader>

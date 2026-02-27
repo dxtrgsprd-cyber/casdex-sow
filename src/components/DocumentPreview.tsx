@@ -92,6 +92,10 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>← Back</Button>
+        <Button onClick={onNext}>Continue to Export →</Button>
+      </div>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DocumentType)}>
         <TabsList className="grid w-full grid-cols-3">
           {docOrder.map(dt => (
