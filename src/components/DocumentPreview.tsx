@@ -17,8 +17,8 @@ interface DocumentPreviewProps {
 }
 
 const docLabels: Record<DocumentType, string> = {
-  SOW_Customer: 'SOW Customer',
-  SOW_SUB_Quoting: 'SOW SUB Quoting',
+  SOW_Customer: 'Customer SOW',
+  SOW_SUB_Quoting: 'RFP SUB',
   SOW_SUB_Project: 'SOW SUB Project',
 };
 
