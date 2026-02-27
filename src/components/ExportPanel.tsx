@@ -77,7 +77,7 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
     try {
       console.log('[export] Starting export for', docType, 'template size:', template.byteLength);
       
-      let docBlob = generateDocx(template, info, overrides[docType]);
+      let docBlob = generateDocx(template, info, overrides[docType], docType);
       console.log('[export] After generateDocx, blob size:', docBlob.size);
 
       if (info.vertical) {

@@ -190,6 +190,31 @@ Verify proper ADA compliance where required
 Confirm fire marshal free egress compliance`,
   },
   {
+    id: 'programming_cctv',
+    title: 'Programming (CCTV)',
+    template: `Configure IP addresses for all cameras according to schema obtained from PoC
+Update camera firmware to latest stable version
+Configure motion detection zones and sensitivity
+Configure AI/analytics features as specified
+Set up recording profiles (continuous, motion, schedule)
+Configure video stream settings (resolution, frame rate, bitrate)
+Verify live view, recording, and playback functionality
+{{PROGRAMMING_CCTV_DETAILS}}`,
+  },
+  {
+    id: 'programming_ac',
+    title: 'Programming (Access Control)',
+    template: `Program access control panels and controllers
+Enroll credentials and configure cardholder access levels
+Configure door schedules and access groups
+Program REX, DPS, and lock timing parameters
+Configure intercom call stations and directory
+Set up alarm monitoring and event notifications
+Configure fire alarm integration and emergency unlock sequences
+Verify all programmed functions at each door
+{{PROGRAMMING_AC_DETAILS}}`,
+  },
+  {
     id: 'programming',
     title: 'Programming',
     template: `{{PROGRAMMING_DETAILS}}`,
@@ -246,6 +271,8 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PUSH_COUNTS', label: 'Push Button Count', autoFillable: true },
   { key: 'POWER_SUPPLY_COUNT', label: 'Power Supply Count', autoFillable: true },
   { key: 'PROGRAMMING_DETAILS', label: 'Programming Details', autoFillable: false },
+  { key: 'PROGRAMMING_CCTV_DETAILS', label: 'Programming CCTV Details', autoFillable: false },
+  { key: 'PROGRAMMING_AC_DETAILS', label: 'Programming AC Details', autoFillable: false },
   { key: 'NVR_COUNT', label: 'NVR Count', autoFillable: true },
 ];
 

@@ -235,11 +235,12 @@ function stripCustomXmlDataBindings(zip: PizZip): void {
   }
 }
 
-function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Record<string, string> {
+function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>, docType?: DocumentType): Record<string, string> {
   const merged = { ...info, ...overrides };
+  const isProgrammingDoc = docType === 'SOW_SUB_Project';
   const materialList = compactMultiline(merged.scope || '');
   const scopeOfWork = compactMultiline(merged.scopeOfWork || '');
-  const programmingDetails = compactMultiline(merged.programmingNotes || '');
+  const programmingDetails = isProgrammingDoc ? compactMultiline(merged.programmingNotes || '') : '';
 
   return {
     Project_Name: merged.projectName,
@@ -327,7 +328,8 @@ function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Re
 export function generateDocx(
   templateBuffer: ArrayBuffer,
   info: ProjectInfo,
-  overrides: Partial<ProjectInfo>
+  overrides: Partial<ProjectInfo>,
+  docType?: DocumentType
 ): Blob {
   const zip = new PizZip(templateBuffer);
 
@@ -390,7 +392,7 @@ export function generateDocx(
     nullGetter: () => '',
   });
 
-  const data = getTemplateData(info, overrides);
+  const data = getTemplateData(info, overrides, docType);
   doc.render(data);
 
   const renderedZip = doc.getZip();
@@ -410,15 +412,17 @@ export function downloadDocx(
   templateBuffer: ArrayBuffer,
   info: ProjectInfo,
   overrides: Partial<ProjectInfo>,
-  fileName: string
+  fileName: string,
+  docType?: DocumentType
 ) {
-  const blob = generateDocx(templateBuffer, info, overrides);
+  const blob = generateDocx(templateBuffer, info, overrides, docType);
   saveAs(blob, fileName);
 }
 
 export function getResolvedFields(
   info: ProjectInfo,
-  overrides: Partial<ProjectInfo>
+  overrides: Partial<ProjectInfo>,
+  docType?: DocumentType
 ): Record<string, string> {
-  return getTemplateData(info, overrides);
+  return getTemplateData(info, overrides, docType);
 }
