@@ -112,33 +112,54 @@ export function generateDocx(
   const removedParts: string[] = [];
   Object.keys(zip.files).forEach((key) => {
     if (key.startsWith('customXml/')) {
-      removedParts.push('/' + key);
+      removedParts.push(key);
       zip.remove(key);
     }
   });
 
-  // Clean up [Content_Types].xml so Word doesn't see missing parts
   if (removedParts.length > 0) {
+    console.log('[docgen] Removed customXml parts:', removedParts);
+
+    // Clean up [Content_Types].xml
     const ctPath = '[Content_Types].xml';
     const ctXml = zip.file(ctPath)?.asText();
     if (ctXml) {
       let cleaned = ctXml;
       for (const part of removedParts) {
-        // Remove Override entries referencing deleted customXml parts
-        const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        cleaned = cleaned.replace(new RegExp(`<Override[^>]+PartName="${escaped}"[^>]*/?>`, 'g'), '');
+        const partName = '/' + part;
+        const escaped = partName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        cleaned = cleaned.replace(new RegExp(`\\s*<Override[^>]*PartName="${escaped}"[^>]*/>`, 'g'), '');
       }
       zip.file(ctPath, cleaned);
+      console.log('[docgen] Cleaned [Content_Types].xml');
     }
 
-    // Remove relationships pointing to customXml
+    // Remove relationships in root _rels/.rels
     const relsPath = '_rels/.rels';
     const relsXml = zip.file(relsPath)?.asText();
     if (relsXml) {
-      const cleaned = relsXml.replace(/<Relationship[^>]+Target="customXml\/[^"]*"[^>]*\/>/g, '');
+      const cleaned = relsXml.replace(/\s*<Relationship[^>]*Target="customXml[^"]*"[^>]*\/>/g, '');
       zip.file(relsPath, cleaned);
     }
+
+    // Remove relationships in word/_rels/document.xml.rels
+    const docRelsPath = 'word/_rels/document.xml.rels';
+    const docRelsXml = zip.file(docRelsPath)?.asText();
+    if (docRelsXml) {
+      const cleaned = docRelsXml.replace(/\s*<Relationship[^>]*Target="[^"]*customXml[^"]*"[^>]*\/>/g, '');
+      zip.file(docRelsPath, cleaned);
+    }
+
+    // Also remove any customXml _rels folders
+    Object.keys(zip.files).forEach((key) => {
+      if (key.includes('customXml') && key.includes('_rels')) {
+        zip.remove(key);
+      }
+    });
   }
+
+  // Log all remaining zip entries for debugging
+  console.log('[docgen] Zip entries after cleanup:', Object.keys(zip.files).filter(k => !k.endsWith('/')));
 
   const doc = new Docxtemplater(zip, {
     paragraphLoop: false,
