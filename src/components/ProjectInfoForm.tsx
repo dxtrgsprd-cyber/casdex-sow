@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import type { ProjectInfo } from '@/types/sow';
 import {
@@ -34,15 +34,15 @@ const customerFields: { key: keyof ProjectInfo; label: string }[] = [
   { key: 'companyAddress', label: 'Project Location' },
   { key: 'cityStateZip', label: 'City / State / Zip' },
   { key: 'customerName', label: 'Point of Contact' },
-  { key: 'customerEmail', label: 'Customer Email' },
-  { key: 'customerPhone', label: 'Customer Phone' },
+  { key: 'customerEmail', label: 'Email' },
+  { key: 'customerPhone', label: 'Phone' },
 ];
 
 const subcontractorFields: { key: keyof ProjectInfo; label: string }[] = [
   { key: 'subcontractorName', label: 'Subcontractor' },
-  { key: 'subcontractorPoC', label: 'Subcontractor PoC' },
-  { key: 'subcontractorEmail', label: 'Subcontractor Email' },
-  { key: 'subcontractorPhone', label: 'Subcontractor Phone' },
+  { key: 'subcontractorPoC', label: 'PoC' },
+  { key: 'subcontractorEmail', label: 'Email' },
+  { key: 'subcontractorPhone', label: 'Phone' },
 ];
 
 const otherFields: { key: keyof ProjectInfo; label: string; type?: 'textarea' }[] = [
@@ -60,7 +60,6 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
     onChange({ ...info, [key]: value });
   };
 
-  // Auto-save contacts when navigating away
   const saveContacts = useCallback(() => {
     if (info.companyName.trim()) {
       saveCustomer({
@@ -114,11 +113,10 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
   };
 
   const renderField = (field: { key: keyof ProjectInfo; label: string; type?: string }) => {
-    // Customer Name with autocomplete
     if (field.key === 'companyName') {
       return (
         <div key={field.key}>
-          <Label htmlFor={field.key}>{field.label}</Label>
+          <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
           <AutocompleteInput
             id={field.key}
             value={info[field.key]}
@@ -134,11 +132,10 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
       );
     }
 
-    // Subcontractor Name with autocomplete
     if (field.key === 'subcontractorName') {
       return (
         <div key={field.key}>
-          <Label htmlFor={field.key}>{field.label}</Label>
+          <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
           <AutocompleteInput
             id={field.key}
             value={info[field.key]}
@@ -156,14 +153,14 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
 
     if (field.type === 'textarea') {
       return (
-        <div key={field.key} className="sm:col-span-2">
-          <Label htmlFor={field.key}>{field.label}</Label>
+        <div key={field.key} className="sm:col-span-2 lg:col-span-3">
+          <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
           <Textarea
             id={field.key}
             value={info[field.key]}
             onChange={e => update(field.key, e.target.value)}
-            rows={5}
-            className="mt-1.5"
+            rows={3}
+            className="mt-1 text-sm"
           />
         </div>
       );
@@ -171,46 +168,62 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
 
     return (
       <div key={field.key}>
-        <Label htmlFor={field.key}>{field.label}</Label>
+        <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
         <Input
           id={field.key}
           value={info[field.key]}
           onChange={e => update(field.key, e.target.value)}
-          className="mt-1.5"
+          className="mt-1 h-8 text-sm"
         />
       </div>
     );
   };
 
-  const sections = [
-    { title: 'Project Information', fields: projectFields },
-    { title: 'Customer Information', fields: customerFields, description: 'Start typing to search saved customers.' },
-    { title: 'Subcontractor Information', fields: subcontractorFields, description: 'Start typing to search saved subcontractors.' },
-    { title: 'HTS Information', fields: [otherFields[0]] },
-    { title: 'Material List', fields: [otherFields[1]], description: 'Auto-populated from BOM. Edit as needed.' },
-    { title: 'Scope of Work', fields: [otherFields[2]], description: 'Paste your Scope of Work narrative here.' },
-    { title: 'Other', fields: [otherFields[3]] },
-  ];
-
   return (
-    <div className="space-y-6">
-      {sections.map(section => (
-        <Card key={section.title}>
-          <CardHeader>
-            <CardTitle className="text-lg">{section.title}</CardTitle>
-            {section.description && (
-              <CardDescription>{section.description}</CardDescription>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {section.fields.map(field => renderField(field))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-3">
+      {/* Project + HTS row */}
+      <div className="rounded-lg border bg-card p-3">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Project</h3>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {projectFields.map(f => renderField(f))}
+        </div>
+        <div className="mt-2">
+          {renderField(otherFields[0])}
+        </div>
+      </div>
 
-      <div className="flex justify-between">
+      {/* Customer + Subcontractor side by side */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded-lg border bg-card p-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Customer
+            <span className="font-normal normal-case ml-1.5 text-muted-foreground/70">— type to search saved</span>
+          </h3>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {customerFields.map(f => renderField(f))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Subcontractor
+            <span className="font-normal normal-case ml-1.5 text-muted-foreground/70">— type to search saved</span>
+          </h3>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {subcontractorFields.map(f => renderField(f))}
+          </div>
+        </div>
+      </div>
+
+      {/* Text areas */}
+      <div className="rounded-lg border bg-card p-3 space-y-2">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Details</h3>
+        <div className="grid gap-2">
+          {otherFields.slice(1).map(f => renderField(f))}
+        </div>
+      </div>
+
+      <div className="flex justify-between pt-1">
         <Button variant="outline" onClick={onBack}>← Back</Button>
         <Button onClick={handleNext}>Continue to Appendix →</Button>
       </div>
