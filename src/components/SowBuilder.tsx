@@ -1,10 +1,11 @@
 import { useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Wrench, Zap, Settings2 } from 'lucide-react';
+import { Wrench, Zap, Settings2, Code2 } from 'lucide-react';
 import {
   SOW_SECTION_TEMPLATES,
   SOW_VARIABLES,
@@ -56,6 +57,19 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     }
   }, [bomItems]);
 
+  // Sync programming notes into the PROGRAMMING_DETAILS variable
+  useEffect(() => {
+    const current = sowState.variables['PROGRAMMING_DETAILS'] ?? '';
+    const notes = sowState.programmingNotes ?? '';
+    if (current !== notes) {
+      onSowStateChange({
+        ...sowState,
+        variables: { ...sowState.variables, PROGRAMMING_DETAILS: notes },
+        customSowText: null,
+      });
+    }
+  }, [sowState.programmingNotes]);
+
   const enabledSections = new Set(sowState.enabledSections);
 
   const handleSectionOrderChange = useCallback(
@@ -83,11 +97,23 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     [sowState, onSowStateChange]
   );
 
+  const handleProgrammingNotesChange = useCallback(
+    (value: string) => {
+      onSowStateChange({
+        ...sowState,
+        programmingNotes: value,
+        customSowText: null,
+      });
+    },
+    [sowState, onSowStateChange]
+  );
+
   const templateMap = useMemo(
     () => new Map(SOW_SECTION_TEMPLATES.map((s) => [s.id, s])),
     []
   );
 
+  // Filter out PROGRAMMING_DETAILS from the variables card (it has its own tab)
   const usedVariables = useMemo(() => {
     const used = new Set<string>();
     for (const id of enabledSections) {
@@ -98,7 +124,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
         used.add(match[1] as string);
       }
     }
-    return SOW_VARIABLES.filter((v) => used.has(v.key));
+    return SOW_VARIABLES.filter((v) => used.has(v.key) && v.key !== 'PROGRAMMING_DETAILS');
   }, [enabledSections, templateMap]);
 
   const autoFilledKeys = useMemo(() => {
@@ -107,6 +133,8 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     return new Set<string>(Object.keys(auto).filter(k => auto[k]));
   }, [bomItems]);
 
+  const programmingEnabled = enabledSections.has('programming');
+
   const previewText = useMemo(() => {
     const enabled = new Set(sowState.enabledSections);
     return generateSowText(sowState.sectionOrder, enabled, sowState.variables);
@@ -114,61 +142,124 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   return (
     <div className="space-y-4">
-      {/* Section Selector */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Settings2 className="w-4 h-4 text-primary" />
-            Scope of Work Sections
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Click to add sections. Drag to reorder in-use items.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SowSectionSelector
-            sectionOrder={sowState.sectionOrder}
-            enabledSections={sowState.enabledSections}
-            onSectionOrderChange={handleSectionOrderChange}
-            onEnabledSectionsChange={handleEnabledSectionsChange}
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="sections">
+        <TabsList className="w-full">
+          <TabsTrigger value="sections" className="flex-1 gap-1.5">
+            <Settings2 className="w-3.5 h-3.5" />
+            Sections
+          </TabsTrigger>
+          <TabsTrigger value="programming" className="flex-1 gap-1.5">
+            <Code2 className="w-3.5 h-3.5" />
+            Programming
+          </TabsTrigger>
+          <TabsTrigger value="variables" className="flex-1 gap-1.5">
+            <Wrench className="w-3.5 h-3.5" />
+            Variables
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Variables */}
-      {usedVariables.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wrench className="w-4 h-4 text-primary" />
-              SOW Variables
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Values auto-filled from your BOM are marked with ⚡. You can override any value.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {usedVariables.map((v) => (
-                <div key={v.key}>
-                  <Label className="flex items-center gap-1.5 text-xs">
-                    {v.label}
-                    {autoFilledKeys.has(v.key) && (
-                      <Zap className="w-3 h-3 text-primary" />
-                    )}
-                  </Label>
-                  <Input
-                    value={sowState.variables[v.key] || ''}
-                    onChange={(e) => handleVariableChange(v.key, e.target.value)}
-                    placeholder={`Enter ${v.label.toLowerCase()}`}
-                    className="mt-1 h-8 text-sm"
-                  />
+        {/* Sections Tab */}
+        <TabsContent value="sections">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Settings2 className="w-4 h-4 text-primary" />
+                Scope of Work Sections
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Click to add sections. Drag to reorder in-use items.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SowSectionSelector
+                sectionOrder={sowState.sectionOrder}
+                enabledSections={sowState.enabledSections}
+                onSectionOrderChange={handleSectionOrderChange}
+                onEnabledSectionsChange={handleEnabledSectionsChange}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Programming Tab */}
+        <TabsContent value="programming">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Code2 className="w-4 h-4 text-primary" />
+                Programming Notes
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Enter programming details below. These will be inserted into the SOW under the "Programming" section.
+                {!programmingEnabled && (
+                  <span className="block mt-1 text-destructive font-medium">
+                    ⚠ The "Programming" section is not enabled. Add it from the Sections tab for these notes to appear in the output.
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={sowState.programmingNotes ?? ''}
+                onChange={(e) => handleProgrammingNotesChange(e.target.value)}
+                placeholder={`Enter programming details, e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels\nEnroll credentials and set schedules\nConfigure VMS recording profiles`}
+                className="min-h-[14rem] text-sm font-mono whitespace-pre"
+              />
+              {!programmingEnabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 text-xs"
+                  onClick={() => handleEnabledSectionsChange([...sowState.enabledSections, 'programming'])}
+                >
+                  Enable Programming Section
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Variables Tab */}
+        <TabsContent value="variables">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Wrench className="w-4 h-4 text-primary" />
+                SOW Variables
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Values auto-filled from your BOM are marked with ⚡. You can override any value.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {usedVariables.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No variables needed for the currently enabled sections.
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {usedVariables.map((v) => (
+                    <div key={v.key}>
+                      <Label className="flex items-center gap-1.5 text-xs">
+                        {v.label}
+                        {autoFilledKeys.has(v.key) && (
+                          <Zap className="w-3 h-3 text-primary" />
+                        )}
+                      </Label>
+                      <Input
+                        value={sowState.variables[v.key] || ''}
+                        onChange={(e) => handleVariableChange(v.key, e.target.value)}
+                        placeholder={`Enter ${v.label.toLowerCase()}`}
+                        className="mt-1 h-8 text-sm"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Editable Preview */}
       {previewText && (

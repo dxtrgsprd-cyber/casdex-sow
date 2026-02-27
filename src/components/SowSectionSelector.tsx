@@ -7,9 +7,6 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragOverEvent,
-  DragOverlay,
-  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -19,9 +16,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, X } from 'lucide-react';
+import { GripVertical, Plus, X, CheckSquare, XSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { SOW_SECTION_TEMPLATES } from '@/lib/sowTemplates';
-import { useState } from 'react';
 
 interface SowSectionSelectorProps {
   sectionOrder: string[];
@@ -89,13 +87,11 @@ export default function SowSectionSelector({
 
   const enabledSet = useMemo(() => new Set(enabledSections), [enabledSections]);
 
-  // In-use items in their display order
   const inUseItems = useMemo(
     () => sectionOrder.filter((id) => enabledSet.has(id)),
     [sectionOrder, enabledSet]
   );
 
-  // Available items (not enabled), preserving template default order
   const availableItems = useMemo(() => {
     const allIds = SOW_SECTION_TEMPLATES.map((s) => s.id);
     return allIds.filter((id) => !enabledSet.has(id));
@@ -129,54 +125,85 @@ export default function SowSectionSelector({
     [enabledSections, onEnabledSectionsChange]
   );
 
+  const handleSelectAll = useCallback(() => {
+    const allIds = SOW_SECTION_TEMPLATES.map((s) => s.id);
+    onEnabledSectionsChange(allIds);
+  }, [onEnabledSectionsChange]);
+
+  const handleClearAll = useCallback(() => {
+    onEnabledSectionsChange([]);
+  }, [onEnabledSectionsChange]);
+
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {/* In Use */}
-      <div>
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-          In Use ({inUseItems.length})
-        </h4>
-        <div className="border rounded-lg p-2 min-h-[120px] bg-muted/10 space-y-1.5">
-          {inUseItems.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              Add sections from the right →
-            </p>
-          )}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={inUseItems} strategy={verticalListSortingStrategy}>
-              {inUseItems.map((id, idx) => (
-                <div key={id} className="flex items-center gap-1">
-                  <div className="flex-1 min-w-0">
-                    <SortableInUseItem id={id} index={idx} />
-                  </div>
-                  <button
-                    onClick={() => handleRemove(id)}
-                    className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    title="Remove section"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </SortableContext>
-          </DndContext>
-        </div>
+    <div>
+      {/* Bulk actions */}
+      <div className="flex gap-2 mb-2">
+        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleSelectAll}>
+          <CheckSquare className="w-3 h-3 mr-1" />
+          Select All
+        </Button>
+        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleClearAll}>
+          <XSquare className="w-3 h-3 mr-1" />
+          Clear All
+        </Button>
       </div>
 
-      {/* Available */}
-      <div>
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-          Available ({availableItems.length})
-        </h4>
-        <div className="border rounded-lg p-2 min-h-[120px] bg-muted/10 space-y-1.5">
-          {availableItems.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              All sections in use ✓
-            </p>
-          )}
-          {availableItems.map((id) => (
-            <AvailableItem key={id} id={id} onAdd={handleAdd} />
-          ))}
+      <div className="grid grid-cols-2 gap-3">
+        {/* In Use */}
+        <div>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            In Use ({inUseItems.length})
+          </h4>
+          <div className="border rounded-lg bg-muted/10">
+            <ScrollArea className="max-h-[280px]">
+              <div className="p-2 space-y-1.5 min-h-[80px]">
+                {inUseItems.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Add sections from the right →
+                  </p>
+                )}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={inUseItems} strategy={verticalListSortingStrategy}>
+                    {inUseItems.map((id, idx) => (
+                      <div key={id} className="flex items-center gap-1">
+                        <div className="flex-1 min-w-0">
+                          <SortableInUseItem id={id} index={idx} />
+                        </div>
+                        <button
+                          onClick={() => handleRemove(id)}
+                          className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Remove section"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+
+        {/* Available */}
+        <div>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Available ({availableItems.length})
+          </h4>
+          <div className="border rounded-lg bg-muted/10">
+            <ScrollArea className="max-h-[280px]">
+              <div className="p-2 space-y-1.5 min-h-[80px]">
+                {availableItems.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    All sections in use ✓
+                  </p>
+                )}
+                {availableItems.map((id) => (
+                  <AvailableItem key={id} id={id} onAdd={handleAdd} />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
       </div>
     </div>

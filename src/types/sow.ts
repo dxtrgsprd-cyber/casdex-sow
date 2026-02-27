@@ -69,6 +69,7 @@ export interface SowBuilderState {
   enabledSections: string[];
   variables: Record<string, string>;
   customSowText: string | null;
+  programmingNotes: string;
 }
 
 export const defaultSowBuilderState: SowBuilderState = {
@@ -98,6 +99,8 @@ export const defaultSowBuilderState: SowBuilderState = {
     'wireless_ptp',
     // Server
     'server_nvr',
+    // Programming
+    'programming',
     // Testing always last
     'testing_commissioning',
     'ac_testing',
@@ -109,6 +112,7 @@ export const defaultSowBuilderState: SowBuilderState = {
   ],
   variables: {},
   customSowText: null,
+  programmingNotes: '',
 };
 
 export interface AppState {

@@ -188,6 +188,11 @@ Verify proper reader mounting height
 Ensure proper locking hardware alignment
 Confirm fire marshal free egress compliance`,
   },
+  {
+    id: 'programming',
+    title: 'Programming',
+    template: `{{PROGRAMMING_DETAILS}}`,
+  },
 ];
 
 export interface SowVariable {
@@ -239,6 +244,7 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'REX_COUNT', label: 'REX Count', autoFillable: true },
   { key: 'PUSH_COUNTS', label: 'Push Button Count', autoFillable: true },
   { key: 'POWER_SUPPLY_COUNT', label: 'Power Supply Count', autoFillable: true },
+  { key: 'PROGRAMMING_DETAILS', label: 'Programming Details', autoFillable: false },
 ];
 
 /** Extract variable values from BOM items */
