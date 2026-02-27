@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import type { ProjectInfo, SowBuilderState } from '@/types/sow';
@@ -182,7 +184,7 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
           <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
           <Textarea
             id={field.key}
-            value={info[field.key]}
+            value={String(info[field.key])}
             onChange={e => update(field.key, e.target.value)}
             rows={3}
             className="mt-1 text-sm"
@@ -196,7 +198,7 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
         <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
         <Input
           id={field.key}
-          value={info[field.key]}
+          value={String(info[field.key])}
           onChange={e => update(field.key, e.target.value)}
           className="mt-1 h-8 text-sm"
         />
@@ -241,7 +243,87 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
         </div>
       </div>
 
-      {/* Details: Material List, Notes, Programming Notes */}
+      {/* Other Info Box */}
+      <div className="rounded-lg border bg-card p-3 space-y-3">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Other Info</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {/* Programming */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="programmingRequired"
+                checked={info.programmingRequired}
+                onCheckedChange={checked => onChange({ ...info, programmingRequired: checked })}
+              />
+              <Label htmlFor="programmingRequired" className="text-xs">Programming Required</Label>
+            </div>
+            {info.programmingRequired && (
+              <div>
+                <Label htmlFor="programmingNotes" className="text-xs">Programming Notes (added as appendix)</Label>
+                <Textarea
+                  id="programmingNotes"
+                  value={sowState?.programmingNotes ?? ''}
+                  onChange={e => {
+                    if (!sowState || !onSowStateChange) return;
+                    onSowStateChange({
+                      ...sowState,
+                      programmingNotes: e.target.value,
+                      variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
+                      customSowText: null,
+                    });
+                  }}
+                  placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version`}
+                  rows={3}
+                  className="mt-1 text-sm font-mono"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Lift Needed */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="liftNeeded"
+                checked={info.liftNeeded}
+                onCheckedChange={checked => onChange({ ...info, liftNeeded: checked })}
+              />
+              <Label htmlFor="liftNeeded" className="text-xs">Lift Needed</Label>
+            </div>
+            {info.liftNeeded && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="liftHeight" className="text-xs">Height of Install</Label>
+                  <Input
+                    id="liftHeight"
+                    value={info.liftHeight}
+                    onChange={e => update('liftHeight', e.target.value)}
+                    placeholder="e.g. 25"
+                    className="h-8 text-sm w-20"
+                  />
+                  <span className="text-xs text-muted-foreground">ft</span>
+                </div>
+                <RadioGroup
+                  value={info.liftEnvironment}
+                  onValueChange={val => onChange({ ...info, liftEnvironment: val as 'indoor' | 'outdoor' })}
+                  className="flex gap-3"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <RadioGroupItem value="indoor" id="indoor" />
+                    <Label htmlFor="indoor" className="text-xs">Indoor</Label>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <RadioGroupItem value="outdoor" id="outdoor" />
+                    <Label htmlFor="outdoor" className="text-xs">Outdoor</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Details: Material List, Notes */}
       <div className="rounded-lg border bg-card p-3 space-y-2">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Details</h3>
         <div className="grid gap-2">
@@ -263,28 +345,6 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
               onChange={e => update('notes', e.target.value)}
               rows={3}
               className="mt-1 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="programmingNotes" className="text-xs">Programming Notes</Label>
-            <p className="text-xs text-muted-foreground mb-1">
-              Notes entered here will populate the Programming tab in Step 3 (Scope of Work).
-            </p>
-            <Textarea
-              id="programmingNotes"
-              value={sowState?.programmingNotes ?? ''}
-              onChange={e => {
-                if (!sowState || !onSowStateChange) return;
-                onSowStateChange({
-                  ...sowState,
-                  programmingNotes: e.target.value,
-                  variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
-                  customSowText: null,
-                });
-              }}
-              placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels`}
-              rows={4}
-              className="text-sm font-mono"
             />
           </div>
         </div>
