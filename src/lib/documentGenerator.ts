@@ -9,9 +9,15 @@ const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 
 
 function numberToWords(n: number): string {
   if (n < 0) return 'negative ' + numberToWords(-n);
+  if (n === 0) return '';
   if (n < 20) return ones[n];
   if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? '-' + ones[n % 10] : '');
-  if (n < 1000) return ones[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' ' + numberToWords(n % 100) : '');
+  if (n < 1000) return ones[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' and ' + numberToWords(n % 100) : '');
+  if (n < 1000000) {
+    const thousands = Math.floor(n / 1000);
+    const remainder = n % 1000;
+    return numberToWords(thousands) + ' thousand' + (remainder ? (remainder < 100 ? ' and ' : ' ') + numberToWords(remainder) : '');
+  }
   return String(n);
 }
 
