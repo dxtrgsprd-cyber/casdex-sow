@@ -31,6 +31,10 @@ export interface ProjectInfo {
   scopeOfWork: string;
   notes: string;
   programmingNotes: string;
+  programmingRequired: boolean;
+  liftNeeded: boolean;
+  liftHeight: string;
+  liftEnvironment: 'indoor' | 'outdoor' | '';
 }
 
 export const defaultProjectInfo: ProjectInfo = {
@@ -56,6 +60,10 @@ export const defaultProjectInfo: ProjectInfo = {
   scopeOfWork: '',
   notes: '',
   programmingNotes: '',
+  programmingRequired: false,
+  liftNeeded: false,
+  liftHeight: '',
+  liftEnvironment: '',
 };
 
 export type DocumentType = 'SOW_Customer' | 'SOW_SUB_Quoting' | 'SOW_SUB_Project';
