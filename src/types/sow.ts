@@ -103,6 +103,8 @@ export const defaultSowBuilderState: SowBuilderState = {
     'licenses',
     'wireless_ptp',
     'server_nvr',
+    'programming_cctv',
+    'programming_ac',
     'programming',
     'testing_commissioning',
     'ac_testing',

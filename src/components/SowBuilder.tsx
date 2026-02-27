@@ -159,6 +159,11 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>← Back</Button>
+        <Button onClick={onNext}>Continue to Preview & Edit →</Button>
+      </div>
+
       <Tabs defaultValue="sections">
         <TabsList className="w-full">
           <TabsTrigger value="sections" className="flex-1 gap-1.5">
