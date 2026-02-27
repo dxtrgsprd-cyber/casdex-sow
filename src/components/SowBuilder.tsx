@@ -97,6 +97,23 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     [sowState, onSowStateChange]
   );
 
+  const handleCustomTemplateChange = useCallback(
+    (id: string, template: string | null) => {
+      const updated = { ...sowState.customTemplates };
+      if (template === null) {
+        delete updated[id];
+      } else {
+        updated[id] = template;
+      }
+      onSowStateChange({
+        ...sowState,
+        customTemplates: updated,
+        customSowText: null,
+      });
+    },
+    [sowState, onSowStateChange]
+  );
+
   const handleProgrammingNotesChange = useCallback(
     (value: string) => {
       onSowStateChange({
@@ -137,8 +154,8 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const previewText = useMemo(() => {
     const enabled = new Set(sowState.enabledSections);
-    return generateSowText(sowState.sectionOrder, enabled, sowState.variables);
-  }, [sowState.sectionOrder, sowState.enabledSections, sowState.variables]);
+    return generateSowText(sowState.sectionOrder, enabled, sowState.variables, sowState.customTemplates);
+  }, [sowState.sectionOrder, sowState.enabledSections, sowState.variables, sowState.customTemplates]);
 
   return (
     <div className="space-y-4">
@@ -174,8 +191,10 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
               <SowSectionSelector
                 sectionOrder={sowState.sectionOrder}
                 enabledSections={sowState.enabledSections}
+                customTemplates={sowState.customTemplates ?? {}}
                 onSectionOrderChange={handleSectionOrderChange}
                 onEnabledSectionsChange={handleEnabledSectionsChange}
+                onCustomTemplateChange={handleCustomTemplateChange}
               />
             </CardContent>
           </Card>

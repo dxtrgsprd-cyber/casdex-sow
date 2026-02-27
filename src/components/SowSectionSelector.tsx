@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -16,23 +16,41 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, X, CheckSquare, XSquare } from 'lucide-react';
+import { GripVertical, Plus, X, CheckSquare, XSquare, Pencil, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { SOW_SECTION_TEMPLATES } from '@/lib/sowTemplates';
 
 interface SowSectionSelectorProps {
   sectionOrder: string[];
   enabledSections: string[];
+  customTemplates: Record<string, string>;
   onSectionOrderChange: (order: string[]) => void;
   onEnabledSectionsChange: (enabled: string[]) => void;
+  onCustomTemplateChange: (id: string, template: string | null) => void;
 }
 
 const templateMap = new Map(SOW_SECTION_TEMPLATES.map((s) => [s.id, s]));
 
-function SortableInUseItem({ id, index }: { id: string; index: number }) {
+function SortableInUseItem({
+  id,
+  index,
+  isEditing,
+  customTemplate,
+  onToggleEdit,
+  onCustomTemplateChange,
+}: {
+  id: string;
+  index: number;
+  isEditing: boolean;
+  customTemplate: string | undefined;
+  onToggleEdit: (id: string) => void;
+  onCustomTemplateChange: (id: string, template: string | null) => void;
+}) {
   const tmpl = templateMap.get(id);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const hasCustom = customTemplate !== undefined;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -41,20 +59,45 @@ function SortableInUseItem({ id, index }: { id: string; index: number }) {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 px-2 py-1.5 rounded border bg-card border-border text-sm group"
-    >
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0"
-      >
-        <GripVertical className="w-3.5 h-3.5" />
-      </button>
-      <span className="text-muted-foreground font-medium text-xs w-5 shrink-0">{index + 1}.</span>
-      <span className="flex-1 min-w-0 truncate font-medium text-foreground">{tmpl?.title ?? id}</span>
+    <div ref={setNodeRef} style={style} className="space-y-1">
+      <div className="flex items-center gap-2 px-2 py-1.5 rounded border bg-card border-border text-sm group">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+        <span className="text-muted-foreground font-medium text-xs w-5 shrink-0">{index + 1}.</span>
+        <span className="flex-1 min-w-0 truncate font-medium text-foreground">{tmpl?.title ?? id}</span>
+        <button
+          onClick={() => onToggleEdit(id)}
+          className={`shrink-0 p-1 rounded transition-colors ${isEditing ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-primary/10'}`}
+          title="Edit section description"
+        >
+          <Pencil className="w-3 h-3" />
+        </button>
+      </div>
+      {isEditing && tmpl && (
+        <div className="ml-7 mr-1 space-y-1">
+          <Textarea
+            value={customTemplate ?? tmpl.template}
+            onChange={(e) => onCustomTemplateChange(id, e.target.value)}
+            className="text-xs font-mono min-h-[6rem] whitespace-pre"
+          />
+          {hasCustom && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs text-muted-foreground"
+              onClick={() => onCustomTemplateChange(id, null)}
+            >
+              <RotateCcw className="w-3 h-3 mr-1" />
+              Reset to default
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -77,9 +120,13 @@ function AvailableItem({ id, onAdd }: { id: string; onAdd: (id: string) => void 
 export default function SowSectionSelector({
   sectionOrder,
   enabledSections,
+  customTemplates,
   onSectionOrderChange,
   onEnabledSectionsChange,
+  onCustomTemplateChange,
 }: SowSectionSelectorProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -121,9 +168,14 @@ export default function SowSectionSelector({
   const handleRemove = useCallback(
     (id: string) => {
       onEnabledSectionsChange(enabledSections.filter((s) => s !== id));
+      if (editingId === id) setEditingId(null);
     },
-    [enabledSections, onEnabledSectionsChange]
+    [enabledSections, onEnabledSectionsChange, editingId]
   );
+
+  const handleToggleEdit = useCallback((id: string) => {
+    setEditingId(prev => prev === id ? null : id);
+  }, []);
 
   const handleSelectAll = useCallback(() => {
     const allIds = SOW_SECTION_TEMPLATES.map((s) => s.id);
@@ -132,6 +184,7 @@ export default function SowSectionSelector({
 
   const handleClearAll = useCallback(() => {
     onEnabledSectionsChange([]);
+    setEditingId(null);
   }, [onEnabledSectionsChange]);
 
   return (
@@ -165,13 +218,20 @@ export default function SowSectionSelector({
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={inUseItems} strategy={verticalListSortingStrategy}>
                     {inUseItems.map((id, idx) => (
-                      <div key={id} className="flex items-center gap-1">
+                      <div key={id} className="flex items-start gap-1">
                         <div className="flex-1 min-w-0">
-                          <SortableInUseItem id={id} index={idx} />
+                          <SortableInUseItem
+                            id={id}
+                            index={idx}
+                            isEditing={editingId === id}
+                            customTemplate={customTemplates[id]}
+                            onToggleEdit={handleToggleEdit}
+                            onCustomTemplateChange={onCustomTemplateChange}
+                          />
                         </div>
                         <button
                           onClick={() => handleRemove(id)}
-                          className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          className="shrink-0 p-1 mt-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           title="Remove section"
                         >
                           <X className="w-3.5 h-3.5" />

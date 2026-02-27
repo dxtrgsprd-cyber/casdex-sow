@@ -7,11 +7,11 @@ export interface SowSectionTemplate {
 export const SOW_SECTION_TEMPLATES: SowSectionTemplate[] = [
   {
     id: 'install_cameras',
-    title: 'Install New Cameras',
+    title: 'Install Cameras according to hardware schedule',
     template: `Mount {{NEW_CAMERA_TOTAL}} new {{CAMERA_BRAND}} cameras, consisting of:
 {{EXTERIOR_CAMERA_COUNT}} exterior cameras
 {{INTERIOR_CAMERA_COUNT}} interior cameras
-Mounting should be secure and level
+ALL Camera Mounting should be secure and level, according to manufacturer specs
 Install approved junction boxes where required
 Seal all exterior penetrations`,
   },
@@ -27,7 +27,7 @@ Approximate total cable length: {{CAT6_FOOTAGE}} ft.`,
   {
     id: 'relocate_cameras',
     title: 'Relocate Existing Cameras',
-    template: `Relocate {{RELOCATE_COUNT}} existing cameras to new locations as directed by HTS.`,
+    template: `Relocate {{RELOCATE_COUNT}} existing cameras to new locations according to hardware schedule.`,
   },
   {
     id: 'conduit_installation',
@@ -37,16 +37,16 @@ Approximate conduit length: {{CONDUIT_FOOTAGE}} ft.`,
   },
   {
     id: 'cable_termination',
-    title: 'Cable Termination (CCTV)',
-    template: `Terminate {{CAT6_COUNT}} Cat6 cables at designated network/camera locations using punchdowns, keystone jacks, or approved termination hardware.`,
+    title: 'Cable Termination (Cat6)',
+    template: `Terminate {{CAT6_COUNT}} Cat6 cables at designated locations using approved termination hardware.`,
   },
   {
     id: 'testing_commissioning',
     title: 'Testing and Commissioning (CCTV)',
     template: `Test all newly installed and/or relocated cables.
-Set IP addresses of Cameras and equipment
-Verify operational status of all cameras.
 Verify all cameras power on
+Set IP addresses of Cameras and equipment according to schema obtained from PoC
+Verify operational status of all cameras.
 Confirm live video stream
 Confirm proper focus and framing`,
   },
@@ -56,7 +56,7 @@ Confirm proper focus and framing`,
     template: `Install {{SERVER_TOTAL}} new {{SERVER_BRAND}} Server/NVR
 Install {{NVR_COUNT}} NVR/VMS server(s).
 Mount hardware and connect to power/UPS.
-Connect and configure network settings.
+Connect and configure network settings according to IP Address schema obtained from PoC
 Install/configure {{VMS_PLATFORM}}
 Setup User access configuration
 Apply {{CAMERA_LICENSES}} Camera Licenses
@@ -71,7 +71,9 @@ Test live view, recording, and playback.`,
     title: 'Wireless Point-to-Point',
     template: `Provide and install {{PTP_COUNT}} wireless point-to-point bridge(s).
 Mount radios securely at designated locations with proper alignment and weatherproofing.
-Configure and test wireless link(s) for connectivity and throughput.`,
+Configure and test wireless link(s) for connectivity and throughput.
+Remove default settings, and logins
+Provide updated settings to PoC`,
   },
   {
     id: 'licenses',
@@ -98,8 +100,8 @@ Verify proper power delivery to connected devices.`,
     id: 'mounts_accessories',
     title: 'Mounts & Accessories',
     template: `Provide and install {{MOUNT_COUNT}} mounting accessory(ies), including but not limited to:
-Wall-mount arms, corner brackets, pendant mounts, pole adapters, and junction boxes as specified in the BOM.
-All mounts shall be installed securely per manufacturer specifications.`,
+Wall-mount arms, corner brackets, pendant mounts, pole adapters, and junction boxes as specified in the Hardware Schedule.
+All mounts shall be installed properly and securely per manufacturer specifications.`,
   },
   {
     id: 'ac_install',
@@ -177,15 +179,14 @@ Confirm controller, lock, REX, DPS, and reader connections as applicable.`,
     template: `Test all newly installed cabling
 Configure panel settings and network parameters
 Confirm system communication and operational status
+Ensure all devices are securely mounted
+Verify proper reader mounting height
+Verify proper locking hardware alignment
 Verify lock/unlock operation at all {{DOOR_TOTAL}} doors
 Verify reader credential functionality
 Verify DPS and REX operation
 Verify intercom communication
-Verify proper ADA compliance where required.
-Confirm system communication and operational status
-Ensure all devices are securely mounted
-Verify proper reader mounting height
-Ensure proper locking hardware alignment
+Verify proper ADA compliance where required
 Confirm fire marshal free egress compliance`,
   },
   {
@@ -245,6 +246,7 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PUSH_COUNTS', label: 'Push Button Count', autoFillable: true },
   { key: 'POWER_SUPPLY_COUNT', label: 'Power Supply Count', autoFillable: true },
   { key: 'PROGRAMMING_DETAILS', label: 'Programming Details', autoFillable: false },
+  { key: 'NVR_COUNT', label: 'NVR Count', autoFillable: true },
 ];
 
 /** Extract variable values from BOM items */
@@ -350,6 +352,7 @@ export function generateSowText(
   sectionOrder: string[],
   enabledSections: Set<string>,
   variables: Record<string, string>,
+  customTemplates?: Record<string, string>,
 ): string {
   const templates = new Map(SOW_SECTION_TEMPLATES.map(s => [s.id, s]));
 
@@ -361,17 +364,18 @@ export function generateSowText(
     if (!tmpl) continue;
 
     num++;
-    let text = tmpl.template;
+    let text = customTemplates?.[id] ?? tmpl.template;
     for (const [key, value] of Object.entries(variables)) {
       text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || `[${key}]`);
     }
-    text = text.replace(/\{\{(\w+)\}\}/g, '[$1]');
+    text = text.replace(/\\{\\{(\w+)\\}\}/g, '[$1]');
 
     // Indent all body lines under the header
     const indentedBody = text
       .split('\n')
       .map(line => (line.trim() ? `    ${line}` : ''))
       .join('\n');
+
 
     parts.push(`${num}. ${tmpl.title}\n\n${indentedBody}`);
   }
