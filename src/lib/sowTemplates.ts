@@ -214,11 +214,6 @@ Configure fire alarm integration and emergency unlock sequences
 Verify all programmed functions at each door
 {{PROGRAMMING_AC_DETAILS}}`,
   },
-  {
-    id: 'programming',
-    title: 'Programming',
-    template: `{{PROGRAMMING_DETAILS}}`,
-  },
 ];
 
 export interface SowVariable {
