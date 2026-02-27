@@ -42,7 +42,7 @@ export const defaultProjectInfo: ProjectInfo = {
   companyAddress: '',
   cityStateZip: '',
   installLocation: '',
-  vertical: '',
+  vertical: 'BIZ',
   customerName: '',
   customerEmail: '',
   customerPhone: '',
