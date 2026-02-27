@@ -71,8 +71,8 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
     if (!template) return;
 
     const label = docTypes.find(d => d.type === docType)?.label ?? docType;
-    const projectName = info.projectName?.trim() || info.oppNumber?.trim() || 'Document';
-    const fileName = `${projectName} - ${label}.docx`;
+    const opp = info.oppNumber?.trim() || 'Document';
+    const fileName = `${opp} - ${label}.docx`;
 
     try {
       let docBlob = generateDocx(template, info, overrides[docType]);
