@@ -27,6 +27,10 @@ export default function AppendixUpload({
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>← Back</Button>
+        <Button onClick={onNext}>Continue to Preview →</Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">

@@ -45,6 +45,9 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button onClick={onNext} disabled={bomItems.length === 0}>Continue to Project Info →</Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -127,12 +130,13 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
                 </TableBody>
               </Table>
             </div>
-            <div className="mt-4 flex justify-end">
-              <Button onClick={onNext}>Continue to Project Info →</Button>
-            </div>
           </CardContent>
         </Card>
       )}
+
+      <div className="flex justify-end">
+        <Button onClick={onNext} disabled={bomItems.length === 0}>Continue to Project Info →</Button>
+      </div>
     </div>
   );
 }

@@ -199,6 +199,10 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>← Back</Button>
+        <Button onClick={handleNext}>Continue to SOW →</Button>
+      </div>
       {/* Project Box */}
       <div className="rounded-lg border bg-card p-3">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Project</h3>
