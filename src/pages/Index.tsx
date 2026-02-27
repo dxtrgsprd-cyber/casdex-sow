@@ -221,6 +221,8 @@ const Index = () => {
         <ProjectInfoForm
           info={projectInfo}
           onChange={setProjectInfo}
+          sowState={sowState}
+          onSowStateChange={setSowState}
           onNext={() => nextStep(2)}
           onBack={() => goToStep(1)} />
 
