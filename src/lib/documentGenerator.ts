@@ -212,6 +212,29 @@ function applyMultilineFieldFormattingFix(zip: PizZip, data: Record<string, stri
   }
 }
 
+function stripCustomXmlDataBindings(zip: PizZip): void {
+  const xmlPaths = Object.keys(zip.files).filter((path) => /^word\/.*\.xml$/i.test(path));
+  let updatedCount = 0;
+
+  for (const path of xmlPaths) {
+    const xml = zip.file(path)?.asText();
+    if (!xml) continue;
+
+    const cleaned = xml
+      .replace(/<w:dataBinding\b[^>]*\/>/g, '')
+      .replace(/<w15:dataBinding\b[^>]*\/>/g, '');
+
+    if (cleaned !== xml) {
+      zip.file(path, cleaned);
+      updatedCount += 1;
+    }
+  }
+
+  if (updatedCount > 0) {
+    console.log('[docgen] Removed customXml dataBinding tags from XML parts:', updatedCount);
+  }
+}
+
 function getTemplateData(info: ProjectInfo, overrides: Partial<ProjectInfo>): Record<string, string> {
   const merged = { ...info, ...overrides };
   const materialList = compactMultiline(merged.scope || '');
@@ -311,7 +334,7 @@ export function generateDocx(
   // Remove customXml parts that may contain broken template tags
   const removedParts: string[] = [];
   Object.keys(zip.files).forEach((key) => {
-    if (key.startsWith('customXml/')) {
+    if (/^customXml\//i.test(key)) {
       removedParts.push(key);
       zip.remove(key);
     }
@@ -330,25 +353,24 @@ export function generateDocx(
         const escaped = partName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         cleaned = cleaned.replace(new RegExp(`\\s*<Override[^>]*PartName="${escaped}"[^>]*/>`, 'g'), '');
       }
+
+      cleaned = cleaned.replace(/\s*<Override[^>]*PartName="\/customXml\/[^\"]*"[^>]*\/>/gi, '');
       zip.file(ctPath, cleaned);
       console.log('[docgen] Cleaned [Content_Types].xml');
     }
 
-    // Remove relationships in root _rels/.rels
-    const relsPath = '_rels/.rels';
-    const relsXml = zip.file(relsPath)?.asText();
-    if (relsXml) {
-      const cleaned = relsXml.replace(/\s*<Relationship[^>]*Target="customXml[^"]*"[^>]*\/>/g, '');
-      zip.file(relsPath, cleaned);
-    }
-
-    // Remove relationships in word/_rels/document.xml.rels
-    const docRelsPath = 'word/_rels/document.xml.rels';
-    const docRelsXml = zip.file(docRelsPath)?.asText();
-    if (docRelsXml) {
-      const cleaned = docRelsXml.replace(/\s*<Relationship[^>]*Target="[^"]*customXml[^"]*"[^>]*\/>/g, '');
-      zip.file(docRelsPath, cleaned);
-    }
+    // Remove customXml relationships from every relationship part, not just document-level rels
+    const relPaths = Object.keys(zip.files).filter((key) => /_rels\/[^/]+\.rels$/i.test(key));
+    relPaths.forEach((relsPath) => {
+      const relsXml = zip.file(relsPath)?.asText();
+      if (!relsXml) return;
+      const cleaned = relsXml
+        .replace(/\s*<Relationship[^>]*Target="[^\"]*customXml[^\"]*"[^>]*\/>/gi, '')
+        .replace(/\s*<Relationship[^>]*Type="[^\"]*customXml[^\"]*"[^>]*\/>/gi, '');
+      if (cleaned !== relsXml) {
+        zip.file(relsPath, cleaned);
+      }
+    });
 
     // Also remove any customXml _rels folders
     Object.keys(zip.files).forEach((key) => {
@@ -373,6 +395,7 @@ export function generateDocx(
 
   const renderedZip = doc.getZip();
   applyMultilineFieldFormattingFix(renderedZip, data);
+  stripCustomXmlDataBindings(renderedZip);
 
   const out = renderedZip.generate({
     type: 'blob',
