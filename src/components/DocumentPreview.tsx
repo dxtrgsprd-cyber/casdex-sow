@@ -14,6 +14,7 @@ interface DocumentPreviewProps {
   overrides: DocumentOverrides;
   onOverridesChange: (overrides: DocumentOverrides) => void;
   onProgrammingToggle?: (enabled: boolean) => void;
+  onLiftToggle?: (enabled: boolean) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -74,7 +75,7 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
   Notes: 'notes',
 };
 
-export default function DocumentPreview({ info, overrides, onOverridesChange, onProgrammingToggle, onNext, onBack }: DocumentPreviewProps) {
+export default function DocumentPreview({ info, overrides, onOverridesChange, onProgrammingToggle, onLiftToggle, onNext, onBack }: DocumentPreviewProps) {
   const [activeTab, setActiveTab] = useState<DocumentType>('SOW_SUB_Quoting');
 
   const handleOverride = (docType: DocumentType, templateField: string, value: string) => {
@@ -165,14 +166,7 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
                 id="include-programming"
                 checked={info.programmingRequired}
                 onCheckedChange={(checked) => {
-                  // This triggers a projectInfo change via the parent
-                  const syntheticInfo = { ...info, programmingRequired: !!checked };
-                  // We use override mechanism to signal this back
-                  onOverridesChange({
-                    ...overrides,
-                    // Store the flag - we pass it through info directly
-                  });
-                  // Notify parent of the toggle
+                  onOverridesChange({ ...overrides });
                   onProgrammingToggle?.(!!checked);
                 }}
               />
@@ -182,6 +176,31 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   Programming notes will be appended as a separate appendix page at the end of the document.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lift Notes Toggle */}
+      {info.liftNeeded && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="include-lift"
+                checked={info.liftNeeded}
+                onCheckedChange={(checked) => {
+                  onLiftToggle?.(!!checked);
+                }}
+              />
+              <div className="grid gap-1 leading-none">
+                <Label htmlFor="include-lift" className="font-semibold cursor-pointer">
+                  Include Lift Requirements in SOW
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Lift / equipment requirements ({info.liftHeight ? `${info.liftHeight} ft` : 'height TBD'}{info.liftEnvironment ? `, ${info.liftEnvironment}` : ''}) will be appended as an appendix page.
                 </p>
               </div>
             </div>
