@@ -20,6 +20,7 @@ export interface ProjectData {
 export interface ProjectIndexEntry {
   id: string;
   oppNumber: string;
+  customerName: string;
   projectName: string;
   lastModified: string;
   currentStep: number;
@@ -72,6 +73,7 @@ export function saveProjectData(id: string, data: ProjectData) {
     const entry: ProjectIndexEntry = {
       id,
       oppNumber: data.projectInfo.oppNumber,
+      customerName: data.projectInfo.customerName,
       projectName: data.projectInfo.projectName,
       lastModified: new Date().toLocaleDateString('en-US'),
       currentStep: data.currentStep,
