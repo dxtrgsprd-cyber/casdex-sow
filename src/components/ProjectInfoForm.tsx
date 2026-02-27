@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import AutocompleteInput from '@/components/AutocompleteInput';
-import type { ProjectInfo } from '@/types/sow';
+import type { ProjectInfo, SowBuilderState } from '@/types/sow';
 import {
   searchCustomers,
   saveCustomer,
@@ -18,6 +18,8 @@ import {
 interface ProjectInfoFormProps {
   info: ProjectInfo;
   onChange: (info: ProjectInfo) => void;
+  sowState: SowBuilderState;
+  onSowStateChange: (state: SowBuilderState) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -52,7 +54,7 @@ const otherFields: { key: keyof ProjectInfo; label: string; type?: 'textarea' }[
   { key: 'notes', label: 'Additional Notes', type: 'textarea' },
 ];
 
-export default function ProjectInfoForm({ info, onChange, onNext, onBack }: ProjectInfoFormProps) {
+export default function ProjectInfoForm({ info, onChange, sowState, onSowStateChange, onNext, onBack }: ProjectInfoFormProps) {
   const [customerSuggestions, setCustomerSuggestions] = useState<CustomerContact[]>([]);
   const [subSuggestions, setSubSuggestions] = useState<SubcontractorContact[]>([]);
 
@@ -221,6 +223,26 @@ export default function ProjectInfoForm({ info, onChange, onNext, onBack }: Proj
         <div className="grid gap-2">
           {otherFields.slice(1).map(f => renderField(f))}
         </div>
+      </div>
+
+      {/* Programming Notes */}
+      <div className="rounded-lg border bg-card p-3">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Programming Notes</h3>
+        <p className="text-xs text-muted-foreground mb-2">
+          Notes entered here will populate the Programming tab in Step 3 (Scope of Work).
+        </p>
+        <Textarea
+          value={sowState.programmingNotes ?? ''}
+          onChange={e => onSowStateChange({
+            ...sowState,
+            programmingNotes: e.target.value,
+            variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
+            customSowText: null,
+          })}
+          placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels`}
+          rows={4}
+          className="text-sm font-mono"
+        />
       </div>
 
       <div className="flex justify-between pt-1">
