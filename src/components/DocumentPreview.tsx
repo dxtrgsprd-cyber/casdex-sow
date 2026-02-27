@@ -24,6 +24,12 @@ const docLabels: Record<DocumentType, string> = {
   SOW_SUB_Project: 'SOW SUB Project',
 };
 
+const docDescriptions: Record<DocumentType, string> = {
+  SOW_SUB_Quoting: 'RFP send to Sub for Labor Quote',
+  SOW_SUB_Project: 'Send this SOW to sub once OPP is Awarded',
+  SOW_Customer: 'Final SOW to include with documentation for customer signature',
+};
+
 const fieldLabels: Record<string, string> = {
   Project_Name: 'Project Name',
   'OPP Number': 'OPP Number',
@@ -99,7 +105,7 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
             <TabsContent key={docType} value={docType}>
               <Card>
                 <CardHeader>
-                  <CardTitle>{docLabels[docType]} — Preview & Overrides</CardTitle>
+                  <CardTitle>{docDescriptions[docType]}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2">
