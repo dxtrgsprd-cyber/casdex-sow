@@ -30,6 +30,7 @@ export interface ProjectInfo {
   scope: string;
   scopeOfWork: string;
   notes: string;
+  programmingNotes: string;
 }
 
 export const defaultProjectInfo: ProjectInfo = {
@@ -54,6 +55,7 @@ export const defaultProjectInfo: ProjectInfo = {
   scope: '',
   scopeOfWork: '',
   notes: '',
+  programmingNotes: '',
 };
 
 export type DocumentType = 'SOW_Customer' | 'SOW_SUB_Quoting' | 'SOW_SUB_Project';
