@@ -37,7 +37,6 @@ const fieldLabels: Record<string, string> = {
   Date: 'Date',
   Company_Address: 'Project Location',
   City_State_Zip: 'City / State / Zip',
-  Customer_Name: 'Customer Name',
   'Point of Contact': 'Point of Contact',
   Customer_Email: 'Customer Email',
   Customer_Phone: 'Customer Phone',
@@ -46,7 +45,7 @@ const fieldLabels: Record<string, string> = {
   Subcontractor_Email: 'Subcontractor Email',
   Subcontractor_Phone: 'Subcontractor Phone',
   SOLUTION_ARCHITECT: 'Solution Architect',
-  SCOPE: 'Material List',
+  Material_List: 'Material List',
   SCOPE_OF_WORK: 'Scope of Work',
   Notes: 'Notes',
 };
@@ -58,7 +57,6 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
   Date: 'date',
   Company_Address: 'companyAddress',
   City_State_Zip: 'cityStateZip',
-  Customer_Name: 'companyName',
   'Point of Contact': 'customerName',
   Customer_Email: 'customerEmail',
   Customer_Phone: 'customerPhone',
@@ -67,7 +65,7 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
   Subcontractor_Email: 'subcontractorEmail',
   Subcontractor_Phone: 'subcontractorPhone',
   SOLUTION_ARCHITECT: 'solutionArchitect',
-  SCOPE: 'scope',
+  Material_List: 'scope',
   SCOPE_OF_WORK: 'scopeOfWork',
   Notes: 'notes',
 };
