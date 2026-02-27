@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import type { ProjectInfo, SowBuilderState } from '@/types/sow';
 import {
@@ -37,7 +38,7 @@ const projectFields: { key: keyof ProjectInfo; label: string }[] = [
 const customerFields: { key: keyof ProjectInfo; label: string }[] = [
   { key: 'companyName', label: 'Customer Name' },
   { key: 'installLocation', label: 'Install Location' },
-  { key: 'multipleSites', label: 'Multiple Sites' },
+  { key: 'vertical', label: 'Vertical' },
   { key: 'customerName', label: 'Point of Contact' },
   { key: 'customerEmail', label: 'Email' },
   { key: 'customerPhone', label: 'Phone' },
@@ -126,6 +127,25 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
             onSelect={handleSelectCustomer}
             onSearch={q => setCustomerSuggestions(searchCustomers(q))}
           />
+        </div>
+      );
+    }
+
+    if (field.key === 'vertical') {
+      const verticals = ['K12', 'HEW', 'BIZ', 'GOV', 'MED'];
+      return (
+        <div key={field.key}>
+          <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
+          <Select value={info.vertical} onValueChange={val => update('vertical', val)}>
+            <SelectTrigger className="mt-1 h-8 text-sm">
+              <SelectValue placeholder="Select vertical" />
+            </SelectTrigger>
+            <SelectContent>
+              {verticals.map(v => (
+                <SelectItem key={v} value={v}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       );
     }

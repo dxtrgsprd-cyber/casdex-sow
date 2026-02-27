@@ -18,7 +18,7 @@ export interface ProjectInfo {
   companyAddress: string;
   cityStateZip: string;
   installLocation: string;
-  multipleSites: string;
+  vertical: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -42,7 +42,7 @@ export const defaultProjectInfo: ProjectInfo = {
   companyAddress: '',
   cityStateZip: '',
   installLocation: '',
-  multipleSites: '',
+  vertical: '',
   customerName: '',
   customerEmail: '',
   customerPhone: '',
