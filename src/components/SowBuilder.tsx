@@ -148,13 +148,13 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
             <Settings2 className="w-3.5 h-3.5" />
             Sections
           </TabsTrigger>
-          <TabsTrigger value="programming" className="flex-1 gap-1.5">
-            <Code2 className="w-3.5 h-3.5" />
-            Programming
-          </TabsTrigger>
           <TabsTrigger value="variables" className="flex-1 gap-1.5">
             <Wrench className="w-3.5 h-3.5" />
             Variables
+          </TabsTrigger>
+          <TabsTrigger value="programming" className="flex-1 gap-1.5">
+            <Code2 className="w-3.5 h-3.5" />
+            Programming
           </TabsTrigger>
         </TabsList>
 
