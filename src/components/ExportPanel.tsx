@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { generateDocx } from '@/lib/documentGenerator';
 import { appendToDocs } from '@/lib/appendixInjector';
+import { appendProgrammingNotes } from '@/lib/programmingAppendix';
 import {
   appendVerticalNotes,
   DEFAULT_VERTICAL_NOTES,
@@ -14,6 +15,8 @@ import {
   type VerticalEntry,
 } from '@/lib/verticalAppendix';
 import { saveTemplate, deleteTemplate } from '@/lib/templateStorage';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
@@ -24,6 +27,7 @@ interface ExportPanelProps {
   templateFiles: Record<DocumentType, ArrayBuffer | null>;
   onTemplateChange: (type: DocumentType, buffer: ArrayBuffer | null) => void;
   appendixFile: File | null;
+  onProgrammingToggle?: (enabled: boolean) => void;
   onBack: () => void;
 }
 
@@ -35,7 +39,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
 
 const VERTICAL_ORDER = ['K12', 'HEW', 'MED', 'BIZ', 'GOV'];
 
-export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onBack }: ExportPanelProps) {
+export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onProgrammingToggle, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
   // Appendix overrides state
@@ -88,6 +92,12 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
       if (appendixFile) {
         docBlob = await appendToDocs(docBlob, appendixFile);
         console.log('[export] After appendToDocs, blob size:', docBlob.size);
+      }
+
+      // Append programming notes last (after all other appendices)
+      if (info.programmingRequired && info.programmingNotes?.trim()) {
+        docBlob = await appendProgrammingNotes(docBlob, info.programmingNotes);
+        console.log('[export] After appendProgrammingNotes, blob size:', docBlob.size);
       }
 
       saveAs(docBlob, fileName);
@@ -169,6 +179,25 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
               ))}
             </div>
           </div>
+
+          {/* Programming Notes Toggle */}
+          {info.programmingNotes?.trim() && (
+            <div className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+              <Checkbox
+                id="export-include-programming"
+                checked={info.programmingRequired}
+                onCheckedChange={(checked) => onProgrammingToggle?.(!!checked)}
+              />
+              <div className="grid gap-1 leading-none">
+                <Label htmlFor="export-include-programming" className="font-semibold cursor-pointer">
+                  Include Programming Notes
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Appends programming notes as a separate page at the end of each exported document.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
