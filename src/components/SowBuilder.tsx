@@ -211,8 +211,8 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
               <CardDescription className="text-xs">
                 Enter programming details below. These will be inserted into the SOW under the "Programming" section.
                 {!programmingEnabled && (
-                  <span className="block mt-1 text-destructive font-medium">
-                    ⚠ The "Programming" section is not enabled. Add it from the Sections tab for these notes to appear in the output.
+                  <span className="block mt-1 text-muted-foreground font-medium">
+                    ℹ The "Programming" section is not enabled in the SOW narrative preview. These notes will still be exported to the document template via {'{{PROGRAMMING_DETAILS}}'}.
                   </span>
                 )}
               </CardDescription>
