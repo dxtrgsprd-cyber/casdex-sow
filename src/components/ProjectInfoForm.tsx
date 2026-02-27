@@ -3,7 +3,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import type { ProjectInfo, SowBuilderState } from '@/types/sow';
 import {
@@ -25,16 +24,20 @@ interface ProjectInfoFormProps {
 }
 
 const projectFields: { key: keyof ProjectInfo; label: string }[] = [
-  { key: 'projectName', label: 'Project Name' },
-  { key: 'oppNumber', label: 'OPP Number' },
-  { key: 'projectNumber', label: 'Project Number' },
   { key: 'date', label: 'Date' },
+  { key: 'oppNumber', label: 'OPP Number' },
+  { key: 'companyName', label: 'Customer Name' },
+  { key: 'companyAddress', label: 'Address' },
+  { key: 'cityStateZip', label: 'City / State / Zip' },
+  { key: 'projectName', label: 'Project Name' },
+  { key: 'solutionArchitect', label: 'Solution Architect / Presales Engineer' },
+  { key: 'numberOfWorkDays', label: 'Number of Work Days' },
 ];
 
 const customerFields: { key: keyof ProjectInfo; label: string }[] = [
   { key: 'companyName', label: 'Customer Name' },
-  { key: 'companyAddress', label: 'Project Location' },
-  { key: 'cityStateZip', label: 'City / State / Zip' },
+  { key: 'installLocation', label: 'Install Location' },
+  { key: 'multipleSites', label: 'Multiple Sites' },
   { key: 'customerName', label: 'Point of Contact' },
   { key: 'customerEmail', label: 'Email' },
   { key: 'customerPhone', label: 'Phone' },
@@ -45,13 +48,6 @@ const subcontractorFields: { key: keyof ProjectInfo; label: string }[] = [
   { key: 'subcontractorPoC', label: 'PoC' },
   { key: 'subcontractorEmail', label: 'Email' },
   { key: 'subcontractorPhone', label: 'Phone' },
-];
-
-const otherFields: { key: keyof ProjectInfo; label: string; type?: 'textarea' }[] = [
-  { key: 'solutionArchitect', label: 'Solution Architect' },
-  { key: 'scope', label: 'Material List', type: 'textarea' },
-  { key: 'scopeOfWork', label: 'Scope of Work', type: 'textarea' },
-  { key: 'notes', label: 'Additional Notes', type: 'textarea' },
 ];
 
 export default function ProjectInfoForm({ info, onChange, sowState, onSowStateChange, onNext, onBack }: ProjectInfoFormProps) {
@@ -117,7 +113,7 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
   const renderField = (field: { key: keyof ProjectInfo; label: string; type?: string }) => {
     if (field.key === 'companyName') {
       return (
-        <div key={field.key}>
+        <div key={field.key + field.label}>
           <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
           <AutocompleteInput
             id={field.key}
@@ -169,7 +165,7 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
     }
 
     return (
-      <div key={field.key}>
+      <div key={field.key + field.label}>
         <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
         <Input
           id={field.key}
@@ -183,14 +179,11 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
 
   return (
     <div className="space-y-3">
-      {/* Project + HTS row */}
+      {/* Project Box */}
       <div className="rounded-lg border bg-card p-3">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Project</h3>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {projectFields.map(f => renderField(f))}
-        </div>
-        <div className="mt-2">
-          {renderField(otherFields[0])}
         </div>
       </div>
 
@@ -217,35 +210,53 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
         </div>
       </div>
 
-      {/* Text areas */}
+      {/* Details: Material List, Notes, Programming Notes */}
       <div className="rounded-lg border bg-card p-3 space-y-2">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Details</h3>
         <div className="grid gap-2">
-          {otherFields.slice(1).map(f => renderField(f))}
+          <div>
+            <Label htmlFor="scope" className="text-xs">Material List</Label>
+            <Textarea
+              id="scope"
+              value={info.scope}
+              onChange={e => update('scope', e.target.value)}
+              rows={3}
+              className="mt-1 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="notes" className="text-xs">Notes</Label>
+            <Textarea
+              id="notes"
+              value={info.notes}
+              onChange={e => update('notes', e.target.value)}
+              rows={3}
+              className="mt-1 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="programmingNotes" className="text-xs">Programming Notes</Label>
+            <p className="text-xs text-muted-foreground mb-1">
+              Notes entered here will populate the Programming tab in Step 3 (Scope of Work).
+            </p>
+            <Textarea
+              id="programmingNotes"
+              value={sowState?.programmingNotes ?? ''}
+              onChange={e => {
+                if (!sowState || !onSowStateChange) return;
+                onSowStateChange({
+                  ...sowState,
+                  programmingNotes: e.target.value,
+                  variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
+                  customSowText: null,
+                });
+              }}
+              placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels`}
+              rows={4}
+              className="text-sm font-mono"
+            />
+          </div>
         </div>
-      </div>
-
-      {/* Programming Notes */}
-      <div className="rounded-lg border bg-card p-3">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Programming Notes</h3>
-        <p className="text-xs text-muted-foreground mb-2">
-          Notes entered here will populate the Programming tab in Step 3 (Scope of Work).
-        </p>
-        <Textarea
-          value={sowState?.programmingNotes ?? ''}
-          onChange={e => {
-            if (!sowState || !onSowStateChange) return;
-            onSowStateChange({
-              ...sowState,
-              programmingNotes: e.target.value,
-              variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
-              customSowText: null,
-            });
-          }}
-          placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version\nProgram access control panels`}
-          rows={4}
-          className="text-sm font-mono"
-        />
       </div>
 
       <div className="flex justify-between pt-1">

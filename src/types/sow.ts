@@ -13,9 +13,12 @@ export interface ProjectInfo {
   oppNumber: string;
   projectNumber: string;
   date: string;
+  numberOfWorkDays: string;
   companyName: string;
   companyAddress: string;
   cityStateZip: string;
+  installLocation: string;
+  multipleSites: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -34,9 +37,12 @@ export const defaultProjectInfo: ProjectInfo = {
   oppNumber: '',
   projectNumber: '',
   date: new Date().toLocaleDateString('en-US'),
+  numberOfWorkDays: '',
   companyName: '',
   companyAddress: '',
   cityStateZip: '',
+  installLocation: '',
+  multipleSites: '',
   customerName: '',
   customerEmail: '',
   customerPhone: '',

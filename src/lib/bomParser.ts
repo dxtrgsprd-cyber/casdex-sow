@@ -107,7 +107,7 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
     return cell ? String(cell.v).trim() : '';
   };
 
-  // OPP # → C4 (row 4, col C = index 2)
+  // OPP # → C4
   const opp = cellVal('C4');
   if (opp) info.oppNumber = opp;
 
@@ -123,11 +123,13 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
   const sa = cellVal('C7');
   if (sa) info.solutionArchitect = sa;
 
-  // City, State → C8, C9
-  const city = cellVal('C8');
-  const state = cellVal('C9');
-  const cityState = [city, state].filter(Boolean).join(', ');
-  if (cityState) info.cityStateZip = cityState;
+  // Project Location / Address → C8
+  const address = cellVal('C8');
+  if (address) info.companyAddress = address;
+
+  // City, State, Zip → C9
+  const cityStateZip = cellVal('C9');
+  if (cityStateZip) info.cityStateZip = cityStateZip;
 
   // Date → K5, fallback to today
   const dateVal = cellVal('K5');
