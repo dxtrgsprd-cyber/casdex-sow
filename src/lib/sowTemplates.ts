@@ -275,7 +275,7 @@ export const SOW_VARIABLES: SowVariable[] = [
 export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Record<string, string> {
   const vars: Record<string, string> = {};
 
-  const cameraKeywords = ['camera', 'dome', 'bullet', 'turret', 'ptz', 'ip cam'];
+  const cameraKeywords = ['camera', 'cam', 'dome', 'bullet', 'turret', 'ptz', 'ip cam', 'fisheye', 'panoramic', 'multisensor', 'multi-sensor', 'fixed dome', 'fixed lens', 'mini dome', 'box cam', 'wedge', 'vandal', 'eyeball'];
   const cableKeywords = ['cat6', 'cat 6', 'cable', 'cat5', 'cat 5', 'utp', 'ethernet'];
   const ptpKeywords = ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'];
   const licenseKeywords = ['license', 'licence', 'subscription', 'lic'];
@@ -294,6 +294,10 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // Cameras
   const cameraItems = matchItems(cameraKeywords);
   const cameraTotal = sumQty(cameraItems);
+  console.log(`[AutoFill] Camera matching: found ${cameraItems.length} items, total qty=${cameraTotal}`);
+  console.log(`[AutoFill] Matched cameras:`, cameraItems.map(i => `${i.quantity}x ${i.description}`));
+  const unmatchedItems = bomItems.filter(item => !cameraItems.includes(item));
+  console.log(`[AutoFill] Unmatched items:`, unmatchedItems.map(i => `${i.quantity}x ${i.description} (pn: ${i.partNumber || 'n/a'})`));
   if (cameraTotal > 0) vars['NEW_CAMERA_TOTAL'] = String(cameraTotal);
 
   // Camera brand
