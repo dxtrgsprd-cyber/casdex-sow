@@ -16,6 +16,8 @@ interface DocumentPreviewProps {
   onBack: () => void;
 }
 
+const docOrder: DocumentType[] = ['SOW_SUB_Quoting', 'SOW_SUB_Project', 'SOW_Customer'];
+
 const docLabels: Record<DocumentType, string> = {
   SOW_Customer: 'Customer SOW',
   SOW_SUB_Quoting: 'RFP SUB',
@@ -65,7 +67,7 @@ const fieldToInfoKey: Record<string, keyof ProjectInfo> = {
 };
 
 export default function DocumentPreview({ info, overrides, onOverridesChange, onNext, onBack }: DocumentPreviewProps) {
-  const [activeTab, setActiveTab] = useState<DocumentType>('SOW_Customer');
+  const [activeTab, setActiveTab] = useState<DocumentType>('SOW_SUB_Quoting');
 
   const handleOverride = (docType: DocumentType, templateField: string, value: string) => {
     const infoKey = fieldToInfoKey[templateField];
@@ -86,12 +88,12 @@ export default function DocumentPreview({ info, overrides, onOverridesChange, on
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DocumentType)}>
         <TabsList className="grid w-full grid-cols-3">
-          {(Object.keys(docLabels) as DocumentType[]).map(dt => (
+          {docOrder.map(dt => (
             <TabsTrigger key={dt} value={dt}>{docLabels[dt]}</TabsTrigger>
           ))}
         </TabsList>
 
-        {(Object.keys(docLabels) as DocumentType[]).map(docType => {
+        {docOrder.map(docType => {
           const resolved = getResolvedFields(info, overrides[docType]);
           return (
             <TabsContent key={docType} value={docType}>
