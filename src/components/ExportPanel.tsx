@@ -20,8 +20,8 @@ interface ExportPanelProps {
 
 const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_SUB_Quoting', label: 'RFP SUB' },
-  { type: 'SOW_Customer', label: 'Customer SOW' },
   { type: 'SOW_SUB_Project', label: 'SOW SUB Project' },
+  { type: 'SOW_Customer', label: 'Customer SOW' },
 ];
 
 export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onBack }: ExportPanelProps) {
