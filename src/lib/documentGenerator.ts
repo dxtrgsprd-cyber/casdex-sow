@@ -50,45 +50,165 @@ function stripBoldFromRun(runXml: string): string {
     .replace(/<w:bCs(?:\s+[^>]*)?\s*\/>/g, '');
 }
 
-function removeBoldFromTargetLines(documentXml: string, targetLines: string[]): { xml: string; updatedRuns: number } {
-  const targets = new Set(targetLines.map(normalizeForMatch).filter(Boolean));
-  if (targets.size === 0) return { xml: documentXml, updatedRuns: 0 };
+function extractRunText(runXml: string): string {
+  const texts = Array.from(runXml.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)).map((m) => decodeXmlEntities(m[1]));
+  return texts.join('');
+}
 
-  let updatedRuns = 0;
-  const xml = documentXml.replace(/<w:r\b[\s\S]*?<\/w:r>/g, (runXml) => {
-    const texts = Array.from(runXml.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)).map((m) => decodeXmlEntities(m[1]));
-    if (texts.length === 0) return runXml;
+function isHeaderText(text: string): boolean {
+  return /^\s*\d+\.\s+/.test(normalizeForMatch(text));
+}
 
-    const runText = normalizeForMatch(texts.join(''));
-    if (!targets.has(runText)) return runXml;
+function ensureBoldInRPr(rPrXml: string): string {
+  if (!rPrXml) return '<w:rPr><w:b/><w:bCs/></w:rPr>';
+  if (/<w:b(?:\s+[^>]*)?\s*\/>/.test(rPrXml)) return rPrXml;
+  return rPrXml.replace('</w:rPr>', '<w:b/><w:bCs/></w:rPr>');
+}
 
-    const stripped = stripBoldFromRun(runXml);
-    if (stripped !== runXml) updatedRuns += 1;
-    return stripped;
+function splitRunByBreaksAndApplyFormatting(runXml: string): string {
+  if (!runXml.includes('<w:br')) return runXml;
+
+  const openTagMatch = runXml.match(/^<w:r\b[^>]*>/);
+  const closeTag = '</w:r>';
+  if (!openTagMatch || !runXml.endsWith(closeTag)) return runXml;
+
+  const openTag = openTagMatch[0];
+  const inner = runXml.slice(openTag.length, -closeTag.length);
+  const rPrMatch = inner.match(/^<w:rPr>[\s\S]*?<\/w:rPr>/);
+  const originalRPr = rPrMatch ? rPrMatch[0] : '';
+  const baseRPr = stripBoldFromRun(originalRPr);
+  const content = rPrMatch ? inner.slice(originalRPr.length) : inner;
+
+  const parts = content.split(/(<w:br(?:\s+[^>]*)?\s*\/?>)/g);
+  const lineChunks: string[] = [];
+  let current = '';
+
+  for (const part of parts) {
+    if (!part) continue;
+    if (/^<w:br(?:\s+[^>]*)?\s*\/?>$/.test(part)) {
+      lineChunks.push(current);
+      current = '';
+    } else {
+      current += part;
+    }
+  }
+  lineChunks.push(current);
+
+  if (lineChunks.length <= 1) return runXml;
+
+  const rebuilt: string[] = [];
+  lineChunks.forEach((lineChunk, idx) => {
+    const textOnly = normalizeForMatch(decodeXmlEntities(lineChunk.replace(/<[^>]+>/g, '')));
+    const lineRPr = isHeaderText(textOnly) ? ensureBoldInRPr(baseRPr) : baseRPr;
+    rebuilt.push(`${openTag}${lineRPr}${lineChunk}${closeTag}`);
+    if (idx < lineChunks.length - 1) {
+      rebuilt.push(`${openTag}${baseRPr}<w:br/>${closeTag}`);
+    }
   });
 
-  return { xml, updatedRuns };
+  return rebuilt.join('');
+}
+
+function tightenParagraphSpacing(paragraphXml: string): string {
+  const spacingTag = '<w:spacing w:before="0" w:after="0" w:line="220" w:lineRule="auto"/>';
+  if (/<w:pPr>[\s\S]*?<w:spacing\b[^>]*\/>[\s\S]*?<\/w:pPr>/.test(paragraphXml)) {
+    return paragraphXml.replace(/<w:spacing\b[^>]*\/>/g, spacingTag);
+  }
+  if (/<w:pPr>/.test(paragraphXml)) {
+    return paragraphXml.replace('<w:pPr>', `<w:pPr>${spacingTag}`);
+  }
+  return paragraphXml.replace(/<w:p\b[^>]*>/, (m) => `${m}<w:pPr>${spacingTag}</w:pPr>`);
+}
+
+function paragraphTextWithLineBreaks(paragraphXml: string): string {
+  let output = '';
+  const tokenRegex = /<w:br(?:\s+[^>]*)?\s*\/>|<w:t[^>]*>[\s\S]*?<\/w:t>/g;
+  const tokens = paragraphXml.match(tokenRegex) || [];
+  for (const token of tokens) {
+    if (/^<w:br/.test(token)) {
+      output += '\n';
+    } else {
+      const textMatch = token.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/);
+      if (textMatch) output += decodeXmlEntities(textMatch[1]);
+    }
+  }
+  return output;
+}
+
+function isTargetParagraph(paragraphXml: string, targets: Set<string>): boolean {
+  const lines = paragraphTextWithLineBreaks(paragraphXml)
+    .split('\n')
+    .map((line) => normalizeForMatch(line))
+    .filter(Boolean);
+
+  if (lines.length === 0) return false;
+
+  const targetList = Array.from(targets);
+  return lines.some((line) =>
+    targets.has(line) ||
+    targetList.some((target) =>
+      (target.includes(line) && line.length > 8) ||
+      (line.includes(target) && target.length > 8)
+    )
+  );
 }
 
 function applyMultilineFieldFormattingFix(zip: PizZip, data: Record<string, string>): void {
-  const materialLines = compactMultiline(data.Material_List || '').split('\n').map((l) => l.trim()).filter(Boolean);
-  const programmingLines = compactMultiline(data.PROGRAMMING_DETAILS || '').split('\n').map((l) => l.trim()).filter(Boolean);
-  const scopeBodyLines = compactMultiline(data.SCOPE_OF_WORK || '')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l && !/^\d+\.\s+/.test(l));
+  const materialLines = compactMultiline(data.Material_List || '').split('\n').map((l) => normalizeForMatch(l)).filter(Boolean);
+  const programmingLines = compactMultiline(data.PROGRAMMING_DETAILS || '').split('\n').map((l) => normalizeForMatch(l)).filter(Boolean);
+  const scopeLines = compactMultiline(data.SCOPE_OF_WORK || '').split('\n').map((l) => normalizeForMatch(l)).filter(Boolean);
 
-  const targetLines = [...materialLines, ...programmingLines, ...scopeBodyLines];
-  if (targetLines.length === 0) return;
+  const targetSet = new Set([...materialLines, ...programmingLines, ...scopeLines]);
+  if (targetSet.size === 0) return;
 
-  const docPath = 'word/document.xml';
-  const documentXml = zip.file(docPath)?.asText();
-  if (!documentXml) return;
+  const xmlPaths = Object.keys(zip.files).filter((path) => /^word\/(document|header\d+|footer\d+)\.xml$/i.test(path));
+  if (xmlPaths.length === 0) return;
 
-  const { xml, updatedRuns } = removeBoldFromTargetLines(documentXml, targetLines);
-  if (updatedRuns > 0) {
-    zip.file(docPath, xml);
-    console.log('[docgen] Removed bold from multiline body runs:', updatedRuns);
+  let totalUpdatedParagraphs = 0;
+  let totalUpdatedRuns = 0;
+
+  for (const path of xmlPaths) {
+    const xml = zip.file(path)?.asText();
+    if (!xml) continue;
+
+    let updatedParagraphs = 0;
+    let updatedRuns = 0;
+
+    const updatedXml = xml.replace(/<w:p\b[\s\S]*?<\/w:p>/g, (paragraphXml) => {
+      if (!isTargetParagraph(paragraphXml, targetSet)) return paragraphXml;
+
+      updatedParagraphs += 1;
+      let updatedParagraph = tightenParagraphSpacing(paragraphXml);
+
+      updatedParagraph = updatedParagraph.replace(/<w:r\b[\s\S]*?<\/w:r>/g, (runXml) => {
+        const splitAdjusted = splitRunByBreaksAndApplyFormatting(runXml);
+        if (splitAdjusted !== runXml) {
+          updatedRuns += 1;
+          return splitAdjusted;
+        }
+
+        const text = normalizeForMatch(extractRunText(runXml));
+        if (!text) return runXml;
+        if (isHeaderText(text)) return runXml;
+
+        const stripped = stripBoldFromRun(runXml);
+        if (stripped !== runXml) updatedRuns += 1;
+        return stripped;
+      });
+
+      return updatedParagraph;
+    });
+
+    if (updatedParagraphs > 0 || updatedRuns > 0) {
+      zip.file(path, updatedXml);
+      totalUpdatedParagraphs += updatedParagraphs;
+      totalUpdatedRuns += updatedRuns;
+      console.log('[docgen] Formatting patch applied to', path, { updatedParagraphs, updatedRuns });
+    }
+  }
+
+  if (totalUpdatedParagraphs > 0 || totalUpdatedRuns > 0) {
+    console.log('[docgen] Formatting patch totals:', { totalUpdatedParagraphs, totalUpdatedRuns });
   }
 }
 
