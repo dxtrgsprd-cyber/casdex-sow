@@ -73,7 +73,7 @@ export function saveProjectData(id: string, data: ProjectData) {
     const entry: ProjectIndexEntry = {
       id,
       oppNumber: data.projectInfo.oppNumber,
-      customerName: data.projectInfo.customerName,
+      customerName: data.projectInfo.companyName,
       projectName: data.projectInfo.projectName,
       lastModified: new Date().toLocaleDateString('en-US'),
       currentStep: data.currentStep,
