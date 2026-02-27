@@ -200,7 +200,7 @@ const Index = () => {
           onLoad={handleLoadProject}
           onDelete={handleDeleteProject}
           onNew={handleNewProject}
-          onContinue={() => nextStep(0)}
+          onContinue={() => nextStep(currentStep)}
           onBack={() => goToStep(currentStep - 1)}
           showBack={currentStep > 1} />
 
