@@ -62,7 +62,6 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
   const handleResetTemplate = useCallback(async (docType: DocumentType) => {
     try {
       await deleteTemplate(docType);
-      // Reload default from public/templates
       const res = await fetch(`/templates/${docType}.docx`);
       if (res.ok) {
         const buffer = await res.arrayBuffer();
@@ -76,6 +75,42 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
 
   return (
     <div className="space-y-6">
+      {/* Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Download className="w-5 h-5 text-primary" />
+            Export Documents
+          </CardTitle>
+          <CardDescription>
+            Templates are pre-loaded — just download your documents
+            {appendixFile && ` (appendix "${appendixFile.name}" will be inserted at the end)`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {!allLoaded && (
+            <p className="text-sm text-muted-foreground">Loading templates…</p>
+          )}
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Download Documents</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {docTypes.map(({ type, label }) => (
+                <Button
+                  key={type}
+                  variant="outline"
+                  onClick={() => handleExportSingle(type)}
+                  disabled={!templateFiles[type]}
+                >
+                  <FileText className="w-4 h-4 mr-1.5" />
+                  {label} (.docx)
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Template Management */}
       <Card>
         <CardHeader>
@@ -115,42 +150,6 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Export */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download className="w-5 h-5 text-primary" />
-            Export Documents
-          </CardTitle>
-          <CardDescription>
-            Templates are pre-loaded — just download your documents
-            {appendixFile && ` (appendix "${appendixFile.name}" will be inserted at the end)`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {!allLoaded && (
-            <p className="text-sm text-muted-foreground">Loading templates…</p>
-          )}
-
-          <div className="space-y-3">
-            <p className="text-sm font-medium">Download Documents</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {docTypes.map(({ type, label }) => (
-                <Button
-                  key={type}
-                  variant="outline"
-                  onClick={() => handleExportSingle(type)}
-                  disabled={!templateFiles[type]}
-                >
-                  <FileText className="w-4 h-4 mr-1.5" />
-                  {label} (.docx)
-                </Button>
-              ))}
-            </div>
           </div>
         </CardContent>
       </Card>
