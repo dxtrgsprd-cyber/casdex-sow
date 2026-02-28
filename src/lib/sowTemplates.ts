@@ -19,9 +19,10 @@ Seal all exterior penetrations`,
     id: 'provide_cabling',
     title: 'Provide Cat6 Cabling',
     template: `Provide and install {{CAT6_COUNT}} new Cat6 data cables.
-Properly support cabling (no ceiling grid support)
-Label both ends of all cables
-Maintain separation from high-voltage wiring
+Indoor Cat6 (above-ceiling): Use space-rated cable (plenum where applicable)
+Maintain min 2" separation from power lines unless an exception applies.
+Supports: max 5 ft intervals, add within 12" of drops/terminations
+Properly label each cable at each end
 Approximate total cable length: {{CAT6_FOOTAGE}} ft.`,
   },
   {
@@ -33,12 +34,21 @@ Approximate total cable length: {{CAT6_FOOTAGE}} ft.`,
     id: 'conduit_installation',
     title: 'Conduit Installation',
     template: `Provide and install conduit to protect exposed cabling where required.
-Approximate conduit length: {{CONDUIT_FOOTAGE}} ft.`,
+Use listed transitions and raintight/wet-location fittings/boxes
+Keep pull/junction points accessible
+Strap EMT within 3 ft of terminations and max 10 ft intervals
+Strap PVC within 3 ft of terminations and max 3 ft intervals
+Estimated conduit length: {{CONDUIT_FOOTAGE}} ft.`,
   },
   {
     id: 'cable_termination',
     title: 'Cable Termination (Cat6)',
-    template: `Terminate {{CAT6_COUNT}} Cat6 cables at designated locations using approved termination hardware.`,
+    template: `Terminate {{CAT6_COUNT}} Cat6 cables at designated locations
+Terminate on Category-rated patch panels and keystone jacks (IDC) using T568B unless otherwise specified
+No field-crimp RJ45 on horizontal cable unless MPTL is explicitly approved and tested.
+Maintain pair twists to within 0.5 in (13 mm) of the termination, strip jacket only as needed
+Provide strain relief, and dress cabling neat without damage.
+Make device/outdoor terminations inside rated enclosures with wet-location/raintight components.`,
   },
   {
     id: 'testing_commissioning',
