@@ -417,11 +417,23 @@ export function generateSowText(
 
     num++;
     let text = customTemplates?.[id] ?? tmpl.template;
+
+    // First pass: substitute variables, marking empty/zero ones for line removal
+    const emptyMarker = '\x00EMPTY_VAR\x00';
     for (const [key, value] of Object.entries(variables)) {
-      const display = formatNumericSpelling(value || '') || `[${key}]`;
+      const trimmed = (value || '').trim();
+      const isEmptyOrZero = !trimmed || trimmed === '0';
+      const display = isEmptyOrZero ? emptyMarker : formatNumericSpelling(trimmed);
       text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), display);
     }
-    text = text.replace(/\\{\\{(\w+)\\}\}/g, '[$1]');
+    // Unfilled placeholders also mark for removal
+    text = text.replace(/\{\{(\w+)\}\}/g, emptyMarker);
+
+    // Remove any line that contains the empty marker
+    text = text
+      .split('\n')
+      .filter(line => !line.includes(emptyMarker))
+      .join('\n');
 
     // Indent all body lines under the header
     const indentedBody = text
