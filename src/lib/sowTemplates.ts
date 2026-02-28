@@ -394,9 +394,7 @@ function numberToWords(n: number): string {
 }
 
 function formatNumericSpelling(value: string): string {
-  const num = parseInt(value, 10);
-  if (isNaN(num) || value.trim() === '' || String(num) !== value.trim()) return value;
-  return `${numberToWords(num)} (${num})`;
+  return value;
 }
 
 /** Generate scope of work text from enabled sections with variables filled in */
