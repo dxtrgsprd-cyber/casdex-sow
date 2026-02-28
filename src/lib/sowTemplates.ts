@@ -387,14 +387,22 @@ const tensWords = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seven
 
 function numberToWords(n: number): string {
   if (n < 0) return 'negative ' + numberToWords(-n);
+  if (n === 0) return 'zero';
   if (n < 20) return onesWords[n];
   if (n < 100) return tensWords[Math.floor(n / 10)] + (n % 10 ? '-' + onesWords[n % 10] : '');
-  if (n < 1000) return onesWords[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' ' + numberToWords(n % 100) : '');
+  if (n < 1000) return onesWords[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' and ' + numberToWords(n % 100) : '');
+  if (n < 1000000) {
+    const thousands = Math.floor(n / 1000);
+    const remainder = n % 1000;
+    return numberToWords(thousands) + ' thousand' + (remainder ? (remainder < 100 ? ' and ' : ' ') + numberToWords(remainder) : '');
+  }
   return String(n);
 }
 
 function formatNumericSpelling(value: string): string {
-  return value;
+  const num = parseInt(value, 10);
+  if (isNaN(num) || value.trim() === '' || String(num) !== value.trim()) return value;
+  return `${numberToWords(num)} (${num})`;
 }
 
 /** Generate scope of work text from enabled sections with variables filled in */
