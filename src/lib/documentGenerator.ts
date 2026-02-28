@@ -22,9 +22,7 @@ function numberToWords(n: number): string {
 }
 
 function formatNumericSpelling(value: string): string {
-  const num = parseInt(value, 10);
-  if (isNaN(num) || value.trim() === '') return value;
-  return `${numberToWords(num)} (${num})`;
+  return value;
 }
 
 function compactMultiline(value: string): string {
