@@ -79,7 +79,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       onSowStateChange({
         ...sowState,
         variables: { ...sowState.variables, [key]: value },
-        customSowText: null,
       });
     },
     [sowState, onSowStateChange]
