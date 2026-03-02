@@ -39,7 +39,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
   { type: 'SOW_Customer', label: 'Customer SOW' },
 ];
 
-const VERTICAL_ORDER = ['K12', 'HEW', 'MED', 'BIZ', 'GOV'];
+const VERTICAL_ORDER = ['K12', 'HED', 'MED', 'BIZ', 'GOV'];
 
 export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onProgrammingToggle, onLiftToggle, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
