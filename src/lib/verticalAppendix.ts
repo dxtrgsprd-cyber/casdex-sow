@@ -18,7 +18,7 @@ export const DEFAULT_VERTICAL_NOTES: Record<string, VerticalEntry> = {
       'Replace/secure ceiling tiles same-day where possible.',
     ],
   },
-  HEW: {
+  HED: {
     title: 'HIGHER EDUCATION / UNIVERSITY',
     bullets: [
       'Coordinate access/escort rules and after-hours work with campus facilities/security.',
