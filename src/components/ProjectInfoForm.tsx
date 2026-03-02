@@ -141,7 +141,7 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
     }
 
     if (field.key === 'vertical') {
-      const verticals = ['K12', 'HEW', 'BIZ', 'GOV', 'MED'];
+      const verticals = ['K12', 'HED', 'BIZ', 'GOV', 'MED'];
       return (
         <div key={field.key}>
           <Label htmlFor={field.key} className="text-xs">{field.label}</Label>
