@@ -95,7 +95,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       onSowStateChange({
         ...sowState,
         customTemplates: updated,
-        customSowText: null,
       });
     },
     [sowState, onSowStateChange]
