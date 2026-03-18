@@ -106,7 +106,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       onSowStateChange({
         ...sowState,
         programmingNotes: value,
-        customSowText: null,
       });
     },
     [sowState, onSowStateChange]

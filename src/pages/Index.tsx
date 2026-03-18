@@ -243,9 +243,17 @@ const Index = () => {
         {currentStep === 2 &&
         <ProjectInfoForm
           info={projectInfo}
-          onChange={setProjectInfo}
+          onChange={(updated) => {
+            setProjectInfo(updated);
+          }}
           sowState={sowState}
-          onSowStateChange={setSowState}
+          onSowStateChange={(updated) => {
+            setSowState(updated);
+            // Keep programmingNotes in sync with projectInfo
+            if (updated.programmingNotes !== projectInfo.programmingNotes) {
+              setProjectInfo(prev => ({ ...prev, programmingNotes: updated.programmingNotes }));
+            }
+          }}
           onNext={() => nextStep(2)}
           onBack={() => goToStep(1)} />
         }
@@ -254,7 +262,12 @@ const Index = () => {
         <SowBuilder
           bomItems={bomItems}
           sowState={sowState}
-          onSowStateChange={setSowState}
+          onSowStateChange={(updated) => {
+            setSowState(updated);
+            if (updated.programmingNotes !== projectInfo.programmingNotes) {
+              setProjectInfo(prev => ({ ...prev, programmingNotes: updated.programmingNotes }));
+            }
+          }}
           onNext={() => {
             const sowText = sowState.customSowText ?? generateSowText(
               sowState.sectionOrder, new Set(sowState.enabledSections), sowState.variables, sowState.customTemplates
