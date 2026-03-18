@@ -62,7 +62,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const handleSectionOrderChange = useCallback(
     (newOrder: string[]) => {
-      onSowStateChange({ ...sowState, sectionOrder: newOrder, customSowText: null });
+      onSowStateChange({ ...sowState, sectionOrder: newOrder });
     },
     [sowState, onSowStateChange]
   );
