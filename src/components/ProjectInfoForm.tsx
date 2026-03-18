@@ -265,11 +265,11 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
                   value={sowState?.programmingNotes ?? ''}
                   onChange={e => {
                     if (!sowState || !onSowStateChange) return;
+                    const val = e.target.value;
                     onSowStateChange({
                       ...sowState,
-                      programmingNotes: e.target.value,
-                      variables: { ...sowState.variables, PROGRAMMING_DETAILS: e.target.value },
-                      customSowText: null,
+                      programmingNotes: val,
+                      variables: { ...sowState.variables, PROGRAMMING_DETAILS: val },
                     });
                   }}
                   placeholder={`e.g.:\nConfigure IP addresses for all cameras\nUpdate firmware to latest version`}

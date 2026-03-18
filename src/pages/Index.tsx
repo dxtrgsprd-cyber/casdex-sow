@@ -243,9 +243,17 @@ const Index = () => {
         {currentStep === 2 &&
         <ProjectInfoForm
           info={projectInfo}
-          onChange={setProjectInfo}
+          onChange={(updated) => {
+            setProjectInfo(updated);
+          }}
           sowState={sowState}
-          onSowStateChange={setSowState}
+          onSowStateChange={(updated) => {
+            setSowState(updated);
+            // Keep programmingNotes in sync with projectInfo
+            if (updated.programmingNotes !== projectInfo.programmingNotes) {
+              setProjectInfo(prev => ({ ...prev, programmingNotes: updated.programmingNotes }));
+            }
+          }}
           onNext={() => nextStep(2)}
           onBack={() => goToStep(1)} />
         }
