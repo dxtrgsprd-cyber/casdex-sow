@@ -298,10 +298,16 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
           </TabsContent>
 
           <TabsContent value="subcontractors" className="flex-1 overflow-y-auto space-y-2 mt-2">
-            <Button size="sm" variant="outline" className="w-full" onClick={() => setAdding(adding === 'sub' ? null : 'sub')}>
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add Subcontractor
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => setAdding(adding === 'sub' ? null : 'sub')}>
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Add Subcontractor
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleImportCSV('sub')}>
+                <Upload className="w-3.5 h-3.5 mr-1" />
+                Import CSV
+              </Button>
+            </div>
 
             {adding === 'sub' && (
               <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
