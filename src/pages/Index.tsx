@@ -262,7 +262,12 @@ const Index = () => {
         <SowBuilder
           bomItems={bomItems}
           sowState={sowState}
-          onSowStateChange={setSowState}
+          onSowStateChange={(updated) => {
+            setSowState(updated);
+            if (updated.programmingNotes !== projectInfo.programmingNotes) {
+              setProjectInfo(prev => ({ ...prev, programmingNotes: updated.programmingNotes }));
+            }
+          }}
           onNext={() => {
             const sowText = sowState.customSowText ?? generateSowText(
               sowState.sectionOrder, new Set(sowState.enabledSections), sowState.variables, sowState.customTemplates
