@@ -91,6 +91,100 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
     toast.success('Subcontractor deleted');
   };
 
+  const parseCSV = (text: string): string[][] => {
+    const rows: string[][] = [];
+    let current = '';
+    let inQuotes = false;
+    let row: string[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"' && text[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { row.push(current.trim()); current = ''; }
+        else if (ch === '\n' || ch === '\r') {
+          if (ch === '\r' && text[i + 1] === '\n') i++;
+          row.push(current.trim()); current = '';
+          if (row.some(c => c)) rows.push(row);
+          row = [];
+        } else { current += ch; }
+      }
+    }
+    row.push(current.trim());
+    if (row.some(c => c)) rows.push(row);
+    return rows;
+  };
+
+  const handleImportCSV = (type: 'customer' | 'sub') => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const rows = parseCSV(text);
+        if (rows.length < 2) { toast.error('CSV must have a header row and at least one data row'); return; }
+        const headers = rows[0].map(h => h.toLowerCase().replace(/[^a-z]/g, ''));
+        const dataRows = rows.slice(1);
+        let count = 0;
+
+        if (type === 'customer') {
+          const colMap = {
+            company: headers.findIndex(h => (h.includes('company') && h.includes('name')) || h === 'company'),
+            address: headers.findIndex(h => h.includes('address') && !h.includes('city') && !h.includes('state') && !h.includes('zip') && !h.includes('email')),
+            cityStateZip: headers.findIndex(h => h.includes('city') || h.includes('state') || h.includes('zip')),
+            name: headers.findIndex(h => (h.includes('contact') || h.includes('poc') || (h.includes('customer') && h.includes('name'))) && !h.includes('company')),
+            email: headers.findIndex(h => h.includes('email')),
+            phone: headers.findIndex(h => h.includes('phone')),
+          };
+          if (colMap.company < 0) colMap.company = 0;
+          for (const row of dataRows) {
+            const companyName = row[colMap.company] || '';
+            if (!companyName) continue;
+            saveCustomer({
+              companyName,
+              companyAddress: colMap.address >= 0 ? (row[colMap.address] || '') : '',
+              cityStateZip: colMap.cityStateZip >= 0 ? (row[colMap.cityStateZip] || '') : '',
+              customerName: colMap.name >= 0 ? (row[colMap.name] || '') : '',
+              customerEmail: colMap.email >= 0 ? (row[colMap.email] || '') : '',
+              customerPhone: colMap.phone >= 0 ? (row[colMap.phone] || '') : '',
+            });
+            count++;
+          }
+        } else {
+          const colMap = {
+            name: headers.findIndex(h => h.includes('company') || h.includes('subcontractor') || h.includes('name')),
+            poc: headers.findIndex(h => h.includes('contact') || h.includes('poc')),
+            email: headers.findIndex(h => h.includes('email')),
+            phone: headers.findIndex(h => h.includes('phone')),
+          };
+          if (colMap.name < 0) colMap.name = 0;
+          for (const row of dataRows) {
+            const subName = row[colMap.name] || '';
+            if (!subName) continue;
+            saveSubcontractor({
+              subcontractorName: subName,
+              subcontractorPoC: colMap.poc >= 0 ? (row[colMap.poc] || '') : '',
+              subcontractorEmail: colMap.email >= 0 ? (row[colMap.email] || '') : '',
+              subcontractorPhone: colMap.phone >= 0 ? (row[colMap.phone] || '') : '',
+            });
+            count++;
+          }
+        }
+        refresh();
+        toast.success(`Imported ${count} ${type === 'customer' ? 'customers' : 'subcontractors'}`);
+      } catch {
+        toast.error('Failed to parse CSV file');
+      }
+    };
+    input.click();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
