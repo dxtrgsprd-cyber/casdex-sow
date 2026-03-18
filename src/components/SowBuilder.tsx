@@ -69,7 +69,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const handleEnabledSectionsChange = useCallback(
     (newEnabled: string[]) => {
-      onSowStateChange({ ...sowState, enabledSections: newEnabled, customSowText: null });
+      onSowStateChange({ ...sowState, enabledSections: newEnabled });
     },
     [sowState, onSowStateChange]
   );
