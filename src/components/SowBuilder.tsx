@@ -62,14 +62,14 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const handleSectionOrderChange = useCallback(
     (newOrder: string[]) => {
-      onSowStateChange({ ...sowState, sectionOrder: newOrder, customSowText: null });
+      onSowStateChange({ ...sowState, sectionOrder: newOrder });
     },
     [sowState, onSowStateChange]
   );
 
   const handleEnabledSectionsChange = useCallback(
     (newEnabled: string[]) => {
-      onSowStateChange({ ...sowState, enabledSections: newEnabled, customSowText: null });
+      onSowStateChange({ ...sowState, enabledSections: newEnabled });
     },
     [sowState, onSowStateChange]
   );
@@ -95,7 +95,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       onSowStateChange({
         ...sowState,
         customTemplates: updated,
-        customSowText: null,
       });
     },
     [sowState, onSowStateChange]
