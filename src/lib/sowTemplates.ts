@@ -397,6 +397,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const intercomKeywords = ['intercom', 'video intercom', 'door station', 'call station', 'entry panel', 'talk-a-phone', 'aiphone', '2n'];
   const intercomItems = matchItems(intercomKeywords);
   const intercomTotal = sumQty(intercomItems);
+  console.log(`[AutoFill] Intercoms: ${intercomItems.length} items, qty=${intercomTotal}`, intercomItems.map(i => `${i.quantity}x ${i.description}`));
   if (intercomTotal > 0) vars['INTERCOM_TOTAL'] = String(intercomTotal);
   const intercomVendorCounts: Record<string, number> = {};
   intercomItems.forEach(item => {
