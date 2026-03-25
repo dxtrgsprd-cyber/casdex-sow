@@ -117,87 +117,128 @@ All mounts shall be installed properly and securely per manufacturer specificati
     id: 'ac_install',
     title: 'Install Access Control',
     template: `Install access control hardware on {{DOOR_TOTAL}} doors:
-{{RIP_REPLACE_COUNT}} rip-and-replace
-{{NEW_DOOR_COUNT}} new door(s)`,
+{{RIP_REPLACE_COUNT}} rip-and-replace door(s) — remove existing hardware, prep frame/door as needed
+{{NEW_DOOR_COUNT}} new door(s) — core/prep door and frame for new hardware
+Coordinate with GC/door hardware vendor for door prep and electrified hardware compatibility
+Verify door swing, handing, and frame condition prior to installation
+All installations shall comply with ADA, NFPA 101 Life Safety, and local fire code requirements`,
   },
   {
     id: 'ac_composite_cabling',
     title: 'Provide Composite Cabling',
-    template: `Provide and install {{COMPOSITE_COUNT}} composite/multi conductor cable run(s) (approx. {{COMPOSITE_FOOTAGE}} ft total)
-Provide and run {{CAT6_COUNT}} Cat6 cable run(s) for intercom/network devices
-Use proper cable supports and label both ends of all cabling
-Maintain separation from high-voltage wiring`,
+    template: `Provide and install {{COMPOSITE_COUNT}} composite/multi-conductor cable run(s) (approx. {{COMPOSITE_FOOTAGE}} ft total)
+Use manufacturer-recommended cable gauge and type for each device (locks, DPS, REX, readers)
+Provide and run {{CAT6_COUNT}} Cat6 cable run(s) for intercom/network-connected AC devices
+Use proper cable supports at max 5 ft intervals; secure within 12" of terminations
+Label both ends of all cabling with permanent machine-printed labels
+Maintain minimum separation from high-voltage wiring per NEC requirements
+Use plenum-rated cable in air-handling spaces where applicable
+Provide pull strings in all conduit runs for future use`,
   },
   {
     id: 'ac_controller',
     title: 'Controller Installation',
-    template: `Install {{CONTROLLER_COUNT}} new {{CONTROLLER_BRAND}} door controllers
-Secure controllers in accordance with manufacturer installation guidelines.
-Connect Controller(s) to Fire Alarm Panel (if Applicable)`,
+    template: `Install {{CONTROLLER_COUNT}} new {{CONTROLLER_BRAND}} door controller(s)
+Mount controller(s) in approved enclosure(s) in a secure, accessible location
+Secure controllers in accordance with manufacturer installation guidelines
+Connect controller(s) to network infrastructure — verify IP connectivity and communication
+Connect controller(s) to Fire Alarm Panel for emergency egress release (if applicable)
+Provide and connect tamper switch on all controller enclosures
+Ensure adequate ventilation and clearance for controller enclosures`,
   },
   {
     id: 'ac_intercom',
     title: 'Intercom Installation',
-    template: `Install {{INTERCOM_TOTAL}} new {{INTERCOM_BRAND}} intercom device(s).
-Mount intercom units secure and level.`,
+    template: `Install {{INTERCOM_TOTAL}} new {{INTERCOM_BRAND}} intercom device(s)
+Mount intercom units secure, level, and at ADA-compliant height (48" AFF to operable part)
+Connect intercom(s) to network and verify IP communication
+Wire intercom to door release relay / controller as applicable
+Configure call button, camera (if equipped), and audio settings
+Test two-way audio clarity and door release functionality
+Install weather-protective housing or rain hood for exterior-mounted units`,
   },
   {
     id: 'ac_locking',
     title: 'Electric Locking Installation',
     template: `Provide and install {{LOCK_TOTAL}} new locking hardware device(s), consisting of:
-{{ELECTRIC_STRIKE_COUNT}} electric strike(s)
-{{MAGLOCK_COUNT}} magnetic lock(s)
-{{MOTORIZED_LATCH_COUNT}} electrified latch release exit device(s)
+{{ELECTRIC_STRIKE_COUNT}} electric strike(s) — verify proper voltage, fail-safe/fail-secure configuration, and door gap
+{{MAGLOCK_COUNT}} magnetic lock(s) — mount header bracket and armature plate; verify 1200 lb holding force where specified
+{{MOTORIZED_LATCH_COUNT}} electrified latch release exit device(s) — coordinate with door hardware for proper trim and function
 {{OTHER_LOCK_COUNT}} other electrified locking device(s)
-Remove existing hardware where required.
-Prep door/frame as necessary for proper fit and operation.
-Install {{POWER_TRANSFER_COUNT}} devices (hinge/loop) where required.
-Verify proper mechanical operation prior to energizing.
-Test fail-safe / fail-secure functionality.
-Verify proper door alignment and latch engagement/disengagement`,
+Remove existing hardware where required; patch/fill abandoned penetrations
+Prep door/frame as necessary for proper fit and operation
+Install {{POWER_TRANSFER_COUNT}} power transfer device(s) (electric hinge, door loop, or EPT) where required
+Route and dress wiring neatly through door frame and header
+Verify proper mechanical operation prior to energizing
+Test fail-safe / fail-secure functionality per specification
+Verify proper door alignment, latch engagement/disengagement, and positive latching
+Confirm free egress from secured side at all times (NFPA 101 compliance)`,
   },
   {
     id: 'ac_readers',
     title: 'Reader Installation',
-    template: `Remove {{EXISTING_READER_COUNT}} existing readers
-Install {{NEW_READER_COUNT}} new {{READER_BRAND}} readers`,
+    template: `Remove {{EXISTING_READER_COUNT}} existing reader(s) and patch/cover abandoned mounting locations
+Install {{NEW_READER_COUNT}} new {{READER_BRAND}} reader(s)
+Mount readers at ADA-compliant height (48" AFF to center of reader) on latch side of door
+Secure readers with security screws; conceal wiring within wall or raceway
+Connect readers to controller using manufacturer-recommended wiring (Wiegand or OSDP as specified)
+Verify LED and audio feedback on credential presentation
+Test read range and ensure no interference from adjacent readers or metal surfaces`,
   },
   {
     id: 'ac_dps_rex',
     title: 'DPS, REX, Push Button Installation',
-    template: `Install {{DPS_COUNT}} Door Position Sensors
-Install {{REX_COUNT}} request to exits
-Install {{PUSH_COUNTS}} push to exit buttons`,
+    template: `Install {{DPS_COUNT}} Door Position Sensor(s) (DPS)
+Mount DPS on secure side of door frame; align magnet on door leaf for proper gap
+Verify door held-open and forced-door alarm reporting to controller
+Install {{REX_COUNT}} Request-to-Exit device(s) (REX)
+Mount REX sensor/button on secure side at proper height per manufacturer specs
+Adjust sensitivity and timing to prevent false triggers
+Install {{PUSH_COUNTS}} push-to-exit button(s)
+Mount push button at ADA-compliant height with clear signage
+Wire all devices to appropriate controller inputs with proper supervision (EOL resistors where required)`,
   },
   {
     id: 'ac_power',
     title: 'Power & Batteries',
-    template: `Mount {{POWER_SUPPLY_COUNT}} power supplies
-Install batteries in {{POWER_SUPPLY_COUNT}} power supplies and {{CONTROLLER_COUNT}} new controllers
-Verify correct charging voltage and backup operation.`,
+    template: `Mount {{POWER_SUPPLY_COUNT}} power supply/supplies in approved enclosure(s)
+Connect power supplies to dedicated circuit(s); verify proper voltage and amperage
+Install batteries in {{POWER_SUPPLY_COUNT}} power supply/supplies and {{CONTROLLER_COUNT}} controller(s)
+Verify correct charging voltage, current draw, and battery backup operation
+Calculate and verify sufficient battery capacity for minimum 4-hour standby (or per spec)
+Label all power supply breakers at the electrical panel
+Provide tamper switch on all power supply enclosures
+Test failover — confirm locks and controllers operate properly on battery during AC power loss`,
   },
   {
     id: 'ac_termination',
     title: 'Cable Termination (Access Control)',
-    template: `Terminate {{COMPOSITE_COUNT}} composite cables and {{CAT6_COUNT}} Cat6 cables using approved termination hardware
-Label all field wiring within enclosures for serviceability.
-Confirm controller, lock, REX, DPS, and reader connections as applicable.`,
+    template: `Terminate {{COMPOSITE_COUNT}} composite cable(s) and {{CAT6_COUNT}} Cat6 cable(s) using approved termination hardware
+Terminate multi-conductor cables on terminal strips/blocks inside controller and device enclosures
+Terminate Cat6 cables on Category-rated patch panels or keystone jacks using T568B standard
+Label all field wiring within enclosures with permanent machine-printed labels for serviceability
+Use proper wire management (tie wraps, wire duct) inside all enclosures
+Confirm controller, lock, REX, DPS, and reader connections — verify continuity and supervision
+Provide as-built wiring documentation for each door/controller`,
   },
   {
     id: 'ac_testing',
     title: 'Testing & Commissioning (Access Control)',
-    template: `Test all newly installed cabling
-Configure panel settings and network parameters
-Confirm system communication and operational status
-Ensure all devices are securely mounted
-Verify proper reader mounting height
-Verify proper locking hardware alignment
-Verify lock/unlock operation at all {{DOOR_TOTAL}} doors
-Verify reader credential functionality
-Verify DPS and REX operation
-Verify intercom communication
-Verify proper ADA compliance where required
-Confirm fire marshal free egress compliance`,
+    template: `Test all newly installed cabling for continuity and proper termination
+Configure panel/controller network settings and communication parameters
+Confirm system communication between all controllers and head-end software
+Ensure all devices are securely mounted with no exposed wiring
+Verify proper reader mounting height (48" AFF) and orientation
+Verify proper locking hardware alignment and positive latching
+Verify lock/unlock operation at all {{DOOR_TOTAL}} door(s) — test from both sides
+Verify reader credential read — present valid and invalid credentials
+Verify DPS reporting — test door-held-open and door-forced alarms
+Verify REX operation — confirm unlock timing and re-lock
+Verify intercom communication — test call, answer, and door release
+Verify emergency egress — confirm free egress and fire alarm release
+Verify proper ADA compliance at all reader and intercom locations
+Confirm fire marshal free egress compliance
+Provide test report documenting results for each door`,
   },
   {
     id: 'programming_cctv',
@@ -213,14 +254,18 @@ Verify live view, recording, and playback functionality`,
   {
     id: 'programming_ac',
     title: 'Programming (Access Control)',
-    template: `Program access control panels and controllers
-Enroll credentials and configure cardholder access levels
-Configure door schedules and access groups
-Program REX, DPS, and lock timing parameters
-Configure intercom call stations and directory
-Set up alarm monitoring and event notifications
+    template: `Program {{CONTROLLER_COUNT}} access control panel(s)/controller(s) with network and communication settings
+Configure door parameters — lock timing, held-open delay, relock time, and extended unlock for ADA
+Enroll credentials and configure cardholder access levels and access groups
+Configure door schedules (auto-unlock/lock) and holiday schedules
+Program REX, DPS, and lock timing parameters for each door
+Configure intercom call stations, directory entries, and door release associations
+Set up alarm monitoring — door forced, door held open, tamper, and communication loss
+Configure event notifications and email/SMS alerts as specified
 Configure fire alarm integration and emergency unlock sequences
-Verify all programmed functions at each door`,
+Program elevator control floors and access levels (if applicable)
+Verify all programmed functions at each door — test normal and alarm conditions
+Provide programming documentation and system configuration backup`,
   },
 ];
 
