@@ -9,7 +9,6 @@ import { Wrench, Zap, Settings2, Code2 } from 'lucide-react';
 import {
   SOW_SECTION_TEMPLATES,
   SOW_VARIABLES,
-  autoFillFromBom,
   generateSowText,
 } from '@/lib/sowTemplates';
 import type { BomItem } from '@/types/sow';
