@@ -378,6 +378,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // Camera count (reuse camera total)
   if (cameraTotal > 0) vars['CAMERA_COUNT'] = String(cameraTotal);
 
+  console.log(`[AutoFill] Starting AC auto-fill with ${bomItems.length} items`);
+
   // Access Control Controllers
   const controllerKeywords = ['controller', 'door controller', 'access panel', 'access control panel', 'acm', 'mercury', 'hid edge', 'vertx'];
   const controllerItems = matchItems(controllerKeywords);
