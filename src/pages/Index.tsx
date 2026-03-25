@@ -5,7 +5,7 @@ import ProjectInfoForm from '@/components/ProjectInfoForm';
 import SowBuilder from '@/components/SowBuilder';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
-import { generateSowText } from '@/lib/sowTemplates';
+import { generateSowText, autoFillFromBom, autoEnableSectionsFromBom } from '@/lib/sowTemplates';
 import SavedProjectsDialog from '@/components/SavedProjectsDialog';
 import ContactManagerDialog from '@/components/ContactManagerDialog';
 import { loadTemplate } from '@/lib/templateStorage';
