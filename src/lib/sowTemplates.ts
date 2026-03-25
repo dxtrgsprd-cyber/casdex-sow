@@ -434,6 +434,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const readerKeywords = ['reader', 'card reader', 'proximity reader', 'smart reader', 'multi-tech reader', 'iclass', 'multiclass', 'signo', 'r10', 'r40', 'r90', 'osdp reader'];
   const readerItems = matchItems(readerKeywords);
   const readerTotal = sumQty(readerItems);
+  console.log(`[AutoFill] Readers: ${readerItems.length} items, qty=${readerTotal}`, readerItems.map(i => `${i.quantity}x ${i.description}`));
   if (readerTotal > 0) vars['NEW_READER_COUNT'] = String(readerTotal);
   const readerVendorCounts: Record<string, number> = {};
   readerItems.forEach(item => {
