@@ -468,6 +468,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
 
+  console.log(`[AutoFill] Final AC vars:`, vars);
   return vars;
 }
 
