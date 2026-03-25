@@ -378,6 +378,91 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // Camera count (reuse camera total)
   if (cameraTotal > 0) vars['CAMERA_COUNT'] = String(cameraTotal);
 
+  // Access Control Controllers
+  const controllerKeywords = ['controller', 'door controller', 'access panel', 'access control panel', 'acm', 'mercury', 'hid edge', 'vertx'];
+  const controllerItems = matchItems(controllerKeywords);
+  const controllerTotal = sumQty(controllerItems);
+  if (controllerTotal > 0) vars['CONTROLLER_COUNT'] = String(controllerTotal);
+  const controllerVendorCounts: Record<string, number> = {};
+  controllerItems.forEach(item => {
+    if (item.vendor) controllerVendorCounts[item.vendor] = (controllerVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topControllerVendor = Object.entries(controllerVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topControllerVendor) vars['CONTROLLER_BRAND'] = topControllerVendor[0];
+
+  // Intercoms
+  const intercomKeywords = ['intercom', 'video intercom', 'door station', 'call station', 'entry panel', 'talk-a-phone', 'aiphone', '2n'];
+  const intercomItems = matchItems(intercomKeywords);
+  const intercomTotal = sumQty(intercomItems);
+  if (intercomTotal > 0) vars['INTERCOM_TOTAL'] = String(intercomTotal);
+  const intercomVendorCounts: Record<string, number> = {};
+  intercomItems.forEach(item => {
+    if (item.vendor) intercomVendorCounts[item.vendor] = (intercomVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topIntercomVendor = Object.entries(intercomVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topIntercomVendor) vars['INTERCOM_BRAND'] = topIntercomVendor[0];
+
+  // Electric Strikes
+  const strikeKeywords = ['electric strike', 'e-strike', 'door strike', 'hes ', 'von duprin strike'];
+  const strikeTotal = sumQty(matchItems(strikeKeywords));
+  if (strikeTotal > 0) vars['ELECTRIC_STRIKE_COUNT'] = String(strikeTotal);
+
+  // Maglocks
+  const maglockKeywords = ['maglock', 'mag lock', 'magnetic lock', 'electromagnetic lock', 'em lock', 'mag-lock'];
+  const maglockTotal = sumQty(matchItems(maglockKeywords));
+  if (maglockTotal > 0) vars['MAGLOCK_COUNT'] = String(maglockTotal);
+
+  // Motorized Latch / Electrified Exit Devices
+  const motorizedKeywords = ['motorized latch', 'electrified latch', 'electric latch', 'exit device', 'electrified exit', 'e-latch', 'motorized trim'];
+  const motorizedTotal = sumQty(matchItems(motorizedKeywords));
+  if (motorizedTotal > 0) vars['MOTORIZED_LATCH_COUNT'] = String(motorizedTotal);
+
+  // Lock total (sum of all lock types found)
+  const lockTotal = strikeTotal + maglockTotal + motorizedTotal;
+  if (lockTotal > 0) vars['LOCK_TOTAL'] = String(lockTotal);
+
+  // Power Transfers (hinge/loop)
+  const powerTransferKeywords = ['power transfer', 'epc', 'ept', 'elec hinge', 'electric hinge', 'power hinge', 'door loop', 'armored door loop', 'door cord'];
+  const powerTransferTotal = sumQty(matchItems(powerTransferKeywords));
+  if (powerTransferTotal > 0) vars['POWER_TRANSFER_COUNT'] = String(powerTransferTotal);
+
+  // Readers
+  const readerKeywords = ['reader', 'card reader', 'proximity reader', 'smart reader', 'multi-tech reader', 'iclass', 'multiclass', 'signo', 'r10', 'r40', 'r90', 'osdp reader'];
+  const readerItems = matchItems(readerKeywords);
+  const readerTotal = sumQty(readerItems);
+  if (readerTotal > 0) vars['NEW_READER_COUNT'] = String(readerTotal);
+  const readerVendorCounts: Record<string, number> = {};
+  readerItems.forEach(item => {
+    if (item.vendor) readerVendorCounts[item.vendor] = (readerVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topReaderVendor = Object.entries(readerVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topReaderVendor) vars['READER_BRAND'] = topReaderVendor[0];
+
+  // Door Position Sensors
+  const dpsKeywords = ['door position sensor', 'dps', 'door contact', 'magnetic contact', 'door sensor'];
+  const dpsTotal = sumQty(matchItems(dpsKeywords));
+  if (dpsTotal > 0) vars['DPS_COUNT'] = String(dpsTotal);
+
+  // REX (Request to Exit)
+  const rexKeywords = ['request to exit', 'rex', 'motion sensor exit', 'exit sensor', 'request-to-exit', 'pir exit'];
+  const rexItems = bomItems.filter(item => {
+    const desc = (item.description || '').toLowerCase();
+    const pn = (item.partNumber || '').toLowerCase();
+    return rexKeywords.some(k => desc.includes(k) || pn.includes(k));
+  });
+  const rexTotal = sumQty(rexItems);
+  if (rexTotal > 0) vars['REX_COUNT'] = String(rexTotal);
+
+  // Push-to-Exit Buttons
+  const pushKeywords = ['push to exit', 'push-to-exit', 'push button', 'exit button', 'egress button', 'mushroom button'];
+  const pushTotal = sumQty(matchItems(pushKeywords));
+  if (pushTotal > 0) vars['PUSH_COUNTS'] = String(pushTotal);
+
+  // Power Supplies
+  const powerSupplyKeywords = ['power supply', 'pwr supply', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger'];
+  const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
+  if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
+
   return vars;
 }
 
