@@ -384,6 +384,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const controllerKeywords = ['controller', 'door controller', 'access panel', 'access control panel', 'acm', 'mercury', 'hid edge', 'vertx'];
   const controllerItems = matchItems(controllerKeywords);
   const controllerTotal = sumQty(controllerItems);
+  console.log(`[AutoFill] Controllers: ${controllerItems.length} items, qty=${controllerTotal}`, controllerItems.map(i => `${i.quantity}x ${i.description}`));
   if (controllerTotal > 0) vars['CONTROLLER_COUNT'] = String(controllerTotal);
   const controllerVendorCounts: Record<string, number> = {};
   controllerItems.forEach(item => {
