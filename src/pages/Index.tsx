@@ -193,8 +193,8 @@ const Index = () => {
       setSowState(prev => {
         const mergedVars = { ...prev.variables };
         for (const [key, value] of Object.entries(autoVars)) {
-          const current = (mergedVars[key] || '').trim();
-          if (!current && value) {
+          // Force-overwrite with BOM data since user uploaded a new BOM
+          if (value) {
             mergedVars[key] = value;
           }
         }
@@ -202,7 +202,7 @@ const Index = () => {
           ...prev,
           variables: mergedVars,
           enabledSections: autoSections.length > 0 ? autoSections : prev.enabledSections,
-          customSowText: null, // Reset preview since sections changed
+          customSowText: null,
         };
       });
     }

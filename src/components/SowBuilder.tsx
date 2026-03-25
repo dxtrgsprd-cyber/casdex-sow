@@ -9,9 +9,9 @@ import { Wrench, Zap, Settings2, Code2 } from 'lucide-react';
 import {
   SOW_SECTION_TEMPLATES,
   SOW_VARIABLES,
-  autoFillFromBom,
   generateSowText,
 } from '@/lib/sowTemplates';
+import { autoFillFromBom } from '@/lib/sowTemplates';
 import type { BomItem } from '@/types/sow';
 import type { SowBuilderState } from '@/types/sow';
 import SowSectionSelector from '@/components/SowSectionSelector';
@@ -36,32 +36,6 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       });
     }
   }, []); // run once on mount
-
-  // Auto-fill from BOM on mount or when BOM changes
-  useEffect(() => {
-    if (bomItems.length === 0) return;
-    const autoVars = autoFillFromBom(bomItems);
-    console.log('[SowBuilder] autoFillFromBom returned:', autoVars);
-    const hasAnyAutoFilled = Object.keys(autoVars).some(k => autoVars[k]);
-    if (!hasAnyAutoFilled) return;
-
-    const merged = { ...sowState.variables };
-    let changed = false;
-    for (const [key, value] of Object.entries(autoVars)) {
-      // Fill if the variable is empty/unset
-      const current = (merged[key] || '').trim();
-      if (!current && value) {
-        merged[key] = value;
-        changed = true;
-      }
-    }
-    console.log('[SowBuilder] Auto-fill changed:', changed, 'merged:', merged);
-    if (changed) {
-      onSowStateChange({ ...sowState, variables: merged });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bomItems]);
-
 
   const enabledSections = new Set(sowState.enabledSections);
 
