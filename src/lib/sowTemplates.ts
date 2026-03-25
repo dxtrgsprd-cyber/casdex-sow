@@ -378,10 +378,13 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // Camera count (reuse camera total)
   if (cameraTotal > 0) vars['CAMERA_COUNT'] = String(cameraTotal);
 
+  console.log(`[AutoFill] Starting AC auto-fill with ${bomItems.length} items`);
+
   // Access Control Controllers
   const controllerKeywords = ['controller', 'door controller', 'access panel', 'access control panel', 'acm', 'mercury', 'hid edge', 'vertx'];
   const controllerItems = matchItems(controllerKeywords);
   const controllerTotal = sumQty(controllerItems);
+  console.log(`[AutoFill] Controllers: ${controllerItems.length} items, qty=${controllerTotal}`, controllerItems.map(i => `${i.quantity}x ${i.description}`));
   if (controllerTotal > 0) vars['CONTROLLER_COUNT'] = String(controllerTotal);
   const controllerVendorCounts: Record<string, number> = {};
   controllerItems.forEach(item => {
@@ -394,6 +397,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const intercomKeywords = ['intercom', 'video intercom', 'door station', 'call station', 'entry panel', 'talk-a-phone', 'aiphone', '2n'];
   const intercomItems = matchItems(intercomKeywords);
   const intercomTotal = sumQty(intercomItems);
+  console.log(`[AutoFill] Intercoms: ${intercomItems.length} items, qty=${intercomTotal}`, intercomItems.map(i => `${i.quantity}x ${i.description}`));
   if (intercomTotal > 0) vars['INTERCOM_TOTAL'] = String(intercomTotal);
   const intercomVendorCounts: Record<string, number> = {};
   intercomItems.forEach(item => {
@@ -430,6 +434,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const readerKeywords = ['reader', 'card reader', 'proximity reader', 'smart reader', 'multi-tech reader', 'iclass', 'multiclass', 'signo', 'r10', 'r40', 'r90', 'osdp reader'];
   const readerItems = matchItems(readerKeywords);
   const readerTotal = sumQty(readerItems);
+  console.log(`[AutoFill] Readers: ${readerItems.length} items, qty=${readerTotal}`, readerItems.map(i => `${i.quantity}x ${i.description}`));
   if (readerTotal > 0) vars['NEW_READER_COUNT'] = String(readerTotal);
   const readerVendorCounts: Record<string, number> = {};
   readerItems.forEach(item => {
@@ -463,6 +468,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
 
+  console.log(`[AutoFill] Final AC vars:`, vars);
   return vars;
 }
 
