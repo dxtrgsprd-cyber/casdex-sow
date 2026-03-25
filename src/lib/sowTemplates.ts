@@ -472,6 +472,45 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   return vars;
 }
 
+/** Determine which SOW sections should be enabled based on BOM contents */
+export function autoEnableSectionsFromBom(bomItems: import('@/types/sow').BomItem[]): string[] {
+  const vars = autoFillFromBom(bomItems);
+  const enabled: string[] = [];
+
+  const has = (key: string) => {
+    const v = vars[key];
+    return v && v !== '0';
+  };
+
+  // CCTV sections
+  if (has('NEW_CAMERA_TOTAL')) enabled.push('install_cameras');
+  if (has('CAT6_COUNT')) enabled.push('provide_cabling');
+  if (has('CAT6_COUNT')) enabled.push('cable_termination');
+  if (has('NEW_CAMERA_TOTAL') || has('SERVER_TOTAL')) enabled.push('testing_commissioning');
+  if (has('POE_SWITCH_COUNT')) enabled.push('poe_switches');
+  if (has('POE_INJECTOR_COUNT')) enabled.push('poe_injectors');
+  if (has('MOUNT_COUNT')) enabled.push('mounts_accessories');
+  if (has('PTP_COUNT')) enabled.push('wireless_ptp');
+  if (has('LICENSE_COUNT') || has('CAMERA_LICENSES')) enabled.push('licenses');
+  if (has('SERVER_TOTAL') || has('NVR_COUNT')) enabled.push('server_nvr');
+  if (has('NEW_CAMERA_TOTAL')) enabled.push('programming_cctv');
+
+  // Access Control sections
+  if (has('CONTROLLER_COUNT') || has('LOCK_TOTAL') || has('NEW_READER_COUNT')) enabled.push('ac_install');
+  if (has('CONTROLLER_COUNT')) enabled.push('ac_controller');
+  if (has('INTERCOM_TOTAL')) enabled.push('ac_intercom');
+  if (has('LOCK_TOTAL') || has('ELECTRIC_STRIKE_COUNT') || has('MAGLOCK_COUNT') || has('MOTORIZED_LATCH_COUNT')) enabled.push('ac_locking');
+  if (has('NEW_READER_COUNT')) enabled.push('ac_readers');
+  if (has('DPS_COUNT') || has('REX_COUNT') || has('PUSH_COUNTS')) enabled.push('ac_dps_rex');
+  if (has('POWER_SUPPLY_COUNT')) enabled.push('ac_power');
+  if (has('COMPOSITE_COUNT')) enabled.push('ac_composite_cabling');
+  if (has('COMPOSITE_COUNT') || has('CONTROLLER_COUNT')) enabled.push('ac_termination');
+  if (has('CONTROLLER_COUNT') || has('NEW_READER_COUNT')) enabled.push('ac_testing');
+  if (has('CONTROLLER_COUNT') || has('NEW_READER_COUNT')) enabled.push('programming_ac');
+
+  return [...new Set(enabled)];
+}
+
 const onesWords = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
   'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
 const tensWords = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];

@@ -5,7 +5,7 @@ import ProjectInfoForm from '@/components/ProjectInfoForm';
 import SowBuilder from '@/components/SowBuilder';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
-import { generateSowText } from '@/lib/sowTemplates';
+import { generateSowText, autoFillFromBom, autoEnableSectionsFromBom } from '@/lib/sowTemplates';
 import SavedProjectsDialog from '@/components/SavedProjectsDialog';
 import ContactManagerDialog from '@/components/ContactManagerDialog';
 import { loadTemplate } from '@/lib/templateStorage';
@@ -185,6 +185,27 @@ const Index = () => {
       }
       return merged;
     });
+
+    // Auto-enable sections and auto-fill variables from BOM
+    if (items.length > 0) {
+      const autoVars = autoFillFromBom(items);
+      const autoSections = autoEnableSectionsFromBom(items);
+      setSowState(prev => {
+        const mergedVars = { ...prev.variables };
+        for (const [key, value] of Object.entries(autoVars)) {
+          const current = (mergedVars[key] || '').trim();
+          if (!current && value) {
+            mergedVars[key] = value;
+          }
+        }
+        return {
+          ...prev,
+          variables: mergedVars,
+          enabledSections: autoSections.length > 0 ? autoSections : prev.enabledSections,
+          customSowText: null, // Reset preview since sections changed
+        };
+      });
+    }
   }, []);
 
   return (
