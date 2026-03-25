@@ -11,6 +11,7 @@ import {
   SOW_VARIABLES,
   generateSowText,
 } from '@/lib/sowTemplates';
+import { autoFillFromBom } from '@/lib/sowTemplates';
 import type { BomItem } from '@/types/sow';
 import type { SowBuilderState } from '@/types/sow';
 import SowSectionSelector from '@/components/SowSectionSelector';
