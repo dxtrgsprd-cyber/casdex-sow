@@ -8,7 +8,7 @@ export const SOW_SECTION_TEMPLATES: SowSectionTemplate[] = [
   {
     id: 'install_cameras',
     title: 'Install Cameras according to hardware schedule',
-    template: `Mount {{NEW_CAMERA_TOTAL}} new {{CAMERA_BRAND}} cameras, consisting of:
+    template: `Mount {{NEW_CAMERA_TOTAL}} new {{CAMERA_BRAND}} cameras ({{CAMERA_MODELS}}), consisting of:
 {{EXTERIOR_CAMERA_COUNT}} exterior cameras
 {{INTERIOR_CAMERA_COUNT}} interior cameras
 ALL Camera Mounting should be secure and level, according to manufacturer specs
@@ -63,7 +63,7 @@ Confirm proper focus and framing`,
   {
     id: 'server_nvr',
     title: 'Server / NVR',
-    template: `Install {{SERVER_TOTAL}} new {{SERVER_BRAND}} Server/NVR
+    template: `Install {{SERVER_TOTAL}} new {{SERVER_BRAND}} Server/NVR ({{SERVER_MODELS}})
 Install {{NVR_COUNT}} NVR/VMS server(s).
 Mount hardware and connect to power/UPS.
 Connect and configure network settings according to IP Address schema obtained from PoC
@@ -94,7 +94,7 @@ Verify license activation and proper system registration.`,
   {
     id: 'poe_switches',
     title: 'PoE Switches',
-    template: `Provide and install {{POE_SWITCH_COUNT}} PoE network switch(es).
+    template: `Provide and install {{POE_SWITCH_COUNT}} PoE network switch(es) ({{SWITCH_MODELS}}).
 Rack-mount or surface-mount switches as directed.
 Connect and configure switch ports for all PoE-powered devices.
 Verify power delivery and network connectivity on all ports.`,
@@ -133,7 +133,7 @@ Maintain separation from high-voltage wiring`,
   {
     id: 'ac_controller',
     title: 'Controller Installation',
-    template: `Install {{CONTROLLER_COUNT}} new {{CONTROLLER_BRAND}} door controllers
+    template: `Install {{CONTROLLER_COUNT}} new {{CONTROLLER_BRAND}} door controllers ({{CONTROLLER_MODELS}})
 Secure controllers in accordance with manufacturer installation guidelines.
 Provide required controller boards, enclosure terminations, and supervised connections as applicable.
 Connect controller(s) to network, power, locking hardware, readers, DPS, REX, and Fire Alarm interface where applicable.
@@ -142,7 +142,7 @@ Dress and label all field wiring inside controller enclosures for serviceability
   {
     id: 'ac_intercom',
     title: 'Intercom Installation',
-    template: `Install {{INTERCOM_TOTAL}} new {{INTERCOM_BRAND}} intercom device(s).
+    template: `Install {{INTERCOM_TOTAL}} new {{INTERCOM_BRAND}} intercom device(s) ({{INTERCOM_MODELS}}).
 Mount intercom units secure and level.
 Terminate power/network cabling, configure call routing, and verify audio/video performance and door release operation where applicable.`,
   },
@@ -165,7 +165,7 @@ Verify proper door alignment and latch engagement/disengagement`,
     id: 'ac_readers',
     title: 'Reader Installation',
     template: `Remove {{EXISTING_READER_COUNT}} existing readers
-Install {{NEW_READER_COUNT}} new {{READER_BRAND}} readers
+Install {{NEW_READER_COUNT}} new {{READER_BRAND}} readers ({{READER_MODELS}})
 Provide proper trim plates, sealants, and mullion/single-gang mounting hardware as required.
 Verify reader orientation, credential read range, LED/buzzer behavior, and final mounting height per project standards.`,
   },
@@ -243,6 +243,7 @@ export interface SowVariable {
 export const SOW_VARIABLES: SowVariable[] = [
   { key: 'NEW_CAMERA_TOTAL', label: 'New Camera Total', autoFillable: true },
   { key: 'CAMERA_BRAND', label: 'Camera Brand', autoFillable: true },
+  { key: 'CAMERA_MODELS', label: 'Camera Models', autoFillable: true },
   { key: 'EXTERIOR_CAMERA_COUNT', label: 'Exterior Camera Count', autoFillable: false },
   { key: 'INTERIOR_CAMERA_COUNT', label: 'Interior Camera Count', autoFillable: false },
   { key: 'CAT6_COUNT', label: 'Cat6 Cable Count', autoFillable: true },
@@ -252,11 +253,12 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PTP_COUNT', label: 'Point-to-Point Count', autoFillable: true },
   { key: 'LICENSE_COUNT', label: 'License Count', autoFillable: true },
   { key: 'POE_SWITCH_COUNT', label: 'PoE Switch Count', autoFillable: true },
+  { key: 'SWITCH_MODELS', label: 'Switch Models', autoFillable: true },
   { key: 'POE_INJECTOR_COUNT', label: 'PoE Injector Count', autoFillable: true },
   { key: 'MOUNT_COUNT', label: 'Mount/Accessory Count', autoFillable: true },
   { key: 'SERVER_TOTAL', label: 'Server/NVR Total', autoFillable: true },
   { key: 'SERVER_BRAND', label: 'Server Brand', autoFillable: true },
-  
+  { key: 'SERVER_MODELS', label: 'Server/NVR Models', autoFillable: true },
   { key: 'VMS_PLATFORM', label: 'VMS Platform', autoFillable: true },
   { key: 'CAMERA_LICENSES', label: 'Camera Licenses', autoFillable: true },
   { key: 'CAMERA_COUNT', label: 'Camera Count', autoFillable: true },
@@ -268,8 +270,10 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'COMPOSITE_FOOTAGE', label: 'Composite Footage', autoFillable: false },
   { key: 'CONTROLLER_COUNT', label: 'Controller Count', autoFillable: true },
   { key: 'CONTROLLER_BRAND', label: 'Controller Brand', autoFillable: true },
+  { key: 'CONTROLLER_MODELS', label: 'Controller Models', autoFillable: true },
   { key: 'INTERCOM_TOTAL', label: 'Intercom Total', autoFillable: true },
   { key: 'INTERCOM_BRAND', label: 'Intercom Brand', autoFillable: true },
+  { key: 'INTERCOM_MODELS', label: 'Intercom Models', autoFillable: true },
   { key: 'LOCK_TOTAL', label: 'Lock Total', autoFillable: true },
   { key: 'ELECTRIC_STRIKE_COUNT', label: 'Electric Strike Count', autoFillable: true },
   { key: 'MAGLOCK_COUNT', label: 'Maglock Count', autoFillable: true },
@@ -279,6 +283,7 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'EXISTING_READER_COUNT', label: 'Existing Reader Count', autoFillable: false },
   { key: 'NEW_READER_COUNT', label: 'New Reader Count', autoFillable: true },
   { key: 'READER_BRAND', label: 'Reader Brand', autoFillable: true },
+  { key: 'READER_MODELS', label: 'Reader Models', autoFillable: true },
   { key: 'DPS_COUNT', label: 'DPS Count', autoFillable: true },
   { key: 'REX_COUNT', label: 'REX Count', autoFillable: true },
   { key: 'PUSH_COUNTS', label: 'Push Button Count', autoFillable: true },
@@ -368,6 +373,18 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   });
 
   const sumQty = (items: typeof bomItems) => items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+  /** Collect unique, non-empty part numbers from matched items */
+  const collectModels = (items: typeof bomItems): string => {
+    const models = new Set<string>();
+    items.forEach(item => {
+      const pn = (item.partNumber || '').trim();
+      if (pn && pn !== 'undefined' && pn !== 'n/a' && pn !== 'N/A') {
+        models.add(pn);
+      }
+    });
+    return Array.from(models).join(', ');
+  };
   const getDoorCapacityFromController = (item: import('@/types/sow').BomItem) => {
     const text = `${item.partNumber || ''} ${item.description || ''}`.toLowerCase();
     const match = text.match(/(?:^|\b)(1|2|4|8|16)\s*[- ]?door\b/);
@@ -382,6 +399,10 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const unmatchedItems = bomItems.filter(item => !cameraItems.includes(item));
   console.log(`[AutoFill] Unmatched items:`, unmatchedItems.map(i => `${i.quantity}x ${i.description} (pn: ${i.partNumber || 'n/a'})`));
   if (cameraTotal > 0) vars['NEW_CAMERA_TOTAL'] = String(cameraTotal);
+
+  // Camera models (part numbers)
+  const cameraModels = collectModels(cameraItems);
+  if (cameraModels) vars['CAMERA_MODELS'] = cameraModels;
 
   // Camera brand
   const vendorCounts: Record<string, number> = {};
@@ -410,6 +431,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   });
   const poeSwitchTotal = sumQty(poeSwitchItems);
   if (poeSwitchTotal > 0) vars['POE_SWITCH_COUNT'] = String(poeSwitchTotal);
+  const switchModels = collectModels(poeSwitchItems);
+  if (switchModels) vars['SWITCH_MODELS'] = switchModels;
 
   // PoE Injectors
   const poeInjectorItems = bomItems.filter(item => {
@@ -430,6 +453,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const serverTotal = sumQty(serverItems);
   if (serverTotal > 0) vars['SERVER_TOTAL'] = String(serverTotal);
   if (serverTotal > 0) vars['NVR_COUNT'] = String(serverTotal);
+  const serverModels = collectModels(serverItems);
+  if (serverModels) vars['SERVER_MODELS'] = serverModels;
 
   // Server brand
   const serverVendorCounts: Record<string, number> = {};
@@ -461,6 +486,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const controllerTotal = sumQty(controllerItems);
   console.log(`[AutoFill] Controllers: ${controllerItems.length} items, qty=${controllerTotal}`, controllerItems.map(i => `${i.quantity}x ${i.description}`));
   if (controllerTotal > 0) vars['CONTROLLER_COUNT'] = String(controllerTotal);
+  const controllerModels = collectModels(controllerItems);
+  if (controllerModels) vars['CONTROLLER_MODELS'] = controllerModels;
   const controllerVendorCounts: Record<string, number> = {};
   controllerItems.forEach(item => {
     if (item.vendor) controllerVendorCounts[item.vendor] = (controllerVendorCounts[item.vendor] || 0) + item.quantity;
@@ -474,6 +501,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const intercomTotal = sumQty(intercomItems);
   console.log(`[AutoFill] Intercoms: ${intercomItems.length} items, qty=${intercomTotal}`, intercomItems.map(i => `${i.quantity}x ${i.description}`));
   if (intercomTotal > 0) vars['INTERCOM_TOTAL'] = String(intercomTotal);
+  const intercomModels = collectModels(intercomItems);
+  if (intercomModels) vars['INTERCOM_MODELS'] = intercomModels;
   const intercomVendorCounts: Record<string, number> = {};
   intercomItems.forEach(item => {
     if (item.vendor) intercomVendorCounts[item.vendor] = (intercomVendorCounts[item.vendor] || 0) + item.quantity;
@@ -511,6 +540,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const readerTotal = sumQty(readerItems);
   console.log(`[AutoFill] Readers: ${readerItems.length} items, qty=${readerTotal}`, readerItems.map(i => `${i.quantity}x ${i.description}`));
   if (readerTotal > 0) vars['NEW_READER_COUNT'] = String(readerTotal);
+  const readerModels = collectModels(readerItems);
+  if (readerModels) vars['READER_MODELS'] = readerModels;
   const readerVendorCounts: Record<string, number> = {};
   readerItems.forEach(item => {
     if (item.vendor) readerVendorCounts[item.vendor] = (readerVendorCounts[item.vendor] || 0) + item.quantity;
