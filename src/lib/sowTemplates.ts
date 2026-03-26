@@ -118,7 +118,9 @@ All mounts shall be installed properly and securely per manufacturer specificati
     title: 'Install Access Control',
     template: `Install access control hardware on {{DOOR_TOTAL}} doors:
 {{RIP_REPLACE_COUNT}} rip-and-replace
-{{NEW_DOOR_COUNT}} new door(s)`,
+{{NEW_DOOR_COUNT}} new door(s)
+Field-verify each opening, handing, frame condition, available backbox space, pathway accessibility, and hardware compatibility before installation.
+Coordinate mounting locations, rough-in requirements, and final device heights with site conditions and the hardware schedule.`,
   },
   {
     id: 'ac_composite_cabling',
@@ -133,13 +135,16 @@ Maintain separation from high-voltage wiring`,
     title: 'Controller Installation',
     template: `Install {{CONTROLLER_COUNT}} new {{CONTROLLER_BRAND}} door controllers
 Secure controllers in accordance with manufacturer installation guidelines.
-Connect Controller(s) to Fire Alarm Panel (if Applicable)`,
+Provide required controller boards, enclosure terminations, and supervised connections as applicable.
+Connect controller(s) to network, power, locking hardware, readers, DPS, REX, and Fire Alarm interface where applicable.
+Dress and label all field wiring inside controller enclosures for serviceability.`,
   },
   {
     id: 'ac_intercom',
     title: 'Intercom Installation',
     template: `Install {{INTERCOM_TOTAL}} new {{INTERCOM_BRAND}} intercom device(s).
-Mount intercom units secure and level.`,
+Mount intercom units secure and level.
+Terminate power/network cabling, configure call routing, and verify audio/video performance and door release operation where applicable.`,
   },
   {
     id: 'ac_locking',
@@ -160,14 +165,17 @@ Verify proper door alignment and latch engagement/disengagement`,
     id: 'ac_readers',
     title: 'Reader Installation',
     template: `Remove {{EXISTING_READER_COUNT}} existing readers
-Install {{NEW_READER_COUNT}} new {{READER_BRAND}} readers`,
+Install {{NEW_READER_COUNT}} new {{READER_BRAND}} readers
+Provide proper trim plates, sealants, and mullion/single-gang mounting hardware as required.
+Verify reader orientation, credential read range, LED/buzzer behavior, and final mounting height per project standards.`,
   },
   {
     id: 'ac_dps_rex',
     title: 'DPS, REX, Push Button Installation',
     template: `Install {{DPS_COUNT}} Door Position Sensors
 Install {{REX_COUNT}} request to exits
-Install {{PUSH_COUNTS}} push to exit buttons`,
+Install {{PUSH_COUNTS}} push to exit buttons
+Adjust each device for proper operation, secure mounting, and code-compliant free egress behavior where required.`,
   },
   {
     id: 'ac_power',
@@ -181,7 +189,8 @@ Verify correct charging voltage and backup operation.`,
     title: 'Cable Termination (Access Control)',
     template: `Terminate {{COMPOSITE_COUNT}} composite cables and {{CAT6_COUNT}} Cat6 cables using approved termination hardware
 Label all field wiring within enclosures for serviceability.
-Confirm controller, lock, REX, DPS, and reader connections as applicable.`,
+Confirm controller, lock, REX, DPS, reader, and intercom connections as applicable.
+Verify polarity, end-of-line supervision, and continuity before final energization.`,
   },
   {
     id: 'ac_testing',
@@ -197,7 +206,8 @@ Verify reader credential functionality
 Verify DPS and REX operation
 Verify intercom communication
 Verify proper ADA compliance where required
-Confirm fire marshal free egress compliance`,
+Confirm fire marshal free egress compliance
+Document final operational status for each opening and note any site-dependent exceptions requiring customer follow-up.`,
   },
   {
     id: 'programming_cctv',
@@ -279,6 +289,66 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'NVR_COUNT', label: 'NVR Count', autoFillable: true },
 ];
 
+export const AUTO_FILLABLE_VARIABLE_KEYS = new Set(
+  SOW_VARIABLES.filter((variable) => variable.autoFillable).map((variable) => variable.key)
+);
+
+function hasPositiveValue(vars: Record<string, string>, key: string): boolean {
+  const value = parseInt((vars[key] || '').trim(), 10);
+  return Number.isFinite(value) && value > 0;
+}
+
+export function getRecommendedSectionsFromBom(vars: Record<string, string>): string[] {
+  const enabled = new Set<string>();
+
+  const hasCctv = hasPositiveValue(vars, 'NEW_CAMERA_TOTAL');
+  const hasAccessControl = [
+    'DOOR_TOTAL',
+    'CONTROLLER_COUNT',
+    'INTERCOM_TOTAL',
+    'LOCK_TOTAL',
+    'NEW_READER_COUNT',
+    'DPS_COUNT',
+    'REX_COUNT',
+    'PUSH_COUNTS',
+    'POWER_SUPPLY_COUNT',
+  ].some((key) => hasPositiveValue(vars, key));
+
+  if (hasCctv) {
+    enabled.add('install_cameras');
+    if (hasPositiveValue(vars, 'CAT6_COUNT')) enabled.add('provide_cabling');
+    if (hasPositiveValue(vars, 'POE_SWITCH_COUNT')) enabled.add('poe_switches');
+    if (hasPositiveValue(vars, 'POE_INJECTOR_COUNT')) enabled.add('poe_injectors');
+    if (hasPositiveValue(vars, 'MOUNT_COUNT')) enabled.add('mounts_accessories');
+    if (hasPositiveValue(vars, 'SERVER_TOTAL') || hasPositiveValue(vars, 'NVR_COUNT')) enabled.add('server_nvr');
+    if (hasPositiveValue(vars, 'LICENSE_COUNT') || hasPositiveValue(vars, 'CAMERA_LICENSES')) enabled.add('licenses');
+    if (hasPositiveValue(vars, 'PTP_COUNT')) enabled.add('wireless_ptp');
+    enabled.add('cable_termination');
+    enabled.add('testing_commissioning');
+    enabled.add('programming_cctv');
+  }
+
+  if (hasAccessControl) {
+    enabled.add('ac_install');
+    if (hasPositiveValue(vars, 'COMPOSITE_COUNT') || hasPositiveValue(vars, 'CAT6_COUNT')) enabled.add('ac_composite_cabling');
+    if (hasPositiveValue(vars, 'CONTROLLER_COUNT')) enabled.add('ac_controller');
+    if (hasPositiveValue(vars, 'INTERCOM_TOTAL')) enabled.add('ac_intercom');
+    if (hasPositiveValue(vars, 'LOCK_TOTAL') || hasPositiveValue(vars, 'POWER_TRANSFER_COUNT')) enabled.add('ac_locking');
+    if (hasPositiveValue(vars, 'NEW_READER_COUNT') || hasPositiveValue(vars, 'EXISTING_READER_COUNT')) enabled.add('ac_readers');
+    if (hasPositiveValue(vars, 'DPS_COUNT') || hasPositiveValue(vars, 'REX_COUNT') || hasPositiveValue(vars, 'PUSH_COUNTS')) enabled.add('ac_dps_rex');
+    if (hasPositiveValue(vars, 'POWER_SUPPLY_COUNT') || hasPositiveValue(vars, 'CONTROLLER_COUNT')) enabled.add('ac_power');
+    enabled.add('ac_termination');
+    enabled.add('ac_testing');
+    enabled.add('programming_ac');
+  }
+
+  if (enabled.size == 0) {
+    return ['install_cameras', 'provide_cabling', 'testing_commissioning'];
+  }
+
+  return SOW_SECTION_TEMPLATES.map((section) => section.id).filter((id) => enabled.has(id));
+}
+
 /** Extract variable values from BOM items */
 export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Record<string, string> {
   const vars: Record<string, string> = {};
@@ -298,6 +368,11 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   });
 
   const sumQty = (items: typeof bomItems) => items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const getDoorCapacityFromController = (item: import('@/types/sow').BomItem) => {
+    const text = `${item.partNumber || ''} ${item.description || ''}`.toLowerCase();
+    const match = text.match(/(?:^|\b)(1|2|4|8|16)\s*[- ]?door\b/);
+    return match ? Number(match[1]) * (item.quantity || 0) : 0;
+  };
 
   // Cameras
   const cameraItems = matchItems(cameraKeywords);
@@ -467,6 +542,23 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const powerSupplyKeywords = ['power supply', 'pwr supply', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger'];
   const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
+
+  const inferredDoorTotal = Math.max(
+    controllerItems.reduce((sum, item) => sum + getDoorCapacityFromController(item), 0),
+    intercomTotal,
+    lockTotal,
+    readerTotal,
+    dpsTotal,
+    rexTotal,
+    pushTotal,
+    powerTransferTotal
+  );
+
+  if (inferredDoorTotal > 0) {
+    vars['DOOR_TOTAL'] = String(inferredDoorTotal);
+    vars['NEW_DOOR_COUNT'] = String(inferredDoorTotal);
+    vars['COMPOSITE_COUNT'] = String(inferredDoorTotal);
+  }
 
   console.log(`[AutoFill] Final AC vars:`, vars);
   return vars;
