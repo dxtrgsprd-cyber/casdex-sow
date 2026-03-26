@@ -5,7 +5,7 @@ import ProjectInfoForm from '@/components/ProjectInfoForm';
 import SowBuilder from '@/components/SowBuilder';
 import DocumentPreview from '@/components/DocumentPreview';
 import ExportPanel from '@/components/ExportPanel';
-import { generateSowText } from '@/lib/sowTemplates';
+import { AUTO_FILLABLE_VARIABLE_KEYS, autoFillFromBom, generateSowText, getRecommendedSectionsFromBom } from '@/lib/sowTemplates';
 import SavedProjectsDialog from '@/components/SavedProjectsDialog';
 import ContactManagerDialog from '@/components/ContactManagerDialog';
 import { loadTemplate } from '@/lib/templateStorage';
@@ -176,6 +176,26 @@ const Index = () => {
   const handleBomParsed = useCallback((items: BomItem[], scopeText: string, fileName: string, parsedInfo: Partial<ProjectInfo>) => {
     setBomItems(items);
     setBomFileName(fileName);
+    const autoVariables = autoFillFromBom(items);
+    const recommendedSections = getRecommendedSectionsFromBom(autoVariables);
+
+    setSowState((prev) => {
+      const nextVariables = { ...prev.variables };
+
+      for (const key of AUTO_FILLABLE_VARIABLE_KEYS) {
+        delete nextVariables[key];
+      }
+
+      Object.assign(nextVariables, autoVariables);
+
+      return {
+        ...prev,
+        enabledSections: recommendedSections,
+        variables: nextVariables,
+        customSowText: null,
+      };
+    });
+
     setProjectInfo((prev) => {
       const merged = { ...prev, scope: scopeText };
       for (const [key, value] of Object.entries(parsedInfo)) {
