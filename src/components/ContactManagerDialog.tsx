@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, Search, Building2, HardHat, Upload, Pencil } from 'lucide-react';
+import { Trash2, Plus, Search, Building2, HardHat, Upload, Pencil, Download } from 'lucide-react';
 import {
   getCustomers,
   saveCustomer,
@@ -152,6 +152,19 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
     return rows;
   };
 
+  const handleExportTemplate = (type: 'customer' | 'sub') => {
+    const headers = type === 'customer'
+      ? 'companyName,companyAddress,cityStateZip,customerName,customerEmail,customerPhone,vertical'
+      : 'companyName,companyAddress,cityStateZip,customerName,customerEmail,customerPhone';
+    const blob = new Blob([headers + '\n'], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = type === 'customer' ? 'customer_import_template.csv' : 'subcontractor_import_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleImportCSV = (type: 'customer' | 'sub') => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -257,6 +270,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
               <Button size="sm" variant="outline" onClick={() => handleImportCSV('customer')}>
                 <Upload className="w-3.5 h-3.5 mr-1" />
                 Import CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleExportTemplate('customer')}>
+                <Download className="w-3.5 h-3.5 mr-1" />
+                Template
               </Button>
             </div>
 
@@ -382,6 +399,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
               <Button size="sm" variant="outline" onClick={() => handleImportCSV('sub')}>
                 <Upload className="w-3.5 h-3.5 mr-1" />
                 Import CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleExportTemplate('sub')}>
+                <Download className="w-3.5 h-3.5 mr-1" />
+                Template
               </Button>
             </div>
 
