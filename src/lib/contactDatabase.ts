@@ -14,6 +14,7 @@ export interface CustomerContact {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  vertical?: string;
   lastUsed: string;
 }
 

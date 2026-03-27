@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Plus, Search, Building2, HardHat, Upload, Pencil, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   getCustomers,
   saveCustomer,
@@ -35,7 +36,8 @@ interface ContactManagerDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const emptyCustomer = { companyName: '', companyAddress: '', cityStateZip: '', customerName: '', customerEmail: '', customerPhone: '' };
+const VERTICALS = ['K12', 'HED', 'BIZ', 'GOV', 'MED'];
+const emptyCustomer = { companyName: '', companyAddress: '', cityStateZip: '', customerName: '', customerEmail: '', customerPhone: '', vertical: '' };
 const emptySub = { subcontractorName: '', subcontractorPoC: '', subcontractorEmail: '', subcontractorPhone: '' };
 
 export default function ContactManagerDialog({ open, onOpenChange }: ContactManagerDialogProps) {
@@ -99,7 +101,7 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
 
   const startEditCustomer = (c: CustomerContact) => {
     setEditingCustomer(c);
-    setEditingCustomerForm({ companyName: c.companyName, companyAddress: c.companyAddress, cityStateZip: c.cityStateZip, customerName: c.customerName, customerEmail: c.customerEmail, customerPhone: c.customerPhone });
+    setEditingCustomerForm({ companyName: c.companyName, companyAddress: c.companyAddress, cityStateZip: c.cityStateZip, customerName: c.customerName, customerEmail: c.customerEmail, customerPhone: c.customerPhone, vertical: c.vertical ?? '' });
     setAdding(null);
   };
 
@@ -304,6 +306,13 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
                     <Label className="text-xs">Phone</Label>
                     <Input value={newCustomer.customerPhone} onChange={e => setNewCustomer(p => ({ ...p, customerPhone: e.target.value }))} className="h-8 text-sm" />
                   </div>
+                  <div>
+                    <Label className="text-xs">Vertical</Label>
+                    <Select value={newCustomer.vertical} onValueChange={val => setNewCustomer(p => ({ ...p, vertical: val }))}>
+                      <SelectTrigger className="h-8 text-sm mt-0"><SelectValue placeholder="Select…" /></SelectTrigger>
+                      <SelectContent>{VERTICALS.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => { setAdding(null); setNewCustomer(emptyCustomer); }}>Cancel</Button>
@@ -345,6 +354,13 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
                         <Label className="text-xs">Phone</Label>
                         <Input value={editingCustomerForm.customerPhone} onChange={e => setEditingCustomerForm(p => ({ ...p, customerPhone: e.target.value }))} className="h-8 text-sm" />
                       </div>
+                      <div>
+                        <Label className="text-xs">Vertical</Label>
+                        <Select value={editingCustomerForm.vertical ?? ''} onValueChange={val => setEditingCustomerForm(p => ({ ...p, vertical: val }))}>
+                          <SelectTrigger className="h-8 text-sm mt-0"><SelectValue placeholder="Select…" /></SelectTrigger>
+                          <SelectContent>{VERTICALS.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="ghost" onClick={() => setEditingCustomer(null)}>Cancel</Button>
@@ -354,7 +370,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
                 ) : (
                   <div className="flex items-center justify-between p-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{c.companyName}</p>
+                      <p className="text-sm font-medium truncate">
+                        {c.companyName}
+                        {c.vertical && <span className="ml-1.5 text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">{c.vertical}</span>}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {[c.customerName, c.customerEmail, c.customerPhone].filter(Boolean).join(' · ')}
                       </p>
