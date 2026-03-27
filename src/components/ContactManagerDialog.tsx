@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, Search, Building2, HardHat, Upload } from 'lucide-react';
+import { Trash2, Plus, Search, Building2, HardHat, Upload, Pencil } from 'lucide-react';
 import {
   getCustomers,
   saveCustomer,
+  updateCustomer,
   deleteCustomer,
   getSubcontractors,
   saveSubcontractor,
+  updateSubcontractor,
   deleteSubcontractor,
   type CustomerContact,
   type SubcontractorContact,
@@ -43,6 +45,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
   const [adding, setAdding] = useState<'customer' | 'sub' | null>(null);
   const [newCustomer, setNewCustomer] = useState(emptyCustomer);
   const [newSub, setNewSub] = useState(emptySub);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerContact | null>(null);
+  const [editingCustomerForm, setEditingCustomerForm] = useState(emptyCustomer);
+  const [editingSub, setEditingSub] = useState<SubcontractorContact | null>(null);
+  const [editingSubForm, setEditingSubForm] = useState(emptySub);
 
   const refresh = useCallback(() => {
     setCustomers(getCustomers());
@@ -89,6 +95,34 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
     deleteSubcontractor(id);
     refresh();
     toast.success('Subcontractor deleted');
+  };
+
+  const startEditCustomer = (c: CustomerContact) => {
+    setEditingCustomer(c);
+    setEditingCustomerForm({ companyName: c.companyName, companyAddress: c.companyAddress, cityStateZip: c.cityStateZip, customerName: c.customerName, customerEmail: c.customerEmail, customerPhone: c.customerPhone });
+    setAdding(null);
+  };
+
+  const handleUpdateCustomer = () => {
+    if (!editingCustomer) return;
+    updateCustomer(editingCustomer.id, editingCustomerForm);
+    setEditingCustomer(null);
+    refresh();
+    toast.success('Customer updated');
+  };
+
+  const startEditSub = (s: SubcontractorContact) => {
+    setEditingSub(s);
+    setEditingSubForm({ subcontractorName: s.subcontractorName, subcontractorPoC: s.subcontractorPoC, subcontractorEmail: s.subcontractorEmail, subcontractorPhone: s.subcontractorPhone });
+    setAdding(null);
+  };
+
+  const handleUpdateSub = () => {
+    if (!editingSub) return;
+    updateSubcontractor(editingSub.id, editingSubForm);
+    setEditingSub(null);
+    refresh();
+    toast.success('Subcontractor updated');
   };
 
   const parseCSV = (text: string): string[][] => {
@@ -266,33 +300,75 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
             )}
 
             {filteredCustomers.map(c => (
-              <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{c.companyName}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {[c.customerName, c.customerEmail, c.customerPhone].filter(Boolean).join(' · ')}
-                  </p>
-                  {c.companyAddress && (
-                    <p className="text-xs text-muted-foreground truncate">{c.companyAddress}{c.cityStateZip ? `, ${c.cityStateZip}` : ''}</p>
-                  )}
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive shrink-0">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete customer?</AlertDialogTitle>
-                      <AlertDialogDescription>Remove "{c.companyName}" from the contact database.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteCustomer(c.id)}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+              <div key={c.id} className="rounded-lg border bg-card">
+                {editingCustomer?.id === c.id ? (
+                  <div className="p-3 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Company Name *</Label>
+                        <Input value={editingCustomerForm.companyName} onChange={e => setEditingCustomerForm(p => ({ ...p, companyName: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Point of Contact</Label>
+                        <Input value={editingCustomerForm.customerName} onChange={e => setEditingCustomerForm(p => ({ ...p, customerName: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Address</Label>
+                        <Input value={editingCustomerForm.companyAddress} onChange={e => setEditingCustomerForm(p => ({ ...p, companyAddress: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">City / State / Zip</Label>
+                        <Input value={editingCustomerForm.cityStateZip} onChange={e => setEditingCustomerForm(p => ({ ...p, cityStateZip: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Email</Label>
+                        <Input value={editingCustomerForm.customerEmail} onChange={e => setEditingCustomerForm(p => ({ ...p, customerEmail: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Phone</Label>
+                        <Input value={editingCustomerForm.customerPhone} onChange={e => setEditingCustomerForm(p => ({ ...p, customerPhone: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => setEditingCustomer(null)}>Cancel</Button>
+                      <Button size="sm" onClick={handleUpdateCustomer} disabled={!editingCustomerForm.companyName.trim()}>Save</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{c.companyName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[c.customerName, c.customerEmail, c.customerPhone].filter(Boolean).join(' · ')}
+                      </p>
+                      {c.companyAddress && (
+                        <p className="text-xs text-muted-foreground truncate">{c.companyAddress}{c.cityStateZip ? `, ${c.cityStateZip}` : ''}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => startEditCustomer(c)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+                            <AlertDialogDescription>Remove "{c.companyName}" from the contact database.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCustomer(c.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </TabsContent>
@@ -341,30 +417,64 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
             )}
 
             {filteredSubs.map(s => (
-              <div key={s.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{s.subcontractorName}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {[s.subcontractorPoC, s.subcontractorEmail, s.subcontractorPhone].filter(Boolean).join(' · ')}
-                  </p>
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive shrink-0">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete subcontractor?</AlertDialogTitle>
-                      <AlertDialogDescription>Remove "{s.subcontractorName}" from the contact database.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteSub(s.id)}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+              <div key={s.id} className="rounded-lg border bg-card">
+                {editingSub?.id === s.id ? (
+                  <div className="p-3 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Company Name *</Label>
+                        <Input value={editingSubForm.subcontractorName} onChange={e => setEditingSubForm(p => ({ ...p, subcontractorName: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Point of Contact</Label>
+                        <Input value={editingSubForm.subcontractorPoC} onChange={e => setEditingSubForm(p => ({ ...p, subcontractorPoC: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Email</Label>
+                        <Input value={editingSubForm.subcontractorEmail} onChange={e => setEditingSubForm(p => ({ ...p, subcontractorEmail: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Phone</Label>
+                        <Input value={editingSubForm.subcontractorPhone} onChange={e => setEditingSubForm(p => ({ ...p, subcontractorPhone: e.target.value }))} className="h-8 text-sm" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => setEditingSub(null)}>Cancel</Button>
+                      <Button size="sm" onClick={handleUpdateSub} disabled={!editingSubForm.subcontractorName.trim()}>Save</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{s.subcontractorName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[s.subcontractorPoC, s.subcontractorEmail, s.subcontractorPhone].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => startEditSub(s)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete subcontractor?</AlertDialogTitle>
+                            <AlertDialogDescription>Remove "{s.subcontractorName}" from the contact database.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteSub(s.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </TabsContent>

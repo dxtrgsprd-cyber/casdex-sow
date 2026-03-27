@@ -61,6 +61,14 @@ export function saveCustomer(data: Omit<CustomerContact, 'id' | 'lastUsed'>): Cu
   return entry;
 }
 
+export function updateCustomer(id: string, data: Omit<CustomerContact, 'id' | 'lastUsed'>) {
+  const customers = getCustomers();
+  const idx = customers.findIndex(c => c.id === id);
+  if (idx < 0) return;
+  customers[idx] = { ...customers[idx], ...data, lastUsed: new Date().toISOString() };
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+}
+
 export function deleteCustomer(id: string) {
   const customers = getCustomers().filter(c => c.id !== id);
   localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
@@ -105,6 +113,14 @@ export function saveSubcontractor(data: Omit<SubcontractorContact, 'id' | 'lastU
   }
   localStorage.setItem(SUBCONTRACTORS_KEY, JSON.stringify(subs));
   return entry;
+}
+
+export function updateSubcontractor(id: string, data: Omit<SubcontractorContact, 'id' | 'lastUsed'>) {
+  const subs = getSubcontractors();
+  const idx = subs.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  subs[idx] = { ...subs[idx], ...data, lastUsed: new Date().toISOString() };
+  localStorage.setItem(SUBCONTRACTORS_KEY, JSON.stringify(subs));
 }
 
 export function deleteSubcontractor(id: string) {
