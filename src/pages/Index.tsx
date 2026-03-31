@@ -317,6 +317,7 @@ const Index = () => {
         {currentStep === 5 &&
         <ExportPanel
           info={projectInfo}
+          bomItems={bomItems}
           overrides={overrides}
           templateFiles={templateFiles}
           onTemplateChange={handleTemplateChange}

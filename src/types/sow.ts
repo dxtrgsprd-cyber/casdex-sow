@@ -35,6 +35,14 @@ export interface ProjectInfo {
   liftNeeded: boolean;
   liftHeight: string;
   liftEnvironment: 'indoor' | 'outdoor' | '';
+  // Field Manual fields (optional)
+  systemType: string;
+  vms: string;
+  pmName: string;
+  pmPhone: string;
+  pmEmail: string;
+  revision: string;
+  siteName: string;
 }
 
 export const defaultProjectInfo: ProjectInfo = {
@@ -64,6 +72,14 @@ export const defaultProjectInfo: ProjectInfo = {
   liftNeeded: false,
   liftHeight: '',
   liftEnvironment: '',
+  // Field Manual defaults
+  systemType: '',
+  vms: '',
+  pmName: '',
+  pmPhone: '',
+  pmEmail: '',
+  revision: 'V1',
+  siteName: '',
 };
 
 export type DocumentType = 'SOW_Customer' | 'SOW_SUB_Quoting' | 'SOW_SUB_Project';

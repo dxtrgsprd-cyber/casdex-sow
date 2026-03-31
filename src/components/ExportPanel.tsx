@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen } from 'lucide-react';
+import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,15 +15,17 @@ import {
   saveVerticalOverrides,
   type VerticalEntry,
 } from '@/lib/verticalAppendix';
+import { downloadFieldManual } from '@/lib/fieldManualGenerator';
 import { saveTemplate, deleteTemplate } from '@/lib/templateStorage';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
-import type { ProjectInfo, DocumentType, DocumentOverrides } from '@/types/sow';
+import type { ProjectInfo, BomItem, DocumentType, DocumentOverrides } from '@/types/sow';
 
 interface ExportPanelProps {
   info: ProjectInfo;
+  bomItems: BomItem[];
   overrides: DocumentOverrides;
   templateFiles: Record<DocumentType, ArrayBuffer | null>;
   onTemplateChange: (type: DocumentType, buffer: ArrayBuffer | null) => void;
@@ -41,7 +43,7 @@ const docTypes: { type: DocumentType; label: string }[] = [
 
 const VERTICAL_ORDER = ['K12', 'HED', 'MED', 'BIZ', 'GOV'];
 
-export default function ExportPanel({ info, overrides, templateFiles, onTemplateChange, appendixFile, onProgrammingToggle, onLiftToggle, onBack }: ExportPanelProps) {
+export default function ExportPanel({ info, bomItems, overrides, templateFiles, onTemplateChange, appendixFile, onProgrammingToggle, onLiftToggle, onBack }: ExportPanelProps) {
   const allLoaded = docTypes.every(d => templateFiles[d.type]);
 
   // Appendix overrides state
@@ -185,6 +187,30 @@ export default function ExportPanel({ info, overrides, templateFiles, onTemplate
                   {label} (.docx)
                 </Button>
               ))}
+            </div>
+
+            {/* Field Manual Export */}
+            <div className="pt-3 border-t">
+              <p className="text-sm font-medium mb-2">Field Installation Manual</p>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto border-primary/30 hover:bg-primary/5"
+                onClick={async () => {
+                  try {
+                    await downloadFieldManual(info, bomItems, info.scopeOfWork || '');
+                    toast.success('Field Manual exported');
+                  } catch (e) {
+                    console.error('[export] Field Manual failed:', e);
+                    toast.error('Field Manual export failed');
+                  }
+                }}
+              >
+                <ClipboardList className="w-4 h-4 mr-1.5" />
+                Field Manual (.docx)
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">
+                Generates a 13-section installer field guide with BOM checklist, device specs, QC items, and sign-off sheet.
+              </p>
             </div>
           </div>
 

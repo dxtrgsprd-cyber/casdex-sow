@@ -323,6 +323,86 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
         </div>
       </div>
 
+      {/* Field Manual Fields */}
+      <div className="rounded-lg border bg-card p-3 space-y-2">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+          Field Manual
+          <span className="font-normal normal-case ml-1.5 text-muted-foreground/70">— optional, used when exporting the Field Installation Manual</span>
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <Label htmlFor="pmName" className="text-xs">HTS Project Manager</Label>
+            <Input
+              id="pmName"
+              value={info.pmName}
+              onChange={e => update('pmName', e.target.value)}
+              placeholder="PM Name"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="pmPhone" className="text-xs">PM Phone</Label>
+            <Input
+              id="pmPhone"
+              value={info.pmPhone}
+              onChange={e => update('pmPhone', e.target.value)}
+              placeholder="PM Phone"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="pmEmail" className="text-xs">PM Email</Label>
+            <Input
+              id="pmEmail"
+              value={info.pmEmail}
+              onChange={e => update('pmEmail', e.target.value)}
+              placeholder="PM Email"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="systemType" className="text-xs">System Type</Label>
+            <Input
+              id="systemType"
+              value={info.systemType}
+              onChange={e => update('systemType', e.target.value)}
+              placeholder="e.g. Access Control / CCTV / Intercom"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="vms" className="text-xs">VMS / Platform</Label>
+            <Input
+              id="vms"
+              value={info.vms}
+              onChange={e => update('vms', e.target.value)}
+              placeholder="e.g. Verkada Command, Wisenet Wave"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="siteName" className="text-xs">Site / Building Name</Label>
+            <Input
+              id="siteName"
+              value={info.siteName}
+              onChange={e => update('siteName', e.target.value)}
+              placeholder="e.g. Main Office, Building A"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="revision" className="text-xs">Revision</Label>
+            <Input
+              id="revision"
+              value={info.revision}
+              onChange={e => update('revision', e.target.value)}
+              placeholder="V1"
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Details: Material List, Notes */}
       <div className="rounded-lg border bg-card p-3 space-y-2">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Details</h3>
