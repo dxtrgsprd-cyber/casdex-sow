@@ -232,6 +232,19 @@ Set up alarm monitoring and event notifications
 Configure fire alarm integration and emergency unlock sequences
 Verify all programmed functions at each door`,
   },
+  {
+    id: 'vape_detection',
+    title: 'Vape Detection Sensors',
+    template: `Provide and install {{VAPE_SENSOR_COUNT}} {{VAPE_SENSOR_BRAND}} vape detection sensor(s) ({{VAPE_SENSOR_MODELS}}).
+Mount sensors securely to ceiling/wall per manufacturer specifications and coverage guidelines.
+Provide and terminate {{CAT6_COUNT}} Cat6 cabling to each sensor location as required.
+Connect sensors to network and PoE power source.
+Configure sensor detection thresholds for vape, THC, smoke, and sound anomalies (bullying/aggression) as applicable.
+Integrate sensor alerts with VMS/access control platform where supported.
+Configure notification recipients and escalation rules.
+Test each sensor for proper detection and alert delivery.
+Provide end-user training on sensor dashboard and alert management.`,
+  },
 ];
 
 export interface SowVariable {
@@ -292,6 +305,9 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PROGRAMMING_CCTV_DETAILS', label: 'Programming CCTV Details', autoFillable: false },
   { key: 'PROGRAMMING_AC_DETAILS', label: 'Programming AC Details', autoFillable: false },
   { key: 'NVR_COUNT', label: 'NVR Count', autoFillable: true },
+  { key: 'VAPE_SENSOR_COUNT', label: 'Vape Sensor Count', autoFillable: true },
+  { key: 'VAPE_SENSOR_BRAND', label: 'Vape Sensor Brand', autoFillable: true },
+  { key: 'VAPE_SENSOR_MODELS', label: 'Vape Sensor Models', autoFillable: true },
 ];
 
 export const AUTO_FILLABLE_VARIABLE_KEYS = new Set(
@@ -345,6 +361,10 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
     enabled.add('ac_termination');
     enabled.add('ac_testing');
     enabled.add('programming_ac');
+  }
+
+  if (hasPositiveValue(vars, 'VAPE_SENSOR_COUNT')) {
+    enabled.add('vape_detection');
   }
 
   if (enabled.size == 0) {
@@ -573,6 +593,21 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const powerSupplyKeywords = ['power supply', 'pwr supply', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger'];
   const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
+
+  // Vape Detection Sensors
+  const vapeKeywords = ['vape', 'vaping', 'halo smart', 'halo 3c', 'halo sensor', 'fly sense', 'flysense', 'zeptive', 'ivape', 'iaq sensor', 'thc sensor', 'vape detector'];
+  const vapeItems = matchItems(vapeKeywords);
+  const vapeTotal = sumQty(vapeItems);
+  if (vapeTotal > 0) vars['VAPE_SENSOR_COUNT'] = String(vapeTotal);
+  const vapeModels = collectModels(vapeItems);
+  if (vapeModels) vars['VAPE_SENSOR_MODELS'] = vapeModels;
+  const vapeVendorCounts: Record<string, number> = {};
+  vapeItems.forEach(item => {
+    if (item.vendor) vapeVendorCounts[item.vendor] = (vapeVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topVapeVendor = Object.entries(vapeVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topVapeVendor) vars['VAPE_SENSOR_BRAND'] = topVapeVendor[0];
+
 
   const inferredDoorTotal = Math.max(
     controllerItems.reduce((sum, item) => sum + getDoorCapacityFromController(item), 0),
