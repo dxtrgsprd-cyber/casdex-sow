@@ -210,8 +210,11 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const b20Cell = sheet[b20Addr];
           const hasDataAtStart = (checkCell && String(checkCell.v).trim()) || (b20Cell && String(b20Cell.v).trim());
           if (!hasDataAtStart) {
-            console.log(`[BOM] Sheet "${sheetName}" skipped: no data at row 20 in desc col ${descCol} or col B`);
+            if (import.meta.env.DEV) {
+              console.log(`[BOM] Sheet skipped: no data at expected start row`);
+            }
           } else {
+
 
           const items: BomItem[] = [];
           const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
