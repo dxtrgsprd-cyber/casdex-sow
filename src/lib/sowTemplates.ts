@@ -363,6 +363,10 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
     enabled.add('programming_ac');
   }
 
+  if (hasPositiveValue(vars, 'VAPE_SENSOR_COUNT')) {
+    enabled.add('vape_detection');
+  }
+
   if (enabled.size == 0) {
     return ['install_cameras', 'provide_cabling', 'testing_commissioning'];
   }
