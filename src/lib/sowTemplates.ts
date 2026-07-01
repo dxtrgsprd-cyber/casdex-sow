@@ -232,6 +232,19 @@ Set up alarm monitoring and event notifications
 Configure fire alarm integration and emergency unlock sequences
 Verify all programmed functions at each door`,
   },
+  {
+    id: 'vape_detection',
+    title: 'Vape Detection Sensors',
+    template: `Provide and install {{VAPE_SENSOR_COUNT}} {{VAPE_SENSOR_BRAND}} vape detection sensor(s) ({{VAPE_SENSOR_MODELS}}).
+Mount sensors securely to ceiling/wall per manufacturer specifications and coverage guidelines.
+Provide and terminate {{CAT6_COUNT}} Cat6 cabling to each sensor location as required.
+Connect sensors to network and PoE power source.
+Configure sensor detection thresholds for vape, THC, smoke, and sound anomalies (bullying/aggression) as applicable.
+Integrate sensor alerts with VMS/access control platform where supported.
+Configure notification recipients and escalation rules.
+Test each sensor for proper detection and alert delivery.
+Provide end-user training on sensor dashboard and alert management.`,
+  },
 ];
 
 export interface SowVariable {
