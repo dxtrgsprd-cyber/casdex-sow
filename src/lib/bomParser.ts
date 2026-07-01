@@ -129,7 +129,10 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
   const cityStateZip = [rawC8, rawC9].filter(Boolean).join(', ');
   if (cityStateZip) info.cityStateZip = cityStateZip;
 
-  console.log(`[BOM] City/State/Zip: C8="${rawC8}", C9="${rawC9}", result="${info.cityStateZip}"`);
+  if (import.meta.env.DEV) {
+    console.log(`[BOM] City/State/Zip parsed (dev only)`);
+  }
+
 
   // Date → K5, fallback to today
   const dateVal = cellVal('K5');
@@ -154,7 +157,12 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, {
+          type: 'array',
+          cellDates: true,
+          cellStyles: false, // reduce attack surface
+        });
+
 
         let bestItems: BomItem[] = [];
         let extractedInfo: Partial<ProjectInfo> = {};
@@ -173,24 +181,18 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const sheet = workbook.Sheets[sheetName];
           const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
 
-          console.log(`[BOM] Processing sheet: "${sheetName}", range: ${sheet['!ref']}`);
+          if (import.meta.env.DEV) {
+            console.log(`[BOM] Processing sheet: "${sheetName}"`);
+          }
 
           // Extract project info from Equipment sheet
           extractedInfo = extractProjectInfo(sheet);
 
-          // Log rows 18-21 columns A-K to understand structure
-          for (let r = 17; r <= 21; r++) {
-            const rowData: string[] = [];
-            for (let c = 0; c <= 10; c++) {
-              const addr = XLSX.utils.encode_cell({ r, c });
-              const cell = sheet[addr];
-              rowData.push(`${XLSX.utils.encode_col(c)}${r+1}=${cell ? JSON.stringify(cell.v) : '(empty)'}`);
-            }
-            console.log(`[BOM] Row ${r+1}: ${rowData.join(' | ')}`);
+          const colMap = buildColumnMap(sheet);
+          if (import.meta.env.DEV) {
+            console.log(`[BOM] Column map resolved (dev only)`);
           }
 
-          const colMap = buildColumnMap(sheet);
-          console.log(`[BOM] Column map:`, JSON.stringify(colMap));
 
           // Determine which column to use for "has data" check
           const descCol = colMap && colMap.description >= 0 ? colMap.description : COL_B;
@@ -208,8 +210,11 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const b20Cell = sheet[b20Addr];
           const hasDataAtStart = (checkCell && String(checkCell.v).trim()) || (b20Cell && String(b20Cell.v).trim());
           if (!hasDataAtStart) {
-            console.log(`[BOM] Sheet "${sheetName}" skipped: no data at row 20 in desc col ${descCol} or col B`);
+            if (import.meta.env.DEV) {
+              console.log(`[BOM] Sheet skipped: no data at expected start row`);
+            }
           } else {
+
 
           const items: BomItem[] = [];
           const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
@@ -249,11 +254,18 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
               totalPrice: totalPrice ?? undefined,
             });
           }
-
-          console.log(`[BOM] Sheet "${sheetName}" extracted ${items.length} items. First 3:`, items.slice(0, 3));
+          const MAX_ITEMS = 5000;
+          if (items.length > MAX_ITEMS) {
+            reject(new Error(`BOM contains too many rows (max ${MAX_ITEMS})`));
+            return;
+          }
+          if (import.meta.env.DEV) {
+            console.log(`[BOM] Extracted ${items.length} items`);
+          }
           bestItems = items;
           }
         }
+
 
         const scopeText = bestItems
           .map(item => {
