@@ -98,23 +98,9 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const enabledSections = new Set(sowState.enabledSections);
 
-  const handleSectionOrderChange = useCallback(
-    (newOrder: string[]) => {
-      onSowStateChange({ ...sowState, sectionOrder: newOrder });
-    },
-    [sowState, onSowStateChange]
-  );
-
-  const handleEnabledSectionsChange = useCallback(
-    (newEnabled: string[]) => {
-      onSowStateChange({ ...sowState, enabledSections: newEnabled });
-    },
-    [sowState, onSowStateChange]
-  );
-
-  const handleVariableChange = useCallback(
-    (key: string, value: string) => {
-      const nextVariables = { ...sowState.variables, [key]: value };
+  const mergeCustomForChange = useCallback(
+    (nextState: SowBuilderState): string | null => {
+      if (sowState.customSowText === null) return null;
       const previousGenerated = generateSowText(
         sowState.sectionOrder,
         new Set(sowState.enabledSections),
@@ -122,21 +108,70 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
         sowState.customTemplates
       );
       const nextGenerated = generateSowText(
-        sowState.sectionOrder,
-        new Set(sowState.enabledSections),
-        nextVariables,
-        sowState.customTemplates
+        nextState.sectionOrder,
+        new Set(nextState.enabledSections),
+        nextState.variables,
+        nextState.customTemplates
       );
+      // If custom text is identical to previous generated, just replace with new generated
+      if (sowState.customSowText === previousGenerated) return nextGenerated;
 
-      onSowStateChange({
-        ...sowState,
-        variables: nextVariables,
-        customSowText: sowState.customSowText === null
-          ? null
-          : mergeGeneratedChangesIntoCustom(sowState.customSowText, previousGenerated, nextGenerated),
-      });
+      // Merge: replace unchanged generated sections, append newly-enabled sections,
+      // remove sections that were disabled.
+      let merged = sowState.customSowText;
+      const prevSections = splitGeneratedSections(previousGenerated);
+      const nextSections = splitGeneratedSections(nextGenerated);
+      const prevMap = new Map(prevSections.map((s) => [sectionKey(s), s]));
+      const nextMap = new Map(nextSections.map((s) => [sectionKey(s), s]));
+
+      // Remove disabled
+      for (const [key, prevSection] of prevMap) {
+        if (!nextMap.has(key) && merged.includes(prevSection)) {
+          merged = merged.replace(prevSection + '\n\n', '').replace('\n\n' + prevSection, '').replace(prevSection, '');
+        }
+      }
+      // Replace / update existing
+      for (const [key, nextSection] of nextMap) {
+        const prevSection = prevMap.get(key);
+        if (prevSection && prevSection !== nextSection && merged.includes(prevSection)) {
+          merged = merged.replace(prevSection, nextSection);
+        }
+      }
+      // Append newly enabled sections in order
+      for (const nextSection of nextSections) {
+        const key = sectionKey(nextSection);
+        if (!prevMap.has(key) && !merged.includes(nextSection)) {
+          merged = merged.trimEnd() + '\n\n' + nextSection;
+        }
+      }
+      return merged;
     },
-    [sowState, onSowStateChange]
+    [sowState]
+  );
+
+  const handleSectionOrderChange = useCallback(
+    (newOrder: string[]) => {
+      const next = { ...sowState, sectionOrder: newOrder };
+      onSowStateChange({ ...next, customSowText: mergeCustomForChange(next) });
+    },
+    [sowState, onSowStateChange, mergeCustomForChange]
+  );
+
+  const handleEnabledSectionsChange = useCallback(
+    (newEnabled: string[]) => {
+      const next = { ...sowState, enabledSections: newEnabled };
+      onSowStateChange({ ...next, customSowText: mergeCustomForChange(next) });
+    },
+    [sowState, onSowStateChange, mergeCustomForChange]
+  );
+
+  const handleVariableChange = useCallback(
+    (key: string, value: string) => {
+      const nextVariables = { ...sowState.variables, [key]: value };
+      const next = { ...sowState, variables: nextVariables };
+      onSowStateChange({ ...next, customSowText: mergeCustomForChange(next) });
+    },
+    [sowState, onSowStateChange, mergeCustomForChange]
   );
 
   const handleCustomTemplateChange = useCallback(
@@ -147,12 +182,10 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
       } else {
         updated[id] = template;
       }
-      onSowStateChange({
-        ...sowState,
-        customTemplates: updated,
-      });
+      const next = { ...sowState, customTemplates: updated };
+      onSowStateChange({ ...next, customSowText: mergeCustomForChange(next) });
     },
-    [sowState, onSowStateChange]
+    [sowState, onSowStateChange, mergeCustomForChange]
   );
 
   const handleProgrammingNotesChange = useCallback(
@@ -164,6 +197,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     },
     [sowState, onSowStateChange]
   );
+
 
   const templateMap = useMemo(
     () => new Map(SOW_SECTION_TEMPLATES.map((s) => [s.id, s])),
