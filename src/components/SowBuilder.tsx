@@ -188,6 +188,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     [sowState, onSowStateChange, mergeCustomForChange]
   );
 
+  const handleProgrammingNotesChange = useCallback(
     (value: string) => {
       onSowStateChange({
         ...sowState,
@@ -196,6 +197,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     },
     [sowState, onSowStateChange]
   );
+
 
   const templateMap = useMemo(
     () => new Map(SOW_SECTION_TEMPLATES.map((s) => [s.id, s])),
