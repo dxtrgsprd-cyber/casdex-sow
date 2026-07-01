@@ -181,24 +181,18 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const sheet = workbook.Sheets[sheetName];
           const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
 
-          console.log(`[BOM] Processing sheet: "${sheetName}", range: ${sheet['!ref']}`);
+          if (import.meta.env.DEV) {
+            console.log(`[BOM] Processing sheet: "${sheetName}"`);
+          }
 
           // Extract project info from Equipment sheet
           extractedInfo = extractProjectInfo(sheet);
 
-          // Log rows 18-21 columns A-K to understand structure
-          for (let r = 17; r <= 21; r++) {
-            const rowData: string[] = [];
-            for (let c = 0; c <= 10; c++) {
-              const addr = XLSX.utils.encode_cell({ r, c });
-              const cell = sheet[addr];
-              rowData.push(`${XLSX.utils.encode_col(c)}${r+1}=${cell ? JSON.stringify(cell.v) : '(empty)'}`);
-            }
-            console.log(`[BOM] Row ${r+1}: ${rowData.join(' | ')}`);
+          const colMap = buildColumnMap(sheet);
+          if (import.meta.env.DEV) {
+            console.log(`[BOM] Column map resolved (dev only)`);
           }
 
-          const colMap = buildColumnMap(sheet);
-          console.log(`[BOM] Column map:`, JSON.stringify(colMap));
 
           // Determine which column to use for "has data" check
           const descCol = colMap && colMap.description >= 0 ? colMap.description : COL_B;
