@@ -305,7 +305,6 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PROGRAMMING_CCTV_DETAILS', label: 'Programming CCTV Details', autoFillable: false },
   { key: 'PROGRAMMING_AC_DETAILS', label: 'Programming AC Details', autoFillable: false },
   { key: 'NVR_COUNT', label: 'NVR Count', autoFillable: true },
-  { key: 'NVR_COUNT', label: 'NVR Count', autoFillable: true },
   { key: 'VAPE_SENSOR_COUNT', label: 'Vape Sensor Count', autoFillable: true },
   { key: 'VAPE_SENSOR_BRAND', label: 'Vape Sensor Brand', autoFillable: true },
   { key: 'VAPE_SENSOR_MODELS', label: 'Vape Sensor Models', autoFillable: true },
