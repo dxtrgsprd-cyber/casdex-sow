@@ -16,6 +16,39 @@ import type { BomItem } from '@/types/sow';
 import type { SowBuilderState } from '@/types/sow';
 import SowSectionSelector from '@/components/SowSectionSelector';
 
+function splitGeneratedSections(text: string): string[] {
+  return text ? text.split(/\n\n(?=\d+\. )/) : [];
+}
+
+function sectionKey(section: string): string {
+  return section.match(/^\d+\.\s+(.+)$/m)?.[1] ?? section;
+}
+
+function mergeGeneratedChangesIntoCustom(
+  customText: string,
+  previousGenerated: string,
+  nextGenerated: string
+): string {
+  if (customText === previousGenerated) return nextGenerated;
+
+  let merged = customText;
+  const nextSections = new Map(
+    splitGeneratedSections(nextGenerated).map((section) => [sectionKey(section), section])
+  );
+
+  for (const previousSection of splitGeneratedSections(previousGenerated)) {
+    const nextSection = nextSections.get(sectionKey(previousSection));
+    if (!nextSection || nextSection === previousSection) continue;
+
+    // Only replace generated sections that the user has not manually changed.
+    if (merged.includes(previousSection)) {
+      merged = merged.replace(previousSection, nextSection);
+    }
+  }
+
+  return merged;
+}
+
 interface SowBuilderProps {
   bomItems: BomItem[];
   sowState: SowBuilderState;
@@ -81,9 +114,26 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
   const handleVariableChange = useCallback(
     (key: string, value: string) => {
+      const nextVariables = { ...sowState.variables, [key]: value };
+      const previousGenerated = generateSowText(
+        sowState.sectionOrder,
+        new Set(sowState.enabledSections),
+        sowState.variables,
+        sowState.customTemplates
+      );
+      const nextGenerated = generateSowText(
+        sowState.sectionOrder,
+        new Set(sowState.enabledSections),
+        nextVariables,
+        sowState.customTemplates
+      );
+
       onSowStateChange({
         ...sowState,
-        variables: { ...sowState.variables, [key]: value },
+        variables: nextVariables,
+        customSowText: sowState.customSowText === null
+          ? null
+          : mergeGeneratedChangesIntoCustom(sowState.customSowText, previousGenerated, nextGenerated),
       });
     },
     [sowState, onSowStateChange]
@@ -146,6 +196,16 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     const enabled = new Set(sowState.enabledSections);
     return generateSowText(sowState.sectionOrder, enabled, sowState.variables, sowState.customTemplates);
   }, [sowState.sectionOrder, sowState.enabledSections, sowState.variables, sowState.customTemplates]);
+
+  const handlePreviewTextChange = useCallback(
+    (value: string) => {
+      onSowStateChange({
+        ...sowState,
+        customSowText: value === previewText ? null : value,
+      });
+    },
+    [sowState, previewText, onSowStateChange]
+  );
 
   return (
     <div className="space-y-4">
@@ -272,7 +332,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
           <CardContent>
             <Textarea
               value={sowState.customSowText ?? previewText}
-              onChange={(e) => onSowStateChange({ ...sowState, customSowText: e.target.value })}
+              onChange={(e) => handlePreviewTextChange(e.target.value)}
               className="min-h-[20rem] text-sm font-mono whitespace-pre"
             />
             {sowState.customSowText !== null && (
