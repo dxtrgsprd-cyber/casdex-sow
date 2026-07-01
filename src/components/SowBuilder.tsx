@@ -17,36 +17,152 @@ import type { SowBuilderState } from '@/types/sow';
 import SowSectionSelector from '@/components/SowSectionSelector';
 
 function splitGeneratedSections(text: string): string[] {
-  return text ? text.split(/\n\n(?=\d+\. )/) : [];
+  return text.trim() ? text.trim().split(/\n{2,}(?=\d+\.\s)/).map((section) => section.trim()).filter(Boolean) : [];
 }
 
 function sectionKey(section: string): string {
-  return section.match(/^\d+\.\s+(.+)$/m)?.[1] ?? section;
+  return section.match(/^\d+\.\s+(.+)$/m)?.[1]?.trim() ?? section.trim();
 }
 
-function mergeGeneratedChangesIntoCustom(
-  customText: string,
-  previousGenerated: string,
-  nextGenerated: string
-): string {
-  if (customText === previousGenerated) return nextGenerated;
+type LineDiff =
+  | { type: 'equal'; line: string }
+  | { type: 'delete'; line: string }
+  | { type: 'insert'; line: string };
 
-  let merged = customText;
-  const nextSections = new Map(
-    splitGeneratedSections(nextGenerated).map((section) => [sectionKey(section), section])
-  );
+function diffLines(previousLines: string[], nextLines: string[]): LineDiff[] {
+  const dp = Array.from({ length: previousLines.length + 1 }, () => Array(nextLines.length + 1).fill(0));
 
-  for (const previousSection of splitGeneratedSections(previousGenerated)) {
-    const nextSection = nextSections.get(sectionKey(previousSection));
-    if (!nextSection || nextSection === previousSection) continue;
-
-    // Only replace generated sections that the user has not manually changed.
-    if (merged.includes(previousSection)) {
-      merged = merged.replace(previousSection, nextSection);
+  for (let i = previousLines.length - 1; i >= 0; i--) {
+    for (let j = nextLines.length - 1; j >= 0; j--) {
+      dp[i][j] = previousLines[i] === nextLines[j]
+        ? dp[i + 1][j + 1] + 1
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
     }
   }
 
-  return merged;
+  const diff: LineDiff[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < previousLines.length && j < nextLines.length) {
+    if (previousLines[i] === nextLines[j]) {
+      diff.push({ type: 'equal', line: previousLines[i] });
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      diff.push({ type: 'delete', line: previousLines[i] });
+      i++;
+    } else {
+      diff.push({ type: 'insert', line: nextLines[j] });
+      j++;
+    }
+  }
+  while (i < previousLines.length) diff.push({ type: 'delete', line: previousLines[i++] });
+  while (j < nextLines.length) diff.push({ type: 'insert', line: nextLines[j++] });
+
+  return diff;
+}
+
+function findLineIndex(lines: string[], line: string): number {
+  return lines.findIndex((candidate) => candidate === line);
+}
+
+function insertGeneratedLine(lines: string[], line: string, afterLine: string | null, beforeLine: string | null) {
+  if (!line.trim() || lines.includes(line)) return;
+
+  const beforeIndex = beforeLine ? findLineIndex(lines, beforeLine) : -1;
+  if (beforeIndex !== -1) {
+    lines.splice(beforeIndex, 0, line);
+    return;
+  }
+
+  const afterIndex = afterLine ? findLineIndex(lines, afterLine) : -1;
+  if (afterIndex !== -1) {
+    lines.splice(afterIndex + 1, 0, line);
+    return;
+  }
+
+  lines.push(line);
+}
+
+function nextEqualLine(diff: LineDiff[], startIndex: number): string | null {
+  for (let i = startIndex; i < diff.length; i++) {
+    if (diff[i].type === 'equal') return diff[i].line;
+  }
+  return null;
+}
+
+function flushDeletedLines(lines: string[], deletedLines: string[]) {
+  for (const deletedLine of deletedLines) {
+    const index = findLineIndex(lines, deletedLine);
+    if (index !== -1) lines.splice(index, 1);
+  }
+  deletedLines.length = 0;
+}
+
+function mergeSectionText(customSection: string, previousSection: string, nextSection: string): string {
+  if (customSection === previousSection) return nextSection;
+
+  const mergedLines = customSection.split('\n');
+  const diff = diffLines(previousSection.split('\n'), nextSection.split('\n'));
+  const pendingDeletes: string[] = [];
+  let lastEqualLine: string | null = null;
+
+  diff.forEach((op, index) => {
+    if (op.type === 'delete') {
+      pendingDeletes.push(op.line);
+      return;
+    }
+
+    if (op.type === 'insert') {
+      const deletedLine = pendingDeletes.shift();
+      if (deletedLine !== undefined) {
+        const deletedIndex = findLineIndex(mergedLines, deletedLine);
+        if (deletedIndex !== -1) mergedLines[deletedIndex] = op.line;
+        return;
+      }
+
+      insertGeneratedLine(mergedLines, op.line, lastEqualLine, nextEqualLine(diff, index + 1));
+      return;
+    }
+
+    flushDeletedLines(mergedLines, pendingDeletes);
+    lastEqualLine = op.line;
+  });
+
+  flushDeletedLines(mergedLines, pendingDeletes);
+  return mergedLines.join('\n').trim();
+}
+
+function mergeGeneratedIntoCustom(customText: string, previousGenerated: string, nextGenerated: string): string {
+  if (customText.trim() === previousGenerated.trim()) return nextGenerated;
+
+  const previousSections = splitGeneratedSections(previousGenerated);
+  const nextSections = splitGeneratedSections(nextGenerated);
+  const customSections = splitGeneratedSections(customText);
+  const previousMap = new Map(previousSections.map((section) => [sectionKey(section), section]));
+  const customMap = new Map(customSections.map((section) => [sectionKey(section), section]));
+  const nextKeys = new Set(nextSections.map(sectionKey));
+  const usedCustomKeys = new Set<string>();
+
+  const mergedSections = nextSections.map((nextSection) => {
+    const key = sectionKey(nextSection);
+    const previousSection = previousMap.get(key);
+    const customSection = customMap.get(key);
+    if (previousSection && customSection) {
+      usedCustomKeys.add(key);
+      return mergeSectionText(customSection, previousSection, nextSection);
+    }
+    return nextSection;
+  });
+
+  for (const customSection of customSections) {
+    const key = sectionKey(customSection);
+    if (!usedCustomKeys.has(key) && !previousMap.has(key) && !nextKeys.has(key)) {
+      mergedSections.push(customSection);
+    }
+  }
+
+  return mergedSections.join('\n\n').trim();
 }
 
 interface SowBuilderProps {
@@ -113,38 +229,7 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
         nextState.variables,
         nextState.customTemplates
       );
-      // If custom text is identical to previous generated, just replace with new generated
-      if (sowState.customSowText === previousGenerated) return nextGenerated;
-
-      // Merge: replace unchanged generated sections, append newly-enabled sections,
-      // remove sections that were disabled.
-      let merged = sowState.customSowText;
-      const prevSections = splitGeneratedSections(previousGenerated);
-      const nextSections = splitGeneratedSections(nextGenerated);
-      const prevMap = new Map(prevSections.map((s) => [sectionKey(s), s]));
-      const nextMap = new Map(nextSections.map((s) => [sectionKey(s), s]));
-
-      // Remove disabled
-      for (const [key, prevSection] of prevMap) {
-        if (!nextMap.has(key) && merged.includes(prevSection)) {
-          merged = merged.replace(prevSection + '\n\n', '').replace('\n\n' + prevSection, '').replace(prevSection, '');
-        }
-      }
-      // Replace / update existing
-      for (const [key, nextSection] of nextMap) {
-        const prevSection = prevMap.get(key);
-        if (prevSection && prevSection !== nextSection && merged.includes(prevSection)) {
-          merged = merged.replace(prevSection, nextSection);
-        }
-      }
-      // Append newly enabled sections in order
-      for (const nextSection of nextSections) {
-        const key = sectionKey(nextSection);
-        if (!prevMap.has(key) && !merged.includes(nextSection)) {
-          merged = merged.trimEnd() + '\n\n' + nextSection;
-        }
-      }
-      return merged;
+      return mergeGeneratedIntoCustom(sowState.customSowText, previousGenerated, nextGenerated);
     },
     [sowState]
   );
