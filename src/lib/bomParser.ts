@@ -254,11 +254,18 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
               totalPrice: totalPrice ?? undefined,
             });
           }
-
-          console.log(`[BOM] Sheet "${sheetName}" extracted ${items.length} items. First 3:`, items.slice(0, 3));
+          const MAX_ITEMS = 5000;
+          if (items.length > MAX_ITEMS) {
+            reject(new Error(`BOM contains too many rows (max ${MAX_ITEMS})`));
+            return;
+          }
+          if (import.meta.env.DEV) {
+            console.log(`[BOM] Extracted ${items.length} items`);
+          }
           bestItems = items;
           }
         }
+
 
         const scopeText = bestItems
           .map(item => {
