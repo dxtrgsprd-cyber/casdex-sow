@@ -67,8 +67,9 @@ export function loadProjectData(id: string): ProjectData | null {
 }
 
 export function saveProjectData(id: string, data: ProjectData) {
+  const serialized = JSON.stringify(data);
   try {
-    localStorage.setItem(PROJECT_DATA_PREFIX + id, JSON.stringify(data));
+    localStorage.setItem(PROJECT_DATA_PREFIX + id, serialized);
     // Update index entry
     const index = getProjectIndex();
     const existing = index.findIndex(e => e.id === id);
@@ -87,10 +88,24 @@ export function saveProjectData(id: string, data: ProjectData) {
     }
     saveProjectIndex(index);
     setActiveProjectId(id);
-  } catch {
-    // storage full
+  } catch (err) {
+    // Storage failure - typically quota exceeded. Notify the user so their
+    // work is not lost silently.
+    const isQuota =
+      err instanceof DOMException &&
+      (err.name === 'QuotaExceededError' ||
+        err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+        err.code === 22);
+    toast({
+      title: isQuota ? 'Storage full' : 'Could not save project',
+      description: isQuota
+        ? 'Browser storage is full. Export or delete old projects to free space, then try again.'
+        : 'Your changes could not be saved. Please export this project as a backup.',
+      variant: 'destructive',
+    });
   }
 }
+
 
 export function deleteProject(id: string) {
   localStorage.removeItem(PROJECT_DATA_PREFIX + id);
