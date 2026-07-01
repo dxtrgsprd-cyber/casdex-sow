@@ -157,7 +157,12 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, {
+          type: 'array',
+          cellDates: true,
+          cellStyles: false, // reduce attack surface
+        });
+
 
         let bestItems: BomItem[] = [];
         let extractedInfo: Partial<ProjectInfo> = {};
