@@ -594,8 +594,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
 
-  // Vape Detection Sensors
-  const vapeKeywords = ['vape', 'vaping', 'halo smart', 'halo 3c', 'halo sensor', 'fly sense', 'flysense', 'zeptive', 'ivape', 'iaq sensor', 'thc sensor', 'vape detector'];
+  // Vape Detection Sensors (Verkada, Halo, Triton)
+  const vapeKeywords = ['vape', 'vaping', 'halo smart', 'halo 3c', 'halo sensor', 'halo', 'verkada', 'triton', 'vape detector', 'vape sensor', 'thc sensor', 'smoke sensor', 'air quality sensor', 'iaq sensor'];
   const vapeItems = matchItems(vapeKeywords);
   const vapeTotal = sumQty(vapeItems);
   if (vapeTotal > 0) vars['VAPE_SENSOR_COUNT'] = String(vapeTotal);
