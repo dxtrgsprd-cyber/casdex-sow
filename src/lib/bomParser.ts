@@ -129,7 +129,10 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
   const cityStateZip = [rawC8, rawC9].filter(Boolean).join(', ');
   if (cityStateZip) info.cityStateZip = cityStateZip;
 
-  console.log(`[BOM] City/State/Zip: C8="${rawC8}", C9="${rawC9}", result="${info.cityStateZip}"`);
+  if (import.meta.env.DEV) {
+    console.log(`[BOM] City/State/Zip parsed (dev only)`);
+  }
+
 
   // Date → K5, fallback to today
   const dateVal = cellVal('K5');
