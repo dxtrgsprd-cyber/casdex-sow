@@ -20,16 +20,36 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
 
   const handleFile = useCallback(async (file: File) => {
     setError(null);
+
+    const MAX_BYTES = 10 * 1024 * 1024;
+    const allowedExt = ['.xlsx', '.xlsm', '.xls'];
+    const nameLower = file.name.toLowerCase();
+    if (!allowedExt.some(ext => nameLower.endsWith(ext))) {
+      setError('Unsupported file type. Please upload .xlsx, .xlsm, or .xls');
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setError('File is too large. Maximum size is 10MB.');
+      return;
+    }
+    if (file.size === 0) {
+      setError('File appears to be empty.');
+      return;
+    }
+
     setLoading(true);
     try {
       const { items, scopeText, projectInfo } = await parseBomFile(file);
       onBomParsed(items, scopeText, file.name, projectInfo);
     } catch (err) {
-      setError((err as Error).message);
+      // Generic user-facing error; details stay in dev console only.
+      if (import.meta.env.DEV) console.error('[BOM] Parse error:', err);
+      setError('Could not parse this spreadsheet. Please verify it is a valid BOM file.');
     } finally {
       setLoading(false);
     }
   }, [onBomParsed]);
+
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
