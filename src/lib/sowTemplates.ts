@@ -594,6 +594,21 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
 
+  // Vape Detection Sensors
+  const vapeKeywords = ['vape', 'vaping', 'halo smart', 'halo 3c', 'halo sensor', 'fly sense', 'flysense', 'zeptive', 'ivape', 'iaq sensor', 'thc sensor', 'vape detector'];
+  const vapeItems = matchItems(vapeKeywords);
+  const vapeTotal = sumQty(vapeItems);
+  if (vapeTotal > 0) vars['VAPE_SENSOR_COUNT'] = String(vapeTotal);
+  const vapeModels = collectModels(vapeItems);
+  if (vapeModels) vars['VAPE_SENSOR_MODELS'] = vapeModels;
+  const vapeVendorCounts: Record<string, number> = {};
+  vapeItems.forEach(item => {
+    if (item.vendor) vapeVendorCounts[item.vendor] = (vapeVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topVapeVendor = Object.entries(vapeVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topVapeVendor) vars['VAPE_SENSOR_BRAND'] = topVapeVendor[0];
+
+
   const inferredDoorTotal = Math.max(
     controllerItems.reduce((sum, item) => sum + getDoorCapacityFromController(item), 0),
     intercomTotal,
