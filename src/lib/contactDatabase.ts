@@ -78,14 +78,36 @@ export function deleteCustomer(id: string) {
 }
 
 export function searchCustomers(query: string): CustomerContact[] {
-  if (!query.trim()) return getCustomers().slice(0, 10);
-  const q = query.toLowerCase();
-  return getCustomers()
-    .filter(c =>
-      c.companyName.toLowerCase().includes(q) ||
-      c.customerName.toLowerCase().includes(q)
-    )
-    .slice(0, 10);
+  const all = getCustomers();
+  const q = query.trim().toLowerCase();
+  if (!q) return all.slice(0, 12);
+  const terms = q.split(/\s+/);
+
+  const scored = all
+    .map(c => {
+      const name = (c.companyName || '').toLowerCase();
+      const contact = (c.customerName || '').toLowerCase();
+      const address = `${c.companyAddress || ''} ${c.cityStateZip || ''}`.toLowerCase();
+      const location = (c.installLocation || '').toLowerCase();
+      const haystack = [name, contact, address, location, (c.vertical || '').toLowerCase()].join(' ');
+
+      // every term must appear somewhere
+      if (!terms.every(t => haystack.includes(t))) return null;
+
+      let score = 0;
+      if (name.startsWith(q)) score += 100;
+      else if (name.includes(q)) score += 60;
+      if (contact.includes(q)) score += 30;
+      if (address.includes(q)) score += 20;
+      if (location.includes(q)) score += 20;
+      return { c, score };
+    })
+    .filter((x): x is { c: CustomerContact; score: number } => x !== null);
+
+  scored.sort(
+    (a, b) => b.score - a.score || (b.c.lastUsed || '').localeCompare(a.c.lastUsed || '')
+  );
+  return scored.slice(0, 12).map(x => x.c);
 }
 
 // ---- Subcontractors ----
