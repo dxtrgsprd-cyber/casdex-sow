@@ -245,6 +245,30 @@ Configure notification recipients and escalation rules.
 Test each sensor for proper detection and alert delivery.
 Provide end-user training on sensor dashboard and alert management.`,
   },
+  {
+    id: 'alarm_system',
+    title: 'Intrusion / Alarm System',
+    template: `Provide and install {{ALARM_PANEL_COUNT}} {{ALARM_BRAND}} alarm control panel(s) ({{ALARM_PANEL_MODELS}}).
+Install {{ALARM_KEYPAD_COUNT}} alarm keypad(s) at designated entry/exit locations.
+Install {{MOTION_DETECTOR_COUNT}} interior motion detector(s).
+Install {{DOOR_CONTACT_COUNT}} door/window contact(s).
+Install {{GLASSBREAK_COUNT}} glassbreak detector(s).
+Install {{SIREN_COUNT}} siren(s)/horn strobe(s).
+Install {{ALARM_COMMUNICATOR_COUNT}} cellular/IP communicator(s) for central station reporting.
+Provide and install batteries in all panels and power supplies; verify charging voltage and 4-hour backup operation.
+Run and terminate all required device cabling; label both ends and dress wiring neatly inside enclosures.
+Program zones, partitions, entry/exit delays, user codes, and arming schedules.
+Configure central station account, reporting formats, and test all signals with the monitoring center.
+Walk-test every device and verify alarm, trouble, and restore conditions.
+Provide end-user training on arming/disarming, user code management, and alarm response.`,
+  },
+  {
+    id: 'misc_items',
+    title: 'Miscellaneous Materials',
+    template: `Provide and install the following additional materials listed on the BOM that are not covered in the sections above:
+{{MISC_ITEMS}}
+Install all miscellaneous materials per manufacturer specifications and project requirements.`,
+  },
 ];
 
 export interface SowVariable {
@@ -308,6 +332,17 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'VAPE_SENSOR_COUNT', label: 'Vape Sensor Count', autoFillable: true },
   { key: 'VAPE_SENSOR_BRAND', label: 'Vape Sensor Brand', autoFillable: true },
   { key: 'VAPE_SENSOR_MODELS', label: 'Vape Sensor Models', autoFillable: true },
+  { key: 'ALARM_PANEL_COUNT', label: 'Alarm Panel Count', autoFillable: true },
+  { key: 'ALARM_BRAND', label: 'Alarm Brand', autoFillable: true },
+  { key: 'ALARM_PANEL_MODELS', label: 'Alarm Panel Models', autoFillable: true },
+  { key: 'ALARM_KEYPAD_COUNT', label: 'Alarm Keypad Count', autoFillable: true },
+  { key: 'MOTION_DETECTOR_COUNT', label: 'Motion Detector Count', autoFillable: true },
+  { key: 'DOOR_CONTACT_COUNT', label: 'Door/Window Contact Count', autoFillable: true },
+  { key: 'GLASSBREAK_COUNT', label: 'Glassbreak Detector Count', autoFillable: true },
+  { key: 'SIREN_COUNT', label: 'Siren / Horn Strobe Count', autoFillable: true },
+  { key: 'ALARM_COMMUNICATOR_COUNT', label: 'Alarm Communicator Count', autoFillable: true },
+  { key: 'MISC_ITEMS', label: 'Miscellaneous BOM Items', autoFillable: true },
+  { key: 'MISC_ITEM_COUNT', label: 'Miscellaneous Item Count', autoFillable: true },
 ];
 
 export const AUTO_FILLABLE_VARIABLE_KEYS = new Set(
@@ -367,6 +402,19 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
     enabled.add('vape_detection');
   }
 
+  const hasAlarm = [
+    'ALARM_PANEL_COUNT',
+    'ALARM_KEYPAD_COUNT',
+    'MOTION_DETECTOR_COUNT',
+    'DOOR_CONTACT_COUNT',
+    'GLASSBREAK_COUNT',
+    'SIREN_COUNT',
+    'ALARM_COMMUNICATOR_COUNT',
+  ].some((key) => hasPositiveValue(vars, key));
+  if (hasAlarm) enabled.add('alarm_system');
+
+  if ((vars['MISC_ITEMS'] || '').trim()) enabled.add('misc_items');
+
   if (enabled.size == 0) {
     return ['install_cameras', 'provide_cabling', 'testing_commissioning'];
   }
@@ -386,11 +434,19 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const poeInjectorKeywords = ['poe injector', 'poe adapter', 'midspan', 'injector', 'u-poe', 'ins-3af', 'poe-24', 'poe-48', 'poe-54'];
   const mountKeywords = ['mount', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'wall mount', 'corner', 'gooseneck', 'parapet'];
 
-  const matchItems = (keywords: string[]) => bomItems.filter(item => {
+  // Track every BOM item recognized by a category so leftovers can roll up
+  // into the Miscellaneous Materials section.
+  const matchedItems = new Set<import('@/types/sow').BomItem>();
+  const consume = (items: import('@/types/sow').BomItem[]) => {
+    items.forEach(item => matchedItems.add(item));
+    return items;
+  };
+
+  const matchItems = (keywords: string[]) => consume(bomItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
     return keywords.some(k => desc.includes(k) || pn.includes(k));
-  });
+  }));
 
   const sumQty = (items: typeof bomItems) => items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
@@ -445,21 +501,21 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (licenseTotal > 0) vars['LICENSE_COUNT'] = String(licenseTotal);
 
   // PoE Switches (must match "switch" to avoid catching injectors)
-  const poeSwitchItems = bomItems.filter(item => {
+  const poeSwitchItems = consume(bomItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
     return poeSwitchKeywords.some(k => desc.includes(k)) || (desc.includes('switch') && desc.includes('poe'));
-  });
+  }));
   const poeSwitchTotal = sumQty(poeSwitchItems);
   if (poeSwitchTotal > 0) vars['POE_SWITCH_COUNT'] = String(poeSwitchTotal);
   const switchModels = collectModels(poeSwitchItems);
   if (switchModels) vars['SWITCH_MODELS'] = switchModels;
 
   // PoE Injectors
-  const poeInjectorItems = bomItems.filter(item => {
+  const poeInjectorItems = consume(bomItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
     return (poeInjectorKeywords.some(k => desc.includes(k) || pn.includes(k))) && !desc.includes('switch');
-  });
+  }));
   const poeInjectorTotal = sumQty(poeInjectorItems);
   if (poeInjectorTotal > 0) vars['POE_INJECTOR_COUNT'] = String(poeInjectorTotal);
 
@@ -576,11 +632,11 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
 
   // REX (Request to Exit)
   const rexKeywords = ['request to exit', 'rex', 'motion sensor exit', 'exit sensor', 'request-to-exit', 'pir exit'];
-  const rexItems = bomItems.filter(item => {
+  const rexItems = consume(bomItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
     return rexKeywords.some(k => desc.includes(k) || pn.includes(k));
-  });
+  }));
   const rexTotal = sumQty(rexItems);
   if (rexTotal > 0) vars['REX_COUNT'] = String(rexTotal);
 
@@ -608,6 +664,53 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const topVapeVendor = Object.entries(vapeVendorCounts).sort((a, b) => b[1] - a[1])[0];
   if (topVapeVendor) vars['VAPE_SENSOR_BRAND'] = topVapeVendor[0];
 
+
+  // Intrusion / Alarm System
+  const alarmPanelKeywords = ['alarm panel', 'alarm control panel', 'intrusion panel', 'burglar panel', 'security panel', 'vista ', 'powerseries', 'iq panel', 'qolsys', 'lyric', 'napco', 'gemini panel', 'concord'];
+  const alarmPanelItems = matchItems(alarmPanelKeywords);
+  const alarmPanelTotal = sumQty(alarmPanelItems);
+  if (alarmPanelTotal > 0) vars['ALARM_PANEL_COUNT'] = String(alarmPanelTotal);
+  const alarmPanelModels = collectModels(alarmPanelItems);
+  if (alarmPanelModels) vars['ALARM_PANEL_MODELS'] = alarmPanelModels;
+  const alarmVendorCounts: Record<string, number> = {};
+  alarmPanelItems.forEach(item => {
+    if (item.vendor) alarmVendorCounts[item.vendor] = (alarmVendorCounts[item.vendor] || 0) + item.quantity;
+  });
+  const topAlarmVendor = Object.entries(alarmVendorCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topAlarmVendor) vars['ALARM_BRAND'] = topAlarmVendor[0];
+
+  const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station']));
+  if (keypadTotal > 0) vars['ALARM_KEYPAD_COUNT'] = String(keypadTotal);
+
+  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector']));
+  if (motionTotal > 0) vars['MOTION_DETECTOR_COUNT'] = String(motionTotal);
+
+  const contactTotal = sumQty(matchItems(['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch']));
+  if (contactTotal > 0) vars['DOOR_CONTACT_COUNT'] = String(contactTotal);
+
+  const glassbreakTotal = sumQty(matchItems(['glassbreak', 'glass break', 'glass-break', 'shock sensor']));
+  if (glassbreakTotal > 0) vars['GLASSBREAK_COUNT'] = String(glassbreakTotal);
+
+  const sirenTotal = sumQty(matchItems(['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe']));
+  if (sirenTotal > 0) vars['SIREN_COUNT'] = String(sirenTotal);
+
+  const communicatorTotal = sumQty(matchItems(['communicator', 'lte module', 'alarmnet', 'telguard', 'dialer']));
+  if (communicatorTotal > 0) vars['ALARM_COMMUNICATOR_COUNT'] = String(communicatorTotal);
+
+  // Miscellaneous: anything on the BOM not recognized by any section above
+  const miscItems = bomItems.filter(item => !matchedItems.has(item));
+  if (miscItems.length > 0) {
+    vars['MISC_ITEMS'] = miscItems
+      .map(item => {
+        const qty = item.quantity || 0;
+        const desc = (item.description || '').trim() || (item.partNumber || '').trim() || 'Unspecified item';
+        const pn = (item.partNumber || '').trim();
+        const showPn = pn && pn.toLowerCase() !== 'n/a' && !desc.toLowerCase().includes(pn.toLowerCase());
+        return `${qty} x ${desc}${showPn ? ` (${pn})` : ''}`;
+      })
+      .join('\n');
+    vars['MISC_ITEM_COUNT'] = String(sumQty(miscItems));
+  }
 
   const inferredDoorTotal = Math.max(
     controllerItems.reduce((sum, item) => sum + getDoorCapacityFromController(item), 0),
