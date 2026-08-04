@@ -257,7 +257,7 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search contacts…"
+            placeholder="Search by name, contact, address, or install location…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
