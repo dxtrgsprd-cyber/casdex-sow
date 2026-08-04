@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen, ClipboardList } from 'lucide-react';
+import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen, ClipboardList, FileDown, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,12 +16,14 @@ import {
   type VerticalEntry,
 } from '@/lib/verticalAppendix';
 import { downloadFieldManual } from '@/lib/fieldManualGenerator';
+import { exportDocxAsPdf } from '@/lib/pdfExport';
 import { saveTemplate, deleteTemplate } from '@/lib/templateStorage';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import type { ProjectInfo, BomItem, DocumentType, DocumentOverrides } from '@/types/sow';
+
 
 interface ExportPanelProps {
   info: ProjectInfo;
