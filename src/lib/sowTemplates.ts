@@ -254,6 +254,7 @@ Install {{MOTION_DETECTOR_COUNT}} interior motion detector(s).
 Install {{DOOR_CONTACT_COUNT}} door/window contact(s).
 Install {{GLASSBREAK_COUNT}} glassbreak detector(s).
 Install {{SIREN_COUNT}} siren(s)/horn strobe(s).
+Install {{PANIC_BUTTON_COUNT}} panic/duress button(s).
 Install {{ALARM_COMMUNICATOR_COUNT}} cellular/IP communicator(s) for central station reporting.
 Provide and install batteries in all panels and power supplies; verify charging voltage and 4-hour backup operation.
 Run and terminate all required device cabling; label both ends and dress wiring neatly inside enclosures.
