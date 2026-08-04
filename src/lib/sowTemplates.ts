@@ -254,6 +254,7 @@ Install {{MOTION_DETECTOR_COUNT}} interior motion detector(s).
 Install {{DOOR_CONTACT_COUNT}} door/window contact(s).
 Install {{GLASSBREAK_COUNT}} glassbreak detector(s).
 Install {{SIREN_COUNT}} siren(s)/horn strobe(s).
+Install {{PANIC_BUTTON_COUNT}} panic/duress button(s).
 Install {{ALARM_COMMUNICATOR_COUNT}} cellular/IP communicator(s) for central station reporting.
 Provide and install batteries in all panels and power supplies; verify charging voltage and 4-hour backup operation.
 Run and terminate all required device cabling; label both ends and dress wiring neatly inside enclosures.
@@ -410,6 +411,7 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
     'GLASSBREAK_COUNT',
     'SIREN_COUNT',
     'ALARM_COMMUNICATOR_COUNT',
+    'PANIC_BUTTON_COUNT',
   ].some((key) => hasPositiveValue(vars, key));
   if (hasAlarm) enabled.add('alarm_system');
 
@@ -666,7 +668,16 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
 
 
   // Intrusion / Alarm System
-  const alarmPanelKeywords = ['alarm panel', 'alarm control panel', 'intrusion panel', 'burglar panel', 'security panel', 'vista ', 'powerseries', 'iq panel', 'qolsys', 'lyric', 'napco', 'gemini panel', 'concord'];
+  const alarmPanelKeywords = [
+    'alarm panel', 'alarm control panel', 'intrusion panel', 'burglar panel', 'security panel',
+    'vista ', 'powerseries', 'iq panel', 'qolsys', 'lyric', 'napco', 'gemini panel', 'concord',
+    // Verkada alarms
+    'alarm console', 'bc81', 'bc61', 'verkada alarm', 'alarm hub',
+    // Honeywell
+    'honeywell', 'proseries', 'proa7', 'pro a7', 'vista-', 'vista20', 'vista 20', 'vista128',
+    // Brivo
+    'brivo', 'brivo alarm', 'acs300', 'acs6000',
+  ];
   const alarmPanelItems = matchItems(alarmPanelKeywords);
   const alarmPanelTotal = sumQty(alarmPanelItems);
   if (alarmPanelTotal > 0) vars['ALARM_PANEL_COUNT'] = String(alarmPanelTotal);
@@ -677,25 +688,44 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     if (item.vendor) alarmVendorCounts[item.vendor] = (alarmVendorCounts[item.vendor] || 0) + item.quantity;
   });
   const topAlarmVendor = Object.entries(alarmVendorCounts).sort((a, b) => b[1] - a[1])[0];
-  if (topAlarmVendor) vars['ALARM_BRAND'] = topAlarmVendor[0];
+  if (topAlarmVendor) {
+    vars['ALARM_BRAND'] = topAlarmVendor[0];
+  } else {
+    // Infer brand from item text when vendor column is absent
+    const alarmText = alarmPanelItems
+      .map(i => `${i.description || ''} ${i.partNumber || ''}`.toLowerCase())
+      .join(' ');
+    const brandGuess = /verkada|bc81|bc61|ak11/.test(alarmText)
+      ? 'Verkada'
+      : /honeywell|vista|proa7|proseries|resideo/.test(alarmText)
+      ? 'Honeywell'
+      : /brivo|acs300|acs6000/.test(alarmText)
+      ? 'Brivo'
+      : '';
+    if (brandGuess) vars['ALARM_BRAND'] = brandGuess;
+  }
 
-  const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station']));
+  const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station', 'ak11', '6160', 'tuxedo']));
   if (keypadTotal > 0) vars['ALARM_KEYPAD_COUNT'] = String(keypadTotal);
 
-  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector']));
+  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', '5800pir', 'sixpir']));
   if (motionTotal > 0) vars['MOTION_DETECTOR_COUNT'] = String(motionTotal);
 
-  const contactTotal = sumQty(matchItems(['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch']));
+  const contactTotal = sumQty(matchItems(['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch', 'door sensor', 'ds10', '5816', 'sixminict']));
   if (contactTotal > 0) vars['DOOR_CONTACT_COUNT'] = String(contactTotal);
 
-  const glassbreakTotal = sumQty(matchItems(['glassbreak', 'glass break', 'glass-break', 'shock sensor']));
+  const glassbreakTotal = sumQty(matchItems(['glassbreak', 'glass break', 'glass-break', 'shock sensor', 'gb21', '5853', 'sixgb']));
   if (glassbreakTotal > 0) vars['GLASSBREAK_COUNT'] = String(glassbreakTotal);
 
-  const sirenTotal = sumQty(matchItems(['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe']));
+  const sirenTotal = sumQty(matchItems(['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe', 'wave2', 'sixsiren']));
   if (sirenTotal > 0) vars['SIREN_COUNT'] = String(sirenTotal);
 
-  const communicatorTotal = sumQty(matchItems(['communicator', 'lte module', 'alarmnet', 'telguard', 'dialer']));
+  const communicatorTotal = sumQty(matchItems(['communicator', 'lte module', 'alarmnet', 'telguard', 'dialer', 'lte-xa', 'lte-ia', 'cell module']));
   if (communicatorTotal > 0) vars['ALARM_COMMUNICATOR_COUNT'] = String(communicatorTotal);
+
+  const panicTotal = sumQty(matchItems(['panic button', 'pb11', 'duress button', 'hold-up button', 'holdup button']));
+  if (panicTotal > 0) vars['PANIC_BUTTON_COUNT'] = String(panicTotal);
+
 
   // Miscellaneous: anything on the BOM not recognized by any section above
   const miscItems = bomItems.filter(item => !matchedItems.has(item));
