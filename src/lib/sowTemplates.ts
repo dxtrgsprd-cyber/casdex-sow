@@ -245,6 +245,30 @@ Configure notification recipients and escalation rules.
 Test each sensor for proper detection and alert delivery.
 Provide end-user training on sensor dashboard and alert management.`,
   },
+  {
+    id: 'alarm_system',
+    title: 'Intrusion / Alarm System',
+    template: `Provide and install {{ALARM_PANEL_COUNT}} {{ALARM_BRAND}} alarm control panel(s) ({{ALARM_PANEL_MODELS}}).
+Install {{ALARM_KEYPAD_COUNT}} alarm keypad(s) at designated entry/exit locations.
+Install {{MOTION_DETECTOR_COUNT}} interior motion detector(s).
+Install {{DOOR_CONTACT_COUNT}} door/window contact(s).
+Install {{GLASSBREAK_COUNT}} glassbreak detector(s).
+Install {{SIREN_COUNT}} siren(s)/horn strobe(s).
+Install {{ALARM_COMMUNICATOR_COUNT}} cellular/IP communicator(s) for central station reporting.
+Provide and install batteries in all panels and power supplies; verify charging voltage and 4-hour backup operation.
+Run and terminate all required device cabling; label both ends and dress wiring neatly inside enclosures.
+Program zones, partitions, entry/exit delays, user codes, and arming schedules.
+Configure central station account, reporting formats, and test all signals with the monitoring center.
+Walk-test every device and verify alarm, trouble, and restore conditions.
+Provide end-user training on arming/disarming, user code management, and alarm response.`,
+  },
+  {
+    id: 'misc_items',
+    title: 'Miscellaneous Materials',
+    template: `Provide and install the following additional materials listed on the BOM that are not covered in the sections above:
+{{MISC_ITEMS}}
+Install all miscellaneous materials per manufacturer specifications and project requirements.`,
+  },
 ];
 
 export interface SowVariable {
