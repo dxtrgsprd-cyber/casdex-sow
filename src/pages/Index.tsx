@@ -28,6 +28,7 @@ import type { ProjectIndexEntry } from '@/lib/projectStorage';
 import { toast } from 'sonner';
 import { AlertTriangle, Download, Upload, FolderOpen, Users } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import sowLogo from '@/assets/sow-generator-logo.png.asset.json';
 
 
 const Index = () => {
