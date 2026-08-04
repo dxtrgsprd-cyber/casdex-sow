@@ -212,7 +212,10 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-1 flex items-center justify-between">
-          <img src={sowLogo} alt="Scope of Work Generator" className="h-16 w-auto object-contain" />
+          <div className="flex items-center gap-3 py-2">
+            <img src={sowIcon} alt="SOW Generator" className="h-10 w-10 rounded-lg object-cover" />
+            <h1 className="text-xl font-bold tracking-tight text-foreground">SOW Generator</h1>
+          </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => setContactsOpen(true)}>
