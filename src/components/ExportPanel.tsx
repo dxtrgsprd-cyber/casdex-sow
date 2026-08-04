@@ -76,49 +76,82 @@ export default function ExportPanel({ info, bomItems, overrides, templateFiles, 
     toast.success(`${key} appendix reset to default`);
   }, [appendixOverrides]);
 
-  const handleExportSingle = useCallback(async (docType: DocumentType) => {
+  const buildBlob = useCallback(async (docType: DocumentType): Promise<Blob | null> => {
     const template = templateFiles[docType];
-    if (!template) return;
+    if (!template) return null;
 
+    let docBlob = generateDocx(template, info, overrides[docType], docType);
+
+    if (info.vertical) {
+      docBlob = await appendVerticalNotes(docBlob, info.vertical);
+    }
+    if (appendixFile) {
+      docBlob = await appendToDocs(docBlob, appendixFile);
+    }
+    if (info.programmingRequired && info.programmingNotes?.trim()) {
+      docBlob = await appendProgrammingNotes(docBlob, info.programmingNotes);
+    }
+    if (info.liftNeeded) {
+      docBlob = await appendLiftNotes(docBlob, info.liftHeight, info.liftEnvironment);
+    }
+    return docBlob;
+  }, [templateFiles, info, overrides, appendixFile]);
+
+  const fileNameFor = useCallback((docType: DocumentType, ext: 'docx' | 'pdf') => {
     const label = docTypes.find(d => d.type === docType)?.label ?? docType;
     const opp = info.oppNumber?.trim() || 'Document';
-    const fileName = `${opp} - ${label}.docx`;
+    return `${opp} - ${label}.${ext}`;
+  }, [info.oppNumber]);
 
+  const exportOne = useCallback(async (docType: DocumentType, format: 'docx' | 'pdf') => {
+    const label = docTypes.find(d => d.type === docType)?.label ?? docType;
+    setBusy(`${docType}-${format}`);
     try {
-      console.log('[export] Starting export for', docType, 'template size:', template.byteLength);
-      
-      let docBlob = generateDocx(template, info, overrides[docType], docType);
-      console.log('[export] After generateDocx, blob size:', docBlob.size);
-
-      if (info.vertical) {
-        docBlob = await appendVerticalNotes(docBlob, info.vertical);
-        console.log('[export] After appendVerticalNotes, blob size:', docBlob.size);
+      const docBlob = await buildBlob(docType);
+      if (!docBlob) return;
+      if (format === 'docx') {
+        saveAs(docBlob, fileNameFor(docType, 'docx'));
+      } else {
+        await exportDocxAsPdf(docBlob, fileNameFor(docType, 'pdf'));
       }
-
-      if (appendixFile) {
-        docBlob = await appendToDocs(docBlob, appendixFile);
-        console.log('[export] After appendToDocs, blob size:', docBlob.size);
-      }
-
-      // Append programming notes (after all other appendices)
-      if (info.programmingRequired && info.programmingNotes?.trim()) {
-        docBlob = await appendProgrammingNotes(docBlob, info.programmingNotes);
-        console.log('[export] After appendProgrammingNotes, blob size:', docBlob.size);
-      }
-
-      // Append lift requirements last
-      if (info.liftNeeded) {
-        docBlob = await appendLiftNotes(docBlob, info.liftHeight, info.liftEnvironment);
-        console.log('[export] After appendLiftNotes, blob size:', docBlob.size);
-      }
-
-      saveAs(docBlob, fileName);
-      console.log('[export] File saved:', fileName);
     } catch (e) {
       console.error('[export] Export failed:', e);
       toast.error(`Export failed for ${label}`);
+    } finally {
+      setBusy(null);
     }
-  }, [templateFiles, info, overrides, appendixFile]);
+  }, [buildBlob, fileNameFor]);
+
+  const exportMany = useCallback(async (types: DocumentType[], format: 'docx' | 'pdf') => {
+    if (types.length === 0) {
+      toast.error('Select at least one document to export');
+      return;
+    }
+    setBusy(`batch-${format}`);
+    try {
+      for (const type of types) {
+        const label = docTypes.find(d => d.type === type)?.label ?? type;
+        try {
+          const docBlob = await buildBlob(type);
+          if (!docBlob) continue;
+          if (format === 'docx') {
+            saveAs(docBlob, fileNameFor(type, 'docx'));
+          } else {
+            await exportDocxAsPdf(docBlob, fileNameFor(type, 'pdf'));
+          }
+          // Small gap so browsers don't drop rapid successive downloads / print dialogs
+          await new Promise(r => setTimeout(r, format === 'pdf' ? 1200 : 400));
+        } catch (e) {
+          console.error('[export] Export failed:', e);
+          toast.error(`Export failed for ${label}`);
+        }
+      }
+      toast.success(`Exported ${types.length} document${types.length > 1 ? 's' : ''} (${format.toUpperCase()})`);
+    } finally {
+      setBusy(null);
+    }
+  }, [buildBlob, fileNameFor]);
+
 
   const handleUploadTemplate = useCallback(async (docType: DocumentType) => {
     const input = document.createElement('input');
