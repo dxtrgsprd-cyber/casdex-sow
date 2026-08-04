@@ -672,7 +672,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     'alarm panel', 'alarm control panel', 'intrusion panel', 'burglar panel', 'security panel',
     'vista ', 'powerseries', 'iq panel', 'qolsys', 'lyric', 'napco', 'gemini panel', 'concord',
     // Verkada alarms
-    'alarm console', 'bc81', 'bc61', 'verkada alarm', 'alarm hub',
+    'alarm console', 'bc81', 'bc61', 'bp52', 'verkada alarm', 'alarm hub',
     // Honeywell
     'honeywell', 'proseries', 'proa7', 'pro a7', 'vista-', 'vista20', 'vista 20', 'vista128',
     // Brivo
@@ -695,7 +695,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     const alarmText = alarmPanelItems
       .map(i => `${i.description || ''} ${i.partNumber || ''}`.toLowerCase())
       .join(' ');
-    const brandGuess = /verkada|bc81|bc61|ak11/.test(alarmText)
+    const brandGuess = /verkada|bc81|bc61|bp52|ak11|bk22/.test(alarmText)
       ? 'Verkada'
       : /honeywell|vista|proa7|proseries|resideo/.test(alarmText)
       ? 'Honeywell'
@@ -705,10 +705,10 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     if (brandGuess) vars['ALARM_BRAND'] = brandGuess;
   }
 
-  const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station', 'ak11', '6160', 'tuxedo']));
+  const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station', 'ak11', 'bk22', '6160', 'tuxedo']));
   if (keypadTotal > 0) vars['ALARM_KEYPAD_COUNT'] = String(keypadTotal);
 
-  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', '5800pir', 'sixpir']));
+  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', 'bm', '5800pir', 'sixpir']));
   if (motionTotal > 0) vars['MOTION_DETECTOR_COUNT'] = String(motionTotal);
 
   const contactTotal = sumQty(matchItems(['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch', 'door sensor', 'ds10', '5816', 'sixminict']));
@@ -717,14 +717,21 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const glassbreakTotal = sumQty(matchItems(['glassbreak', 'glass break', 'glass-break', 'shock sensor', 'gb21', '5853', 'sixgb']));
   if (glassbreakTotal > 0) vars['GLASSBREAK_COUNT'] = String(glassbreakTotal);
 
-  const sirenTotal = sumQty(matchItems(['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe', 'wave2', 'sixsiren']));
+  const sirenTotal = sumQty(matchItems(['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe', 'bz32', 'wave2', 'sixsiren']));
   if (sirenTotal > 0) vars['SIREN_COUNT'] = String(sirenTotal);
 
-  const communicatorTotal = sumQty(matchItems(['communicator', 'lte module', 'alarmnet', 'telguard', 'dialer', 'lte-xa', 'lte-ia', 'cell module']));
+  const communicatorTotal = sumQty(matchItems(['communicator', 'lte module', 'acc-cel-lte', 'cellular backup', 'alarmnet', 'telguard', 'dialer', 'lte-xa', 'lte-ia', 'cell module']));
   if (communicatorTotal > 0) vars['ALARM_COMMUNICATOR_COUNT'] = String(communicatorTotal);
 
-  const panicTotal = sumQty(matchItems(['panic button', 'pb11', 'duress button', 'hold-up button', 'holdup button']));
+  const panicTotal = sumQty(matchItems(['panic button', 'pb11', 'br33', 'duress button', 'hold-up button', 'holdup button']));
   if (panicTotal > 0) vars['PANIC_BUTTON_COUNT'] = String(panicTotal);
+
+  const wirelessHubTotal = sumQty(matchItems(['wireless hub', 'wh52', 'wireless receiver', 'rf receiver']));
+  if (wirelessHubTotal > 0) vars['WIRELESS_HUB_COUNT'] = String(wirelessHubTotal);
+
+  const alarmBatteryTotal = sumQty(matchItems(['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries']));
+  if (alarmBatteryTotal > 0) vars['ALARM_BATTERY_COUNT'] = String(alarmBatteryTotal);
+
 
 
   // Miscellaneous: anything on the BOM not recognized by any section above
