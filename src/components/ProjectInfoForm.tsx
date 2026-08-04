@@ -142,10 +142,17 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
             onChange={val => update(field.key, val)}
             suggestions={customerSuggestions.map(c => ({
               label: c.companyName,
-              sublabel: c.customerName,
+              sublabel: [
+                c.customerName,
+                c.installLocation || [c.companyAddress, c.cityStateZip].filter(Boolean).join(', '),
+                c.vertical,
+              ]
+                .filter(Boolean)
+                .join(' · '),
             }))}
             onSelect={handleSelectCustomer}
             onSearch={q => setCustomerSuggestions(searchCustomers(q))}
+            placeholder="Search by customer, address, or install location"
           />
         </div>
       );

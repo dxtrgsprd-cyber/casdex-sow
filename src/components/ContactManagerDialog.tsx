@@ -62,7 +62,20 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
   }, [open, refresh]);
 
   const filteredCustomers = search.trim()
-    ? customers.filter(c => c.companyName.toLowerCase().includes(search.toLowerCase()) || c.customerName.toLowerCase().includes(search.toLowerCase()))
+    ? customers.filter(c => {
+        const q = search.toLowerCase();
+        return [
+          c.companyName,
+          c.customerName,
+          c.customerEmail,
+          c.companyAddress,
+          c.cityStateZip,
+          c.installLocation,
+          c.vertical,
+        ]
+          .filter(Boolean)
+          .some(v => String(v).toLowerCase().includes(q));
+      })
     : customers;
 
   const filteredSubs = search.trim()
