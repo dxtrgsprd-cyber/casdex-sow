@@ -107,8 +107,11 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
       customerName: c.customerName,
       customerEmail: c.customerEmail,
       customerPhone: c.customerPhone,
+      vertical: c.vertical || info.vertical,
+      installLocation: [c.companyAddress, c.cityStateZip].filter(Boolean).join(', ') || info.installLocation,
     });
   };
+
 
   const handleSelectSubcontractor = (index: number) => {
     const s = subSuggestions[index];
