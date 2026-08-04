@@ -342,6 +342,9 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'GLASSBREAK_COUNT', label: 'Glassbreak Detector Count', autoFillable: true },
   { key: 'SIREN_COUNT', label: 'Siren / Horn Strobe Count', autoFillable: true },
   { key: 'ALARM_COMMUNICATOR_COUNT', label: 'Alarm Communicator Count', autoFillable: true },
+  { key: 'PANIC_BUTTON_COUNT', label: 'Panic/Duress Button Count', autoFillable: true },
+  { key: 'WIRELESS_HUB_COUNT', label: 'Wireless Hub Count', autoFillable: true },
+  { key: 'ALARM_BATTERY_COUNT', label: 'Alarm Backup Battery Count', autoFillable: true },
   { key: 'MISC_ITEMS', label: 'Miscellaneous BOM Items', autoFillable: true },
   { key: 'MISC_ITEM_COUNT', label: 'Miscellaneous Item Count', autoFillable: true },
 ];
