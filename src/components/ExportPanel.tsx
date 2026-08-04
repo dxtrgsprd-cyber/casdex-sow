@@ -216,19 +216,91 @@ export default function ExportPanel({ info, bomItems, overrides, templateFiles, 
 
           <div className="space-y-3">
             <p className="text-sm font-medium">Download Documents</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {docTypes.map(({ type, label }) => (
-                <Button
-                  key={type}
-                  variant="outline"
-                  onClick={() => handleExportSingle(type)}
-                  disabled={!templateFiles[type]}
-                >
-                  <FileText className="w-4 h-4 mr-1.5" />
-                  {label} (.docx)
-                </Button>
-              ))}
+
+            <div className="space-y-2">
+              {docTypes.map(({ type, label }) => {
+                const disabled = !templateFiles[type];
+                return (
+                  <div key={type} className="flex flex-wrap items-center gap-2 p-2.5 rounded-lg border bg-card">
+                    <Checkbox
+                      id={`sel-${type}`}
+                      checked={selected.includes(type)}
+                      disabled={disabled}
+                      onCheckedChange={(c) => toggleSelected(type, !!c)}
+                    />
+                    <Label htmlFor={`sel-${type}`} className="flex-1 min-w-[8rem] text-sm font-medium cursor-pointer">
+                      {label}
+                    </Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportOne(type, 'docx')}
+                      disabled={disabled || !!busy}
+                    >
+                      {busy === `${type}-docx`
+                        ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        : <FileText className="w-3.5 h-3.5 mr-1" />}
+                      Word
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportOne(type, 'pdf')}
+                      disabled={disabled || !!busy}
+                    >
+                      {busy === `${type}-pdf`
+                        ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        : <FileDown className="w-3.5 h-3.5 mr-1" />}
+                      PDF
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                size="sm"
+                onClick={() => exportMany(selected, 'docx')}
+                disabled={!allLoaded || !!busy || selected.length === 0}
+              >
+                {busy === 'batch-docx'
+                  ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  : <Download className="w-4 h-4 mr-1.5" />}
+                Export Selected (Word)
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => exportMany(selected, 'pdf')}
+                disabled={!allLoaded || !!busy || selected.length === 0}
+              >
+                {busy === 'batch-pdf'
+                  ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  : <FileDown className="w-4 h-4 mr-1.5" />}
+                Export Selected (PDF)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => exportMany(docTypes.map(d => d.type), 'docx')}
+                disabled={!allLoaded || !!busy}
+              >
+                Export All (Word)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => exportMany(docTypes.map(d => d.type), 'pdf')}
+                disabled={!allLoaded || !!busy}
+              >
+                Export All (PDF)
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              PDF export renders the document and opens your browser's print dialog — choose "Save as PDF".
+            </p>
+
 
             {/* Field Manual Export */}
             <div className="pt-3 border-t">
