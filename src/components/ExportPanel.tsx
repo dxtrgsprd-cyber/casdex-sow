@@ -50,6 +50,12 @@ export default function ExportPanel({ info, bomItems, overrides, templateFiles, 
 
   // Appendix overrides state
   const [appendixOverrides, setAppendixOverrides] = useState<Record<string, VerticalEntry>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DocumentType[]>(docTypes.map(d => d.type));
+
+  const toggleSelected = (type: DocumentType, checked: boolean) =>
+    setSelected(prev => (checked ? [...new Set([...prev, type])] : prev.filter(t => t !== type)));
+
 
   useEffect(() => {
     setAppendixOverrides(loadVerticalOverrides());
