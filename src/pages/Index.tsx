@@ -211,7 +211,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-1 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight text-primary py-4">SOW Generator</h1>
+          <img src={sowLogo.url} alt="Scope of Work Generator" className="h-16 w-auto object-contain" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => setContactsOpen(true)}>
