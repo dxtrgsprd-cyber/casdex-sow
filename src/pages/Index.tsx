@@ -211,7 +211,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-1 flex items-center justify-between">
-          <img src={casdexScopeLogo} alt="SOW Generator" className="h-[112px]" />
+          <h1 className="text-2xl font-bold tracking-tight text-primary py-4">SOW Generator</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => setContactsOpen(true)}>
