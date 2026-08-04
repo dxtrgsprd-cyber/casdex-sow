@@ -256,6 +256,8 @@ Install {{GLASSBREAK_COUNT}} glassbreak detector(s).
 Install {{SIREN_COUNT}} siren(s)/horn strobe(s).
 Install {{PANIC_BUTTON_COUNT}} panic/duress button(s).
 Install {{ALARM_COMMUNICATOR_COUNT}} cellular/IP communicator(s) for central station reporting.
+Install {{WIRELESS_HUB_COUNT}} wireless hub(s)/receiver(s) and enroll all wireless devices.
+Provide and install {{ALARM_BATTERY_COUNT}} backup battery/batteries and enclosure(s) for the alarm panel(s).
 Provide and install batteries in all panels and power supplies; verify charging voltage and 4-hour backup operation.
 Run and terminate all required device cabling; label both ends and dress wiring neatly inside enclosures.
 Program zones, partitions, entry/exit delays, user codes, and arming schedules.
