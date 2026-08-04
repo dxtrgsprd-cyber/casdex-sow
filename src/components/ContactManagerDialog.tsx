@@ -15,6 +15,10 @@ import {
   saveSubcontractor,
   updateSubcontractor,
   deleteSubcontractor,
+  getContactPrefs,
+  saveContactPrefs,
+  sortCustomers,
+  type ContactSort,
   type CustomerContact,
   type SubcontractorContact,
 } from '@/lib/contactDatabase';
@@ -43,7 +47,9 @@ const emptySub = { subcontractorName: '', subcontractorPoC: '', subcontractorEma
 export default function ContactManagerDialog({ open, onOpenChange }: ContactManagerDialogProps) {
   const [customers, setCustomers] = useState<CustomerContact[]>([]);
   const [subs, setSubs] = useState<SubcontractorContact[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => getContactPrefs().search);
+  const [sort, setSort] = useState<ContactSort>(() => getContactPrefs().sort);
+  const [verticalFilter, setVerticalFilter] = useState(() => getContactPrefs().vertical);
   const [adding, setAdding] = useState<'customer' | 'sub' | null>(null);
   const [newCustomer, setNewCustomer] = useState(emptyCustomer);
   const [newSub, setNewSub] = useState(emptySub);
@@ -58,10 +64,21 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
   }, []);
 
   useEffect(() => {
-    if (open) refresh();
+    if (open) {
+      const prefs = getContactPrefs();
+      setSearch(prefs.search);
+      setSort(prefs.sort);
+      setVerticalFilter(prefs.vertical);
+      refresh();
+    }
   }, [open, refresh]);
 
-  const filteredCustomers = search.trim()
+  // Persist filter/sort preferences so they survive across sessions
+  useEffect(() => {
+    saveContactPrefs({ search, sort, vertical: verticalFilter });
+  }, [search, sort, verticalFilter]);
+
+  const searchedCustomers = search.trim()
     ? customers.filter(c => {
         const q = search.toLowerCase();
         return [
@@ -77,6 +94,11 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
           .some(v => String(v).toLowerCase().includes(q));
       })
     : customers;
+
+  const filteredCustomers = sortCustomers(
+    verticalFilter ? searchedCustomers.filter(c => (c.vertical || '') === verticalFilter) : searchedCustomers,
+    sort
+  );
 
   const filteredSubs = search.trim()
     ? subs.filter(s => s.subcontractorName.toLowerCase().includes(search.toLowerCase()) || s.subcontractorPoC.toLowerCase().includes(search.toLowerCase()))
@@ -262,6 +284,40 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Select value={sort} onValueChange={val => setSort(val as ContactSort)}>
+            <SelectTrigger className="h-8 text-xs w-[170px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">Sort: Recently used</SelectItem>
+              <SelectItem value="name">Sort: Name (A–Z)</SelectItem>
+              <SelectItem value="vertical">Sort: Vertical</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={verticalFilter || 'all'} onValueChange={val => setVerticalFilter(val === 'all' ? '' : val)}>
+            <SelectTrigger className="h-8 text-xs w-[150px]">
+              <SelectValue placeholder="Vertical" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All verticals</SelectItem>
+              {VERTICALS.map(v => (
+                <SelectItem key={v} value={v}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(search || verticalFilter || sort !== 'recent') && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => { setSearch(''); setVerticalFilter(''); setSort('recent'); }}
+            >
+              Clear
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="customers" className="flex-1 overflow-hidden flex flex-col">

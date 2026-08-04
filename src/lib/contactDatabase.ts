@@ -29,6 +29,53 @@ export interface SubcontractorContact {
   lastUsed: string;
 }
 
+// ---- Recall filter/sort preferences (persisted across sessions) ----
+
+const PREFS_KEY = 'sow-contacts-prefs';
+
+export type ContactSort = 'recent' | 'name' | 'vertical';
+
+export interface ContactPrefs {
+  search: string;
+  sort: ContactSort;
+  vertical: string; // '' = all
+}
+
+export const defaultContactPrefs: ContactPrefs = { search: '', sort: 'recent', vertical: '' };
+
+export function getContactPrefs(): ContactPrefs {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    return raw ? { ...defaultContactPrefs, ...JSON.parse(raw) } : { ...defaultContactPrefs };
+  } catch {
+    return { ...defaultContactPrefs };
+  }
+}
+
+export function saveContactPrefs(prefs: Partial<ContactPrefs>) {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ ...getContactPrefs(), ...prefs }));
+  } catch {
+    // ignore quota errors — preferences are non-critical
+  }
+}
+
+export function sortCustomers(list: CustomerContact[], sort: ContactSort): CustomerContact[] {
+  const sorted = [...list];
+  if (sort === 'name') {
+    sorted.sort((a, b) => a.companyName.localeCompare(b.companyName));
+  } else if (sort === 'vertical') {
+    sorted.sort(
+      (a, b) =>
+        (a.vertical || 'ZZZ').localeCompare(b.vertical || 'ZZZ') ||
+        a.companyName.localeCompare(b.companyName)
+    );
+  } else {
+    sorted.sort((a, b) => (b.lastUsed || '').localeCompare(a.lastUsed || ''));
+  }
+  return sorted;
+}
+
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
