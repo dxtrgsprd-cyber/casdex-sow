@@ -77,7 +77,9 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
         customerName: info.customerName,
         customerEmail: info.customerEmail,
         customerPhone: info.customerPhone,
+        vertical: info.vertical,
       });
+
     }
     if (info.subcontractorName.trim()) {
       saveSubcontractor({
