@@ -708,7 +708,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station', 'ak11', 'bk22', '6160', 'tuxedo']));
   if (keypadTotal > 0) vars['ALARM_KEYPAD_COUNT'] = String(keypadTotal);
 
-  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', 'bm', '5800pir', 'sixpir']));
+  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', '5800pir', 'sixpir']));
   if (motionTotal > 0) vars['MOTION_DETECTOR_COUNT'] = String(motionTotal);
 
   const contactTotal = sumQty(matchItems(['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch', 'door sensor', 'ds10', '5816', 'sixminict']));
