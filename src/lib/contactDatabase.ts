@@ -15,6 +15,8 @@ export interface CustomerContact {
   customerEmail: string;
   customerPhone: string;
   vertical?: string;
+  installLocation?: string;
+  solutionArchitect?: string;
   lastUsed: string;
 }
 
