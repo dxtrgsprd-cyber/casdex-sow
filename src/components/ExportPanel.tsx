@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen, ClipboardList } from 'lucide-react';
+import { Download, FileText, Upload, RotateCcw, ChevronDown, BookOpen, ClipboardList, FileDown, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,12 +16,14 @@ import {
   type VerticalEntry,
 } from '@/lib/verticalAppendix';
 import { downloadFieldManual } from '@/lib/fieldManualGenerator';
+import { exportDocxAsPdf } from '@/lib/pdfExport';
 import { saveTemplate, deleteTemplate } from '@/lib/templateStorage';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import type { ProjectInfo, BomItem, DocumentType, DocumentOverrides } from '@/types/sow';
+
 
 interface ExportPanelProps {
   info: ProjectInfo;
@@ -48,6 +50,12 @@ export default function ExportPanel({ info, bomItems, overrides, templateFiles, 
 
   // Appendix overrides state
   const [appendixOverrides, setAppendixOverrides] = useState<Record<string, VerticalEntry>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DocumentType[]>(docTypes.map(d => d.type));
+
+  const toggleSelected = (type: DocumentType, checked: boolean) =>
+    setSelected(prev => (checked ? [...new Set([...prev, type])] : prev.filter(t => t !== type)));
+
 
   useEffect(() => {
     setAppendixOverrides(loadVerticalOverrides());
@@ -74,49 +82,82 @@ export default function ExportPanel({ info, bomItems, overrides, templateFiles, 
     toast.success(`${key} appendix reset to default`);
   }, [appendixOverrides]);
 
-  const handleExportSingle = useCallback(async (docType: DocumentType) => {
+  const buildBlob = useCallback(async (docType: DocumentType): Promise<Blob | null> => {
     const template = templateFiles[docType];
-    if (!template) return;
+    if (!template) return null;
 
+    let docBlob = generateDocx(template, info, overrides[docType], docType);
+
+    if (info.vertical) {
+      docBlob = await appendVerticalNotes(docBlob, info.vertical);
+    }
+    if (appendixFile) {
+      docBlob = await appendToDocs(docBlob, appendixFile);
+    }
+    if (info.programmingRequired && info.programmingNotes?.trim()) {
+      docBlob = await appendProgrammingNotes(docBlob, info.programmingNotes);
+    }
+    if (info.liftNeeded) {
+      docBlob = await appendLiftNotes(docBlob, info.liftHeight, info.liftEnvironment);
+    }
+    return docBlob;
+  }, [templateFiles, info, overrides, appendixFile]);
+
+  const fileNameFor = useCallback((docType: DocumentType, ext: 'docx' | 'pdf') => {
     const label = docTypes.find(d => d.type === docType)?.label ?? docType;
     const opp = info.oppNumber?.trim() || 'Document';
-    const fileName = `${opp} - ${label}.docx`;
+    return `${opp} - ${label}.${ext}`;
+  }, [info.oppNumber]);
 
+  const exportOne = useCallback(async (docType: DocumentType, format: 'docx' | 'pdf') => {
+    const label = docTypes.find(d => d.type === docType)?.label ?? docType;
+    setBusy(`${docType}-${format}`);
     try {
-      console.log('[export] Starting export for', docType, 'template size:', template.byteLength);
-      
-      let docBlob = generateDocx(template, info, overrides[docType], docType);
-      console.log('[export] After generateDocx, blob size:', docBlob.size);
-
-      if (info.vertical) {
-        docBlob = await appendVerticalNotes(docBlob, info.vertical);
-        console.log('[export] After appendVerticalNotes, blob size:', docBlob.size);
+      const docBlob = await buildBlob(docType);
+      if (!docBlob) return;
+      if (format === 'docx') {
+        saveAs(docBlob, fileNameFor(docType, 'docx'));
+      } else {
+        await exportDocxAsPdf(docBlob, fileNameFor(docType, 'pdf'));
       }
-
-      if (appendixFile) {
-        docBlob = await appendToDocs(docBlob, appendixFile);
-        console.log('[export] After appendToDocs, blob size:', docBlob.size);
-      }
-
-      // Append programming notes (after all other appendices)
-      if (info.programmingRequired && info.programmingNotes?.trim()) {
-        docBlob = await appendProgrammingNotes(docBlob, info.programmingNotes);
-        console.log('[export] After appendProgrammingNotes, blob size:', docBlob.size);
-      }
-
-      // Append lift requirements last
-      if (info.liftNeeded) {
-        docBlob = await appendLiftNotes(docBlob, info.liftHeight, info.liftEnvironment);
-        console.log('[export] After appendLiftNotes, blob size:', docBlob.size);
-      }
-
-      saveAs(docBlob, fileName);
-      console.log('[export] File saved:', fileName);
     } catch (e) {
       console.error('[export] Export failed:', e);
       toast.error(`Export failed for ${label}`);
+    } finally {
+      setBusy(null);
     }
-  }, [templateFiles, info, overrides, appendixFile]);
+  }, [buildBlob, fileNameFor]);
+
+  const exportMany = useCallback(async (types: DocumentType[], format: 'docx' | 'pdf') => {
+    if (types.length === 0) {
+      toast.error('Select at least one document to export');
+      return;
+    }
+    setBusy(`batch-${format}`);
+    try {
+      for (const type of types) {
+        const label = docTypes.find(d => d.type === type)?.label ?? type;
+        try {
+          const docBlob = await buildBlob(type);
+          if (!docBlob) continue;
+          if (format === 'docx') {
+            saveAs(docBlob, fileNameFor(type, 'docx'));
+          } else {
+            await exportDocxAsPdf(docBlob, fileNameFor(type, 'pdf'));
+          }
+          // Small gap so browsers don't drop rapid successive downloads / print dialogs
+          await new Promise(r => setTimeout(r, format === 'pdf' ? 1200 : 400));
+        } catch (e) {
+          console.error('[export] Export failed:', e);
+          toast.error(`Export failed for ${label}`);
+        }
+      }
+      toast.success(`Exported ${types.length} document${types.length > 1 ? 's' : ''} (${format.toUpperCase()})`);
+    } finally {
+      setBusy(null);
+    }
+  }, [buildBlob, fileNameFor]);
+
 
   const handleUploadTemplate = useCallback(async (docType: DocumentType) => {
     const input = document.createElement('input');
@@ -175,19 +216,91 @@ export default function ExportPanel({ info, bomItems, overrides, templateFiles, 
 
           <div className="space-y-3">
             <p className="text-sm font-medium">Download Documents</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {docTypes.map(({ type, label }) => (
-                <Button
-                  key={type}
-                  variant="outline"
-                  onClick={() => handleExportSingle(type)}
-                  disabled={!templateFiles[type]}
-                >
-                  <FileText className="w-4 h-4 mr-1.5" />
-                  {label} (.docx)
-                </Button>
-              ))}
+
+            <div className="space-y-2">
+              {docTypes.map(({ type, label }) => {
+                const disabled = !templateFiles[type];
+                return (
+                  <div key={type} className="flex flex-wrap items-center gap-2 p-2.5 rounded-lg border bg-card">
+                    <Checkbox
+                      id={`sel-${type}`}
+                      checked={selected.includes(type)}
+                      disabled={disabled}
+                      onCheckedChange={(c) => toggleSelected(type, !!c)}
+                    />
+                    <Label htmlFor={`sel-${type}`} className="flex-1 min-w-[8rem] text-sm font-medium cursor-pointer">
+                      {label}
+                    </Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportOne(type, 'docx')}
+                      disabled={disabled || !!busy}
+                    >
+                      {busy === `${type}-docx`
+                        ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        : <FileText className="w-3.5 h-3.5 mr-1" />}
+                      Word
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportOne(type, 'pdf')}
+                      disabled={disabled || !!busy}
+                    >
+                      {busy === `${type}-pdf`
+                        ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        : <FileDown className="w-3.5 h-3.5 mr-1" />}
+                      PDF
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                size="sm"
+                onClick={() => exportMany(selected, 'docx')}
+                disabled={!allLoaded || !!busy || selected.length === 0}
+              >
+                {busy === 'batch-docx'
+                  ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  : <Download className="w-4 h-4 mr-1.5" />}
+                Export Selected (Word)
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => exportMany(selected, 'pdf')}
+                disabled={!allLoaded || !!busy || selected.length === 0}
+              >
+                {busy === 'batch-pdf'
+                  ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  : <FileDown className="w-4 h-4 mr-1.5" />}
+                Export Selected (PDF)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => exportMany(docTypes.map(d => d.type), 'docx')}
+                disabled={!allLoaded || !!busy}
+              >
+                Export All (Word)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => exportMany(docTypes.map(d => d.type), 'pdf')}
+                disabled={!allLoaded || !!busy}
+              >
+                Export All (PDF)
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              PDF export renders the document and opens your browser's print dialog — choose "Save as PDF".
+            </p>
+
 
             {/* Field Manual Export */}
             <div className="pt-3 border-t">
