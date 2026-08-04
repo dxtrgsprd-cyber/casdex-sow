@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "placeholder.svg", "templates/**/*"],
       manifest: {
-        name: "CASDEX Scope",
-        short_name: "CASDEX",
+        name: "SOW Generator",
+        short_name: "SOW Gen",
         description: "Precision-Driven SOW Automation",
         theme_color: "#1e293b",
         background_color: "#ffffff",
