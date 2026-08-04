@@ -410,6 +410,7 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
     'GLASSBREAK_COUNT',
     'SIREN_COUNT',
     'ALARM_COMMUNICATOR_COUNT',
+    'PANIC_BUTTON_COUNT',
   ].some((key) => hasPositiveValue(vars, key));
   if (hasAlarm) enabled.add('alarm_system');
 
