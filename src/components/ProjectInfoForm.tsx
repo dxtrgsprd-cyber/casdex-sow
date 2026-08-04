@@ -78,6 +78,8 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
         customerEmail: info.customerEmail,
         customerPhone: info.customerPhone,
         vertical: info.vertical,
+        installLocation: info.installLocation,
+        solutionArchitect: info.solutionArchitect,
       });
 
     }
@@ -108,7 +110,11 @@ export default function ProjectInfoForm({ info, onChange, sowState, onSowStateCh
       customerEmail: c.customerEmail,
       customerPhone: c.customerPhone,
       vertical: c.vertical || info.vertical,
-      installLocation: [c.companyAddress, c.cityStateZip].filter(Boolean).join(', ') || info.installLocation,
+      solutionArchitect: c.solutionArchitect || info.solutionArchitect,
+      installLocation:
+        c.installLocation ||
+        [c.companyAddress, c.cityStateZip].filter(Boolean).join(', ') ||
+        info.installLocation,
     });
   };
 
