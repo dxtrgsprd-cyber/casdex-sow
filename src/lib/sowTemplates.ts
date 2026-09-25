@@ -496,7 +496,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     { cat: 'alarm_battery', kw: ['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries', 'battery', 'batteries'] },
     { cat: 'cellular_router', kw: ['cellular router', 'lte router', '5g router', 'cellular gateway', 'cradlepoint', 'peplink', 'pepwave', 'ibr1700', 'ibr900', 'ibr600', 'rut241', 'rutx', 'digi transport'], pn: [/^ibr\d/i, /^rut\d/i, /^ba\d-/i] },
     { cat: 'antenna', kw: ['antenna', 'antennae', 'paddle antenna', 'omni antenna', 'mimo antenna'] },
-    { cat: 'enclosure', kw: ['enclosure', 'cabinet', 'nema enclosure', 'nema box', 'equipment cabinet', 'wall cabinet', 'backplane', 'back panel'], exclude: /battery enclosure/i },
+    { cat: 'enclosure', kw: ['enclosure', 'cabinet', 'electrical box', 'junction enclosure', 'nema enclosure', 'nema box', 'equipment cabinet', 'wall cabinet', 'backplane', 'back panel'], exclude: /battery enclosure/i },
     { cat: 'breaker', kw: ['breaker', 'circuit breaker', 'rocker switch', 'rocker breaker', 'toggle breaker', 'din breaker'] },
     { cat: 'power_strip', kw: ['power strip', 'pdu', 'rack pdu', 'surge protector', 'receptacle strip', 'outlet strip'] },
     { cat: 'din_rail', kw: ['din rail', 'din-rail', 'dinrail'] },
