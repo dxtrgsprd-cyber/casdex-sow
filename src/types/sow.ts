@@ -131,6 +131,7 @@ export const defaultSowBuilderState: SowBuilderState = {
     'programming_ac',
     'testing_commissioning',
     'ac_testing',
+    'enclosure_power_cellular',
   ],
   enabledSections: [
     'install_cameras',

@@ -266,6 +266,19 @@ Walk-test every device and verify alarm, trouble, and restore conditions.
 Provide end-user training on arming/disarming, user code management, and alarm response.`,
   },
   {
+    id: 'enclosure_power_cellular',
+    title: 'Enclosure / Power / Cellular',
+    template: `Provide and install {{ENCLOSURE_COUNT}} equipment enclosure(s) ({{ENCLOSURE_MODELS}}) at designated location(s).
+Assemble and mount all internal components: {{DIN_RAIL_COUNT}} DIN rail(s), {{BUS_BAR_COUNT}} ground/bus bar(s), and panel hardware.
+Install {{BREAKER_COUNT}} circuit breaker(s)/switch(es) and {{POWER_STRIP_COUNT}} power strip(s)/PDU(s) inside the enclosure.
+Install {{CELLULAR_ROUTER_COUNT}} cellular router(s)/gateway(s) ({{CELLULAR_ROUTER_MODELS}}) and {{ANTENNA_COUNT}} antenna(s); route and secure antenna leads.
+Install {{IR_ILLUMINATOR_COUNT}} IR illuminator(s) and aim/align for proper coverage.
+Provide {{EXTENSION_CORD_COUNT}} extension/power cord(s) and {{GLAND_COUNT}} cable gland(s)/cord grip(s) for weather-tight cable entry.
+Dress, label, and strain-relieve all wiring inside the enclosure.
+Verify power distribution, breaker operation, cellular signal strength, and network connectivity.
+Test all enclosure-mounted equipment for proper operation.`,
+  },
+  {
     id: 'misc_items',
     title: 'Miscellaneous Materials',
     template: `Provide and install the following additional materials listed on the BOM that are not covered in the sections above:
@@ -347,6 +360,18 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PANIC_BUTTON_COUNT', label: 'Panic/Duress Button Count', autoFillable: true },
   { key: 'WIRELESS_HUB_COUNT', label: 'Wireless Hub Count', autoFillable: true },
   { key: 'ALARM_BATTERY_COUNT', label: 'Alarm Backup Battery Count', autoFillable: true },
+  { key: 'ENCLOSURE_COUNT', label: 'Enclosure Count', autoFillable: true },
+  { key: 'ENCLOSURE_MODELS', label: 'Enclosure Models', autoFillable: true },
+  { key: 'DIN_RAIL_COUNT', label: 'DIN Rail Count', autoFillable: true },
+  { key: 'BUS_BAR_COUNT', label: 'Bus/Ground Bar Count', autoFillable: true },
+  { key: 'BREAKER_COUNT', label: 'Breaker Count', autoFillable: true },
+  { key: 'POWER_STRIP_COUNT', label: 'Power Strip/PDU Count', autoFillable: true },
+  { key: 'CELLULAR_ROUTER_COUNT', label: 'Cellular Router Count', autoFillable: true },
+  { key: 'CELLULAR_ROUTER_MODELS', label: 'Cellular Router Models', autoFillable: true },
+  { key: 'ANTENNA_COUNT', label: 'Antenna Count', autoFillable: true },
+  { key: 'IR_ILLUMINATOR_COUNT', label: 'IR Illuminator Count', autoFillable: true },
+  { key: 'EXTENSION_CORD_COUNT', label: 'Extension/Power Cord Count', autoFillable: true },
+  { key: 'GLAND_COUNT', label: 'Cable Gland/Cord Grip Count', autoFillable: true },
   { key: 'MISC_ITEMS', label: 'Miscellaneous BOM Items', autoFillable: true },
   { key: 'MISC_ITEM_COUNT', label: 'Miscellaneous Item Count', autoFillable: true },
 ];
@@ -422,6 +447,20 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
   ].some((key) => hasPositiveValue(vars, key));
   if (hasAlarm) enabled.add('alarm_system');
 
+  const hasEnclosure = [
+    'ENCLOSURE_COUNT',
+    'CELLULAR_ROUTER_COUNT',
+    'ANTENNA_COUNT',
+    'BREAKER_COUNT',
+    'POWER_STRIP_COUNT',
+    'DIN_RAIL_COUNT',
+    'BUS_BAR_COUNT',
+    'GLAND_COUNT',
+    'EXTENSION_CORD_COUNT',
+    'IR_ILLUMINATOR_COUNT',
+  ].some((key) => hasPositiveValue(vars, key));
+  if (hasEnclosure) enabled.add('enclosure_power_cellular');
+
   if ((vars['MISC_ITEMS'] || '').trim()) enabled.add('misc_items');
 
   if (enabled.size == 0) {
@@ -455,6 +494,16 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const RULES: Rule[] = [
     { cat: 'power_supply', kw: ['power supply', 'power supplies', 'pwr supply', 'psu', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger', 'power distribution', 'fused distribution', 'acm8', 'acm4', 'transformer', 'power module', 'power adapter', 'lifesafety power', 'life safety power', 'power controller', 'access power'], pn: [/^acm\d/i, /^al\d{3,4}/i, /^eflow/i, /^t\d-/i, /^ma-pwr/i] },
     { cat: 'alarm_battery', kw: ['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries', 'battery', 'batteries'] },
+    { cat: 'cellular_router', kw: ['cellular router', 'lte router', '5g router', 'cellular gateway', 'cradlepoint', 'peplink', 'pepwave', 'ibr1700', 'ibr900', 'ibr600', 'rut241', 'rutx', 'digi transport'], pn: [/^ibr\d/i, /^rut\d/i, /^ba\d-/i] },
+    { cat: 'antenna', kw: ['antenna', 'antennae', 'paddle antenna', 'omni antenna', 'mimo antenna'] },
+    { cat: 'enclosure', kw: ['enclosure', 'cabinet', 'nema enclosure', 'nema box', 'equipment cabinet', 'wall cabinet', 'backplane', 'back panel'], exclude: /battery enclosure/i },
+    { cat: 'breaker', kw: ['breaker', 'circuit breaker', 'rocker switch', 'rocker breaker', 'toggle breaker', 'din breaker'] },
+    { cat: 'power_strip', kw: ['power strip', 'pdu', 'rack pdu', 'surge protector', 'receptacle strip', 'outlet strip'] },
+    { cat: 'din_rail', kw: ['din rail', 'din-rail', 'dinrail'] },
+    { cat: 'bus_bar', kw: ['bus bar', 'busbar', 'ground bar', 'grounding bar', 'ground lug kit'] },
+    { cat: 'gland', kw: ['gland', 'cable gland', 'grommet', 'cord grip', 'strain relief', 'liquid tight fitting'] },
+    { cat: 'extension_cord', kw: ['extension cord', 'power cord', 'line cord', 'iec cord'] },
+    { cat: 'ir_illuminator', kw: ['ir illuminator', 'infrared illuminator', 'illuminator', 'ir light', 'ir lamp'] },
     { cat: 'power_transfer', kw: ['power transfer', 'epc', 'ept', 'elec hinge', 'electric hinge', 'power hinge', 'electrified hinge', 'door loop', 'armored door loop', 'door cord'] },
     { cat: 'mount', kw: ['mount', 'mounting', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'back box', 'backbox', 'wall mount', 'corner', 'gooseneck', 'parapet', 'adapter plate', 'housing'], pn: [/^ma-(mnt|mount|brkt|pole|wall)/i], exclude: /din rail|breaker|receptacle|outlet|power strip/i },
     { cat: 'cable', kw: ['cat6', 'cat 6', 'cat6a', 'cable', 'cabling', 'cat5', 'cat 5', 'cat5e', 'utp', 'patch cord', 'wire'], exclude: /gland|grommet|extension cord|power cord|antenna|cable tie|zip tie|strain relief/i },
@@ -742,6 +791,36 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
 
 
   // Miscellaneous: anything on the BOM not recognized by any section above
+  // Enclosure / Power / Cellular
+  const enclosureItems = byCat('enclosure');
+  const enclosureTotal = sumQty(enclosureItems);
+  if (enclosureTotal > 0) vars['ENCLOSURE_COUNT'] = String(enclosureTotal);
+  const enclosureModels = collectModels(enclosureItems);
+  if (enclosureModels) vars['ENCLOSURE_MODELS'] = enclosureModels;
+
+  const cellularRouterItems = byCat('cellular_router');
+  const cellularRouterTotal = sumQty(cellularRouterItems);
+  if (cellularRouterTotal > 0) vars['CELLULAR_ROUTER_COUNT'] = String(cellularRouterTotal);
+  const cellularRouterModels = collectModels(cellularRouterItems);
+  if (cellularRouterModels) vars['CELLULAR_ROUTER_MODELS'] = cellularRouterModels;
+
+  const antennaTotal = sumQty(byCat('antenna'));
+  if (antennaTotal > 0) vars['ANTENNA_COUNT'] = String(antennaTotal);
+  const breakerTotal = sumQty(byCat('breaker'));
+  if (breakerTotal > 0) vars['BREAKER_COUNT'] = String(breakerTotal);
+  const powerStripTotal = sumQty(byCat('power_strip'));
+  if (powerStripTotal > 0) vars['POWER_STRIP_COUNT'] = String(powerStripTotal);
+  const dinRailTotal = sumQty(byCat('din_rail'));
+  if (dinRailTotal > 0) vars['DIN_RAIL_COUNT'] = String(dinRailTotal);
+  const busBarTotal = sumQty(byCat('bus_bar'));
+  if (busBarTotal > 0) vars['BUS_BAR_COUNT'] = String(busBarTotal);
+  const glandTotal = sumQty(byCat('gland'));
+  if (glandTotal > 0) vars['GLAND_COUNT'] = String(glandTotal);
+  const extensionCordTotal = sumQty(byCat('extension_cord'));
+  if (extensionCordTotal > 0) vars['EXTENSION_CORD_COUNT'] = String(extensionCordTotal);
+  const irIlluminatorTotal = sumQty(byCat('ir_illuminator'));
+  if (irIlluminatorTotal > 0) vars['IR_ILLUMINATOR_COUNT'] = String(irIlluminatorTotal);
+
   const miscItems = bomItems.filter(item => !categoryOf.get(item));
   if (miscItems.length > 0) {
     vars['MISC_ITEMS'] = miscItems
