@@ -60,6 +60,8 @@ export default function BomUpload({ bomItems, bomFileName, onBomParsed, onNext }
 
   const onFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Clear the native selection so choosing the same BOM again always reparses it.
+    e.target.value = '';
     if (file) handleFile(file);
   }, [handleFile]);
 
