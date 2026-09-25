@@ -447,6 +447,20 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
   ].some((key) => hasPositiveValue(vars, key));
   if (hasAlarm) enabled.add('alarm_system');
 
+  const hasEnclosure = [
+    'ENCLOSURE_COUNT',
+    'CELLULAR_ROUTER_COUNT',
+    'ANTENNA_COUNT',
+    'BREAKER_COUNT',
+    'POWER_STRIP_COUNT',
+    'DIN_RAIL_COUNT',
+    'BUS_BAR_COUNT',
+    'GLAND_COUNT',
+    'EXTENSION_CORD_COUNT',
+    'IR_ILLUMINATOR_COUNT',
+  ].some((key) => hasPositiveValue(vars, key));
+  if (hasEnclosure) enabled.add('enclosure_power_cellular');
+
   if ((vars['MISC_ITEMS'] || '').trim()) enabled.add('misc_items');
 
   if (enabled.size == 0) {
@@ -480,6 +494,16 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const RULES: Rule[] = [
     { cat: 'power_supply', kw: ['power supply', 'power supplies', 'pwr supply', 'psu', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger', 'power distribution', 'fused distribution', 'acm8', 'acm4', 'transformer', 'power module', 'power adapter', 'lifesafety power', 'life safety power', 'power controller', 'access power'], pn: [/^acm\d/i, /^al\d{3,4}/i, /^eflow/i, /^t\d-/i, /^ma-pwr/i] },
     { cat: 'alarm_battery', kw: ['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries', 'battery', 'batteries'] },
+    { cat: 'cellular_router', kw: ['cellular router', 'lte router', '5g router', 'cellular gateway', 'cradlepoint', 'peplink', 'pepwave', 'ibr1700', 'ibr900', 'ibr600', 'rut241', 'rutx', 'digi transport'], pn: [/^ibr\d/i, /^rut\d/i, /^ba\d-/i] },
+    { cat: 'antenna', kw: ['antenna', 'antennae', 'paddle antenna', 'omni antenna', 'mimo antenna'] },
+    { cat: 'enclosure', kw: ['enclosure', 'cabinet', 'nema enclosure', 'nema box', 'equipment cabinet', 'wall cabinet', 'backplane', 'back panel'], exclude: /battery enclosure/i },
+    { cat: 'breaker', kw: ['breaker', 'circuit breaker', 'rocker switch', 'rocker breaker', 'toggle breaker', 'din breaker'] },
+    { cat: 'power_strip', kw: ['power strip', 'pdu', 'rack pdu', 'surge protector', 'receptacle strip', 'outlet strip'] },
+    { cat: 'din_rail', kw: ['din rail', 'din-rail', 'dinrail'] },
+    { cat: 'bus_bar', kw: ['bus bar', 'busbar', 'ground bar', 'grounding bar', 'ground lug kit'] },
+    { cat: 'gland', kw: ['gland', 'cable gland', 'grommet', 'cord grip', 'strain relief', 'liquid tight fitting'] },
+    { cat: 'extension_cord', kw: ['extension cord', 'power cord', 'line cord', 'iec cord'] },
+    { cat: 'ir_illuminator', kw: ['ir illuminator', 'infrared illuminator', 'illuminator', 'ir light', 'ir lamp'] },
     { cat: 'power_transfer', kw: ['power transfer', 'epc', 'ept', 'elec hinge', 'electric hinge', 'power hinge', 'electrified hinge', 'door loop', 'armored door loop', 'door cord'] },
     { cat: 'mount', kw: ['mount', 'mounting', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'back box', 'backbox', 'wall mount', 'corner', 'gooseneck', 'parapet', 'adapter plate', 'housing'], pn: [/^ma-(mnt|mount|brkt|pole|wall)/i], exclude: /din rail|breaker|receptacle|outlet|power strip/i },
     { cat: 'cable', kw: ['cat6', 'cat 6', 'cat6a', 'cable', 'cabling', 'cat5', 'cat 5', 'cat5e', 'utp', 'patch cord', 'wire'], exclude: /gland|grommet|extension cord|power cord|antenna|cable tie|zip tie|strain relief/i },
