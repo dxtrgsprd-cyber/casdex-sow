@@ -451,11 +451,28 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     return items;
   };
 
-  const matchItems = (keywords: string[]) => consume(bomItems.filter(item => {
+  // Licenses/subscriptions are never physical hardware — exclude them from hardware matches.
+  const isLicense = (item: import('@/types/sow').BomItem) => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
-    return keywords.some(k => desc.includes(k) || pn.includes(k));
-  }));
+    return /\blicen[cs]e|subscription|\bsaas\b|cloud service|support term|\d+\s*-?\s*(yr|year)\b/.test(desc)
+      || /^lic-|(^|[-_])lic([-_]|$)|-\d+y(r)?$|-\d+yr?-/.test(pn);
+  };
+  const hardwareItems = bomItems.filter(item => !isLicense(item));
+
+  const matchItems = (keywords: string[], pnPatterns: RegExp[] = [], includeLicenses = false) =>
+    consume((includeLicenses ? bomItems : hardwareItems).filter(item => {
+      const desc = (item.description || '').toLowerCase();
+      const pn = (item.partNumber || '').toLowerCase();
+      return keywords.some(k => desc.includes(k) || pn.includes(k))
+        || pnPatterns.some(r => r.test(pn) || r.test(desc));
+    }));
+
+  // Cisco Meraki part-number families
+  const merakiCamera = /\bmv\d{2}[a-z]*(-hw)?\b/i;          // MV12, MV22X, MV32, MV63, MV72, MV93...
+  const merakiSwitch = /\bms\d{3}[a-z0-9-]*\b/i;           // MS120-8FP, MS250-48LP...
+  const merakiInjector = /\bma-inj/i;
+  const merakiMount = /\bma-(mnt|mount|brkt|pole|wall)/i;
 
   const sumQty = (items: typeof bomItems) => items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
@@ -477,7 +494,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   };
 
   // Cameras
-  const cameraItems = matchItems(cameraKeywords);
+  const cameraItems = matchItems(cameraKeywords, [merakiCamera]);
   const cameraTotal = sumQty(cameraItems);
   console.log(`[AutoFill] Camera matching: found ${cameraItems.length} items, total qty=${cameraTotal}`);
   console.log(`[AutoFill] Matched cameras:`, cameraItems.map(i => `${i.quantity}x ${i.description}`));
@@ -506,13 +523,14 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (ptpTotal > 0) vars['PTP_COUNT'] = String(ptpTotal);
 
   // Licenses
-  const licenseTotal = sumQty(matchItems(licenseKeywords));
+  const licenseTotal = sumQty(consume(bomItems.filter(isLicense)).concat(matchItems(licenseKeywords).filter(i => !isLicense(i))));
   if (licenseTotal > 0) vars['LICENSE_COUNT'] = String(licenseTotal);
 
   // PoE Switches (must match "switch" to avoid catching injectors)
-  const poeSwitchItems = consume(bomItems.filter(item => {
+  const poeSwitchItems = consume(hardwareItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
-    return poeSwitchKeywords.some(k => desc.includes(k)) || (desc.includes('switch') && desc.includes('poe'));
+    const pn = (item.partNumber || '').toLowerCase();
+    return poeSwitchKeywords.some(k => desc.includes(k)) || (desc.includes('switch') && desc.includes('poe')) || merakiSwitch.test(pn);
   }));
   const poeSwitchTotal = sumQty(poeSwitchItems);
   if (poeSwitchTotal > 0) vars['POE_SWITCH_COUNT'] = String(poeSwitchTotal);
@@ -520,16 +538,16 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (switchModels) vars['SWITCH_MODELS'] = switchModels;
 
   // PoE Injectors
-  const poeInjectorItems = consume(bomItems.filter(item => {
+  const poeInjectorItems = consume(hardwareItems.filter(item => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
-    return (poeInjectorKeywords.some(k => desc.includes(k) || pn.includes(k))) && !desc.includes('switch');
+    return (poeInjectorKeywords.some(k => desc.includes(k) || pn.includes(k)) || merakiInjector.test(pn)) && !desc.includes('switch');
   }));
   const poeInjectorTotal = sumQty(poeInjectorItems);
   if (poeInjectorTotal > 0) vars['POE_INJECTOR_COUNT'] = String(poeInjectorTotal);
 
   // Mounts & Accessories
-  const mountTotal = sumQty(matchItems(mountKeywords));
+  const mountTotal = sumQty(matchItems(mountKeywords, [merakiMount]));
   if (mountTotal > 0) vars['MOUNT_COUNT'] = String(mountTotal);
 
   // Server/NVR
@@ -556,7 +574,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
 
   // Camera Licenses
   const camLicKeywords = ['camera license', 'channel license', 'cam license', 'device license'];
-  const camLicItems = matchItems(camLicKeywords);
+  const camLicItems = bomItems.filter(i => isLicense(i) && (camLicKeywords.some(k => i.description.toLowerCase().includes(k)) || /lic-mv|mv.*licen|camera/i.test(`${i.partNumber || ''} ${i.description}`)));
   const camLicTotal = sumQty(camLicItems);
   if (camLicTotal > 0) vars['CAMERA_LICENSES'] = String(camLicTotal);
 
