@@ -126,7 +126,9 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
   // City/State/Zip → C8 + C9 combined (BOM splits city and state across two cells)
   const rawC8 = cellVal('C8');
   const rawC9 = cellVal('C9');
-  const cityStateZip = [rawC8, rawC9].filter(Boolean).join(', ');
+  // Skip C9 when C8 already contains it (e.g. "Gulfport, MS" + "MS")
+  const c9Dup = rawC9 && new RegExp(`\\b${rawC9.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(rawC8);
+  const cityStateZip = [rawC8, c9Dup ? '' : rawC9].filter(Boolean).join(', ');
   if (cityStateZip) info.cityStateZip = cityStateZip;
 
   if (import.meta.env.DEV) {
@@ -135,8 +137,11 @@ function extractProjectInfo(sheet: XLSX.WorkSheet): Partial<ProjectInfo> {
 
 
   // Date → K5, fallback to today
+  const dateCell = sheet['K5'];
   const dateVal = cellVal('K5');
-  if (dateVal) {
+  if (dateCell && dateCell.v instanceof Date) {
+    info.date = dateCell.v.toLocaleDateString('en-US', { timeZone: 'UTC' });
+  } else if (dateVal) {
     info.date = dateVal;
   } else {
     info.date = new Date().toLocaleDateString('en-US');
