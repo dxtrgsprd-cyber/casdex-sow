@@ -438,7 +438,6 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   const cameraKeywords = ['camera', 'cam', 'dome', 'bullet', 'turret', 'ptz', 'ip cam', 'fisheye', 'panoramic', 'multisensor', 'multi-sensor', 'fixed dome', 'fixed lens', 'mini dome', 'box cam', 'wedge', 'vandal', 'eyeball'];
   const cableKeywords = ['cat6', 'cat 6', 'cable', 'cat5', 'cat 5', 'utp', 'ethernet'];
   const ptpKeywords = ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'];
-  const licenseKeywords = ['license', 'licence', 'subscription', 'lic'];
   const poeSwitchKeywords = ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch'];
   const poeInjectorKeywords = ['poe injector', 'poe adapter', 'midspan', 'injector', 'u-poe', 'ins-3af', 'poe-24', 'poe-48', 'poe-54'];
   const mountKeywords = ['mount', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'wall mount', 'corner', 'gooseneck', 'parapet'];
@@ -523,7 +522,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (ptpTotal > 0) vars['PTP_COUNT'] = String(ptpTotal);
 
   // Licenses
-  const licenseTotal = sumQty(consume(bomItems.filter(isLicense)).concat(matchItems(licenseKeywords).filter(i => !isLicense(i))));
+  const licenseTotal = sumQty(consume(bomItems.filter(isLicense)));
   if (licenseTotal > 0) vars['LICENSE_COUNT'] = String(licenseTotal);
 
   // PoE Switches (must match "switch" to avoid catching injectors)
