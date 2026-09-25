@@ -257,11 +257,17 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
             const descRaw = String(getCellValue(descCol)).trim();
             if (!descRaw || descRaw === '' || descRaw === 'undefined') continue;
 
+            // Line-number columns are not material descriptions.
+            if (/^\d+(?:\.\d+)?$/.test(descRaw)) continue;
+
             const descLower = descRaw.toLowerCase();
             if (descLower.includes('total') && descLower.length < 20) continue;
             if (descLower === 'subtotal' || descLower === 'grand total') continue;
 
             const qty = parseNumericValue(getCellValue(qtyCol));
+            // A material row must have a real, positive quantity. This also prevents
+            // a failed column match from displaying blank zero-quantity rows.
+            if (qty === null || qty <= 0) continue;
             const unitPrice = parseNumericValue(getCellValue(unitPriceCol));
             const totalPrice = parseNumericValue(getCellValue(totalPriceCol));
             const partNumber = partCol >= 0
@@ -273,7 +279,7 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
 
             items.push({
               description: descRaw,
-              quantity: qty ?? 0,
+              quantity: qty,
               partNumber: partNumber && partNumber !== '' && partNumber !== 'undefined' ? partNumber : undefined,
               vendor: vendor && vendor !== '' && vendor !== 'undefined' ? vendor : undefined,
               unitPrice: unitPrice ?? undefined,
@@ -283,6 +289,10 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const MAX_ITEMS = 5000;
           if (items.length > MAX_ITEMS) {
             reject(new Error(`BOM contains too many rows (max ${MAX_ITEMS})`));
+            return;
+          }
+          if (items.length === 0) {
+            reject(new Error('No material rows with descriptions and positive quantities were found'));
             return;
           }
           if (import.meta.env.DEV) {
