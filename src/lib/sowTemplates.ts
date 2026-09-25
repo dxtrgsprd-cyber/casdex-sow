@@ -791,6 +791,36 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
 
 
   // Miscellaneous: anything on the BOM not recognized by any section above
+  // Enclosure / Power / Cellular
+  const enclosureItems = byCat('enclosure');
+  const enclosureTotal = sumQty(enclosureItems);
+  if (enclosureTotal > 0) vars['ENCLOSURE_COUNT'] = String(enclosureTotal);
+  const enclosureModels = collectModels(enclosureItems);
+  if (enclosureModels) vars['ENCLOSURE_MODELS'] = enclosureModels;
+
+  const cellularRouterItems = byCat('cellular_router');
+  const cellularRouterTotal = sumQty(cellularRouterItems);
+  if (cellularRouterTotal > 0) vars['CELLULAR_ROUTER_COUNT'] = String(cellularRouterTotal);
+  const cellularRouterModels = collectModels(cellularRouterItems);
+  if (cellularRouterModels) vars['CELLULAR_ROUTER_MODELS'] = cellularRouterModels;
+
+  const antennaTotal = sumQty(byCat('antenna'));
+  if (antennaTotal > 0) vars['ANTENNA_COUNT'] = String(antennaTotal);
+  const breakerTotal = sumQty(byCat('breaker'));
+  if (breakerTotal > 0) vars['BREAKER_COUNT'] = String(breakerTotal);
+  const powerStripTotal = sumQty(byCat('power_strip'));
+  if (powerStripTotal > 0) vars['POWER_STRIP_COUNT'] = String(powerStripTotal);
+  const dinRailTotal = sumQty(byCat('din_rail'));
+  if (dinRailTotal > 0) vars['DIN_RAIL_COUNT'] = String(dinRailTotal);
+  const busBarTotal = sumQty(byCat('bus_bar'));
+  if (busBarTotal > 0) vars['BUS_BAR_COUNT'] = String(busBarTotal);
+  const glandTotal = sumQty(byCat('gland'));
+  if (glandTotal > 0) vars['GLAND_COUNT'] = String(glandTotal);
+  const extensionCordTotal = sumQty(byCat('extension_cord'));
+  if (extensionCordTotal > 0) vars['EXTENSION_CORD_COUNT'] = String(extensionCordTotal);
+  const irIlluminatorTotal = sumQty(byCat('ir_illuminator'));
+  if (irIlluminatorTotal > 0) vars['IR_ILLUMINATOR_COUNT'] = String(irIlluminatorTotal);
+
   const miscItems = bomItems.filter(item => !categoryOf.get(item));
   if (miscItems.length > 0) {
     vars['MISC_ITEMS'] = miscItems
