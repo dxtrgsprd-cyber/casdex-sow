@@ -266,6 +266,19 @@ Walk-test every device and verify alarm, trouble, and restore conditions.
 Provide end-user training on arming/disarming, user code management, and alarm response.`,
   },
   {
+    id: 'enclosure_power_cellular',
+    title: 'Enclosure / Power / Cellular',
+    template: `Provide and install {{ENCLOSURE_COUNT}} equipment enclosure(s) ({{ENCLOSURE_MODELS}}) at designated location(s).
+Assemble and mount all internal components: {{DIN_RAIL_COUNT}} DIN rail(s), {{BUS_BAR_COUNT}} ground/bus bar(s), and panel hardware.
+Install {{BREAKER_COUNT}} circuit breaker(s)/switch(es) and {{POWER_STRIP_COUNT}} power strip(s)/PDU(s) inside the enclosure.
+Install {{CELLULAR_ROUTER_COUNT}} cellular router(s)/gateway(s) ({{CELLULAR_ROUTER_MODELS}}) and {{ANTENNA_COUNT}} antenna(s); route and secure antenna leads.
+Install {{IR_ILLUMINATOR_COUNT}} IR illuminator(s) and aim/align for proper coverage.
+Provide {{EXTENSION_CORD_COUNT}} extension/power cord(s) and {{GLAND_COUNT}} cable gland(s)/cord grip(s) for weather-tight cable entry.
+Dress, label, and strain-relieve all wiring inside the enclosure.
+Verify power distribution, breaker operation, cellular signal strength, and network connectivity.
+Test all enclosure-mounted equipment for proper operation.`,
+  },
+  {
     id: 'misc_items',
     title: 'Miscellaneous Materials',
     template: `Provide and install the following additional materials listed on the BOM that are not covered in the sections above:
@@ -347,6 +360,18 @@ export const SOW_VARIABLES: SowVariable[] = [
   { key: 'PANIC_BUTTON_COUNT', label: 'Panic/Duress Button Count', autoFillable: true },
   { key: 'WIRELESS_HUB_COUNT', label: 'Wireless Hub Count', autoFillable: true },
   { key: 'ALARM_BATTERY_COUNT', label: 'Alarm Backup Battery Count', autoFillable: true },
+  { key: 'ENCLOSURE_COUNT', label: 'Enclosure Count', autoFillable: true },
+  { key: 'ENCLOSURE_MODELS', label: 'Enclosure Models', autoFillable: true },
+  { key: 'DIN_RAIL_COUNT', label: 'DIN Rail Count', autoFillable: true },
+  { key: 'BUS_BAR_COUNT', label: 'Bus/Ground Bar Count', autoFillable: true },
+  { key: 'BREAKER_COUNT', label: 'Breaker Count', autoFillable: true },
+  { key: 'POWER_STRIP_COUNT', label: 'Power Strip/PDU Count', autoFillable: true },
+  { key: 'CELLULAR_ROUTER_COUNT', label: 'Cellular Router Count', autoFillable: true },
+  { key: 'CELLULAR_ROUTER_MODELS', label: 'Cellular Router Models', autoFillable: true },
+  { key: 'ANTENNA_COUNT', label: 'Antenna Count', autoFillable: true },
+  { key: 'IR_ILLUMINATOR_COUNT', label: 'IR Illuminator Count', autoFillable: true },
+  { key: 'EXTENSION_CORD_COUNT', label: 'Extension/Power Cord Count', autoFillable: true },
+  { key: 'GLAND_COUNT', label: 'Cable Gland/Cord Grip Count', autoFillable: true },
   { key: 'MISC_ITEMS', label: 'Miscellaneous BOM Items', autoFillable: true },
   { key: 'MISC_ITEM_COUNT', label: 'Miscellaneous Item Count', autoFillable: true },
 ];
