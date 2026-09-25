@@ -536,6 +536,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
                 <Upload className="w-3.5 h-3.5 mr-1" />
                 Import CSV
               </Button>
+              <Button size="sm" variant="outline" onClick={() => handleExportContacts('sub')}>
+                <Download className="w-3.5 h-3.5 mr-1" />
+                Export CSV
+              </Button>
               <Button size="sm" variant="outline" onClick={() => handleExportTemplate('sub')}>
                 <Download className="w-3.5 h-3.5 mr-1" />
                 Template
