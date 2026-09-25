@@ -459,7 +459,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     { cat: 'mount', kw: ['mount', 'mounting', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'back box', 'backbox', 'wall mount', 'corner', 'gooseneck', 'parapet', 'adapter plate', 'housing'], pn: [/^ma-(mnt|mount|brkt|pole|wall)/i] },
     { cat: 'cable', kw: ['cat6', 'cat 6', 'cat6a', 'cable', 'cabling', 'cat5', 'cat 5', 'cat5e', 'utp', 'patch cord', 'wire'] },
     { cat: 'poe_injector', kw: ['poe injector', 'poe adapter', 'midspan', 'injector', 'u-poe', 'ins-3af', 'poe-24', 'poe-48', 'poe-54'], pn: [/^ma-inj/i], exclude: /switch/i },
-    { cat: 'poe_switch', kw: ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch', 'switch'], pn: [/^ms\d{3}/i] },
+    { cat: 'poe_switch', kw: ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch', 'switch'], pn: [/^ms\d{3}/i], exclude: /reed|position|key ?switch|tamper|contact/i },
     { cat: 'ptp', kw: ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'] },
     { cat: 'intercom', kw: ['intercom', 'video intercom', 'door station', 'call station', 'entry panel', 'talk-a-phone', 'aiphone', '2n', 'td52', 'td33'] },
     { cat: 'strike', kw: ['electric strike', 'e-strike', 'door strike', 'strike', 'hes', 'von duprin strike'] },
