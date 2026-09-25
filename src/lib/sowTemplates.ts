@@ -453,7 +453,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   // category that matches, so accessories (power supplies, mounts, batteries) are claimed
   // before broad device categories (controllers, cameras) can grab them.
   const RULES: Rule[] = [
-    { cat: 'power_supply', kw: ['power supply', 'power supplies', 'pwr supply', 'psu', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger', 'power distribution', 'fused distribution', 'acm8', 'acm4', 'transformer', 'power module', 'power adapter', 'lifesafety power', 'life safety power'], pn: [/^al\d{3,4}/i, /^eflow/i, /^t\d-/i, /^ma-pwr/i] },
+    { cat: 'power_supply', kw: ['power supply', 'power supplies', 'pwr supply', 'psu', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger', 'power distribution', 'fused distribution', 'acm8', 'acm4', 'transformer', 'power module', 'power adapter', 'lifesafety power', 'life safety power', 'power controller', 'access power'], pn: [/^acm\d/i, /^al\d{3,4}/i, /^eflow/i, /^t\d-/i, /^ma-pwr/i] },
     { cat: 'alarm_battery', kw: ['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries', 'battery', 'batteries'] },
     { cat: 'power_transfer', kw: ['power transfer', 'epc', 'ept', 'elec hinge', 'electric hinge', 'power hinge', 'electrified hinge', 'door loop', 'armored door loop', 'door cord'] },
     { cat: 'mount', kw: ['mount', 'mounting', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'back box', 'backbox', 'wall mount', 'corner', 'gooseneck', 'parapet', 'adapter plate', 'housing'], pn: [/^ma-(mnt|mount|brkt|pole|wall)/i] },
