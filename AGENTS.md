@@ -1,0 +1,1 @@
+- BOM auto-fill uses one ordered, mutually-exclusive rule list (RULES in sowTemplates.ts autoFillFromBom): each line gets exactly one category, accessories before broad devices — prevents double counting (e.g. power supplies as controllers).
