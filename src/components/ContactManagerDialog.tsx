@@ -189,17 +189,61 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
     return rows;
   };
 
-  const handleExportTemplate = (type: 'customer' | 'sub') => {
-    const headers = type === 'customer'
-      ? 'companyName,companyAddress,cityStateZip,customerName,customerEmail,customerPhone,vertical'
-      : 'companyName,companyAddress,cityStateZip,customerName,customerEmail,customerPhone';
-    const blob = new Blob([headers + '\n'], { type: 'text/csv' });
+  const csvEscape = (value: string): string => {
+    const v = value ?? '';
+    return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  };
+
+  const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
+    const lines = [headers, ...rows].map(r => r.map(csvEscape).join(','));
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = type === 'customer' ? 'customer_import_template.csv' : 'subcontractor_import_template.csv';
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportTemplate = (type: 'customer' | 'sub') => {
+    const headers = type === 'customer'
+      ? ['companyName', 'companyAddress', 'cityStateZip', 'customerName', 'customerEmail', 'customerPhone', 'vertical']
+      : ['subcontractorName', 'contact', 'email', 'phone'];
+    downloadCSV(
+      type === 'customer' ? 'customer_import_template.csv' : 'subcontractor_import_template.csv',
+      headers,
+      []
+    );
+  };
+
+  const handleExportContacts = (type: 'customer' | 'sub') => {
+    if (type === 'customer') {
+      downloadCSV(
+        `customers_export_${new Date().toISOString().slice(0, 10)}.csv`,
+        ['companyName', 'companyAddress', 'cityStateZip', 'customerName', 'customerEmail', 'customerPhone', 'vertical'],
+        customers.map(c => [
+          c.companyName || '',
+          c.companyAddress || '',
+          c.cityStateZip || '',
+          c.customerName || '',
+          c.customerEmail || '',
+          c.customerPhone || '',
+          c.vertical || '',
+        ])
+      );
+    } else {
+      downloadCSV(
+        `subcontractors_export_${new Date().toISOString().slice(0, 10)}.csv`,
+        ['subcontractorName', 'contact', 'email', 'phone'],
+        subs.map(s => [
+          s.subcontractorName || '',
+          s.subcontractorPoC || '',
+          s.subcontractorEmail || '',
+          s.subcontractorPhone || '',
+        ])
+      );
+    }
+    toast.success(`Exported ${type === 'customer' ? customers.length : subs.length} ${type === 'customer' ? 'customers' : 'subcontractors'}`);
   };
 
   const handleImportCSV = (type: 'customer' | 'sub') => {
@@ -341,6 +385,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
               <Button size="sm" variant="outline" onClick={() => handleImportCSV('customer')}>
                 <Upload className="w-3.5 h-3.5 mr-1" />
                 Import CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleExportContacts('customer')}>
+                <Download className="w-3.5 h-3.5 mr-1" />
+                Export CSV
               </Button>
               <Button size="sm" variant="outline" onClick={() => handleExportTemplate('customer')}>
                 <Download className="w-3.5 h-3.5 mr-1" />
@@ -487,6 +535,10 @@ export default function ContactManagerDialog({ open, onOpenChange }: ContactMana
               <Button size="sm" variant="outline" onClick={() => handleImportCSV('sub')}>
                 <Upload className="w-3.5 h-3.5 mr-1" />
                 Import CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleExportContacts('sub')}>
+                <Download className="w-3.5 h-3.5 mr-1" />
+                Export CSV
               </Button>
               <Button size="sm" variant="outline" onClick={() => handleExportTemplate('sub')}>
                 <Download className="w-3.5 h-3.5 mr-1" />
