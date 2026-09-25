@@ -435,43 +435,70 @@ export function getRecommendedSectionsFromBom(vars: Record<string, string>): str
 export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Record<string, string> {
   const vars: Record<string, string> = {};
 
-  const cameraKeywords = ['camera', 'cam', 'dome', 'bullet', 'turret', 'ptz', 'ip cam', 'fisheye', 'panoramic', 'multisensor', 'multi-sensor', 'fixed dome', 'fixed lens', 'mini dome', 'box cam', 'wedge', 'vandal', 'eyeball'];
-  const cableKeywords = ['cat6', 'cat 6', 'cable', 'cat5', 'cat 5', 'utp', 'ethernet'];
-  const ptpKeywords = ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'];
-  const poeSwitchKeywords = ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch'];
-  const poeInjectorKeywords = ['poe injector', 'poe adapter', 'midspan', 'injector', 'u-poe', 'ins-3af', 'poe-24', 'poe-48', 'poe-54'];
-  const mountKeywords = ['mount', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'wall mount', 'corner', 'gooseneck', 'parapet'];
+  type Item = import('@/types/sow').BomItem;
+  type Rule = { cat: string; kw?: string[]; pn?: RegExp[]; exclude?: RegExp };
 
-  // Track every BOM item recognized by a category so leftovers can roll up
-  // into the Miscellaneous Materials section.
-  const matchedItems = new Set<import('@/types/sow').BomItem>();
-  const consume = (items: import('@/types/sow').BomItem[]) => {
-    items.forEach(item => matchedItems.add(item));
-    return items;
-  };
+  // Whole-word keyword match so short tokens ("cam", "acm", "rex") don't hit inside other words.
+  const esc = (k: string) => k.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const kwRegex = (kws: string[]) => new RegExp(`(^|[^a-z0-9])(${kws.map(esc).join('|')})(?=[^a-z0-9]|$)`, 'i');
 
-  // Licenses/subscriptions are never physical hardware — exclude them from hardware matches.
-  const isLicense = (item: import('@/types/sow').BomItem) => {
+  const isLicense = (item: Item) => {
     const desc = (item.description || '').toLowerCase();
     const pn = (item.partNumber || '').toLowerCase();
-    return /\blicen[cs]e|subscription|\bsaas\b|cloud service|support term|\d+\s*-?\s*(yr|year)\b/.test(desc)
+    return /\blicen[cs]e|subscription|\bsaas\b|cloud service|support term|\d+\s*-?\s*(yr|year)s?\b/.test(desc)
       || /^lic-|(^|[-_])lic([-_]|$)|-\d+y(r)?$|-\d+yr?-/.test(pn);
   };
-  const hardwareItems = bomItems.filter(item => !isLicense(item));
 
-  const matchItems = (keywords: string[], pnPatterns: RegExp[] = [], includeLicenses = false) =>
-    consume((includeLicenses ? bomItems : hardwareItems).filter(item => {
-      const desc = (item.description || '').toLowerCase();
-      const pn = (item.partNumber || '').toLowerCase();
-      return keywords.some(k => desc.includes(k) || pn.includes(k))
-        || pnPatterns.some(r => r.test(pn) || r.test(desc));
-    }));
+  // Ordered, mutually-exclusive classification rules. Each BOM line lands in the FIRST
+  // category that matches, so accessories (power supplies, mounts, batteries) are claimed
+  // before broad device categories (controllers, cameras) can grab them.
+  const RULES: Rule[] = [
+    { cat: 'power_supply', kw: ['power supply', 'power supplies', 'pwr supply', 'psu', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger', 'power distribution', 'fused distribution', 'acm8', 'acm4', 'transformer', 'power module', 'power adapter', 'lifesafety power', 'life safety power'], pn: [/^al\d{3,4}/i, /^eflow/i, /^t\d-/i, /^ma-pwr/i] },
+    { cat: 'alarm_battery', kw: ['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries', 'battery', 'batteries'] },
+    { cat: 'power_transfer', kw: ['power transfer', 'epc', 'ept', 'elec hinge', 'electric hinge', 'power hinge', 'electrified hinge', 'door loop', 'armored door loop', 'door cord'] },
+    { cat: 'mount', kw: ['mount', 'mounting', 'bracket', 'arm', 'pendant', 'pole adapter', 'junction box', 'j-box', 'back box', 'backbox', 'wall mount', 'corner', 'gooseneck', 'parapet', 'adapter plate', 'housing'], pn: [/^ma-(mnt|mount|brkt|pole|wall)/i] },
+    { cat: 'cable', kw: ['cat6', 'cat 6', 'cat6a', 'cable', 'cabling', 'cat5', 'cat 5', 'cat5e', 'utp', 'patch cord', 'wire'] },
+    { cat: 'poe_injector', kw: ['poe injector', 'poe adapter', 'midspan', 'injector', 'u-poe', 'ins-3af', 'poe-24', 'poe-48', 'poe-54'], pn: [/^ma-inj/i], exclude: /switch/i },
+    { cat: 'poe_switch', kw: ['poe switch', 'poe+ switch', 'network switch', 'managed switch', 'unmanaged switch', 'switch'], pn: [/^ms\d{3}/i] },
+    { cat: 'ptp', kw: ['point-to-point', 'point to point', 'ptp', 'wireless bridge', 'airfiber', 'nanobeam', 'nanostation', 'litebeam'] },
+    { cat: 'intercom', kw: ['intercom', 'video intercom', 'door station', 'call station', 'entry panel', 'talk-a-phone', 'aiphone', '2n', 'td52', 'td33'] },
+    { cat: 'strike', kw: ['electric strike', 'e-strike', 'door strike', 'strike', 'hes', 'von duprin strike'] },
+    { cat: 'maglock', kw: ['maglock', 'mag lock', 'magnetic lock', 'electromagnetic lock', 'em lock', 'mag-lock'] },
+    { cat: 'motorized', kw: ['motorized latch', 'electrified latch', 'electric latch', 'exit device', 'electrified exit', 'e-latch', 'motorized trim', 'latch retraction', 'electrified lever', 'electrified lock'] },
+    { cat: 'reader', kw: ['reader', 'card reader', 'proximity reader', 'smart reader', 'multi-tech reader', 'iclass', 'multiclass', 'signo', 'r10', 'r40', 'r90', 'osdp reader', 'ad32', 'ad33', 'ad34', 'ad62', 'ad63', 'ad64'] },
+    { cat: 'rex', kw: ['request to exit', 'rex', 'motion sensor exit', 'exit sensor', 'request-to-exit', 'pir exit', 'rex sensor'] },
+    { cat: 'push', kw: ['push to exit', 'push-to-exit', 'push button', 'exit button', 'egress button', 'mushroom button'] },
+    { cat: 'dps', kw: ['door position sensor', 'dps', 'door position switch'] },
+    { cat: 'vape', kw: ['vape', 'vaping', 'halo smart', 'halo 3c', 'halo sensor', 'halo', 'triton', 'vape detector', 'vape sensor', 'thc sensor', 'air quality sensor', 'iaq sensor', 'environmental sensor', 'sv11', 'sv20', 'sv23', 'sv25'] },
+    { cat: 'alarm_panel', kw: ['alarm panel', 'alarm control panel', 'intrusion panel', 'burglar panel', 'security panel', 'vista', 'powerseries', 'iq panel', 'qolsys', 'lyric', 'napco', 'gemini panel', 'concord', 'alarm console', 'bc81', 'bc61', 'bp52', 'verkada alarm', 'alarm hub', 'proseries', 'proa7', 'pro a7', 'vista20', 'vista 20', 'vista128', 'brivo alarm'] },
+    { cat: 'keypad', kw: ['alarm keypad', 'keypad', 'touchpad', 'arming station', 'ak11', 'bk22', '6160', 'tuxedo'] },
+    { cat: 'motion', kw: ['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', '5800pir', 'sixpir'] },
+    { cat: 'contact', kw: ['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch', 'door sensor', 'door contact', 'magnetic contact', 'ds10', '5816', 'sixminict'] },
+    { cat: 'glassbreak', kw: ['glassbreak', 'glass break', 'glass-break', 'shock sensor', 'gb21', '5853', 'sixgb'] },
+    { cat: 'siren', kw: ['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe', 'bz32', 'wave2', 'sixsiren'] },
+    { cat: 'communicator', kw: ['communicator', 'lte module', 'acc-cel-lte', 'cellular backup', 'alarmnet', 'telguard', 'dialer', 'lte-xa', 'lte-ia', 'cell module'] },
+    { cat: 'panic', kw: ['panic button', 'pb11', 'br33', 'duress button', 'hold-up button', 'holdup button'] },
+    { cat: 'wireless_hub', kw: ['wireless hub', 'wh52', 'wireless receiver', 'rf receiver'] },
+    { cat: 'controller', kw: ['door controller', 'access controller', 'access control controller', 'controller', 'access panel', 'access control panel', 'mercury', 'lp1501', 'lp1502', 'lp4502', 'mr52', 'mr62', 'hid edge', 'vertx', 'ac41', 'ac42', 'ac12', 'acu', 'door module', 'interface board', 'reader interface'] },
+    { cat: 'server', kw: ['server', 'nvr', 'recorder', 'recording server', 'command connector', 'cc300', 'cc500', 'workstation'] },
+    { cat: 'vms', kw: ['vms', 'milestone', 'genetec', 'exacq', 'wisenet wave', 'nx witness', 'video management'] },
+    { cat: 'camera', kw: ['camera', 'cam', 'dome', 'bullet', 'turret', 'ptz', 'ip cam', 'fisheye', 'panoramic', 'multisensor', 'multi-sensor', 'fixed dome', 'fixed lens', 'mini dome', 'box cam', 'wedge', 'eyeball'], pn: [/^mv\d{2}/i, /^c[bdm]\d{2}/i] },
+  ];
+  const compiled = RULES.map(r => ({ ...r, re: r.kw ? kwRegex(r.kw) : null }));
 
-  // Cisco Meraki part-number families
-  const merakiCamera = /\bmv\d{2}[a-z]*(-hw)?\b/i;          // MV12, MV22X, MV32, MV63, MV72, MV93...
-  const merakiSwitch = /\bms\d{3}[a-z0-9-]*\b/i;           // MS120-8FP, MS250-48LP...
-  const merakiInjector = /\bma-inj/i;
-  const merakiMount = /\bma-(mnt|mount|brkt|pole|wall)/i;
+  const classify = (item: Item): string | null => {
+    if (isLicense(item)) return 'license';
+    const desc = (item.description || '').toLowerCase();
+    const pn = (item.partNumber || '').toLowerCase().trim();
+    for (const r of compiled) {
+      if (r.exclude && r.exclude.test(desc)) continue;
+      if ((r.pn && r.pn.some(x => x.test(pn))) || (r.re && (r.re.test(desc) || r.re.test(pn)))) return r.cat;
+    }
+    return null;
+  };
+  const categoryOf = new Map<Item, string | null>(bomItems.map(i => [i, classify(i)]));
+  const byCat = (cat: string) => bomItems.filter(i => categoryOf.get(i) === cat);
+  if (import.meta.env.DEV) console.log('[AutoFill] Classified:', bomItems.map(i => `${categoryOf.get(i) ?? 'misc'} ← ${i.partNumber || ''} ${i.description}`));
 
   const sumQty = (items: typeof bomItems) => items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
@@ -493,12 +520,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   };
 
   // Cameras
-  const cameraItems = matchItems(cameraKeywords, [merakiCamera]);
+  const cameraItems = byCat('camera');
   const cameraTotal = sumQty(cameraItems);
-  console.log(`[AutoFill] Camera matching: found ${cameraItems.length} items, total qty=${cameraTotal}`);
-  console.log(`[AutoFill] Matched cameras:`, cameraItems.map(i => `${i.quantity}x ${i.description}`));
-  const unmatchedItems = bomItems.filter(item => !cameraItems.includes(item));
-  console.log(`[AutoFill] Unmatched items:`, unmatchedItems.map(i => `${i.quantity}x ${i.description} (pn: ${i.partNumber || 'n/a'})`));
   if (cameraTotal > 0) vars['NEW_CAMERA_TOTAL'] = String(cameraTotal);
 
   // Camera models (part numbers)
@@ -514,44 +537,35 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (topVendor) vars['CAMERA_BRAND'] = topVendor[0];
 
   // Cables
-  const cat6Total = sumQty(matchItems(cableKeywords));
+  const cat6Total = sumQty(byCat('cable'));
   if (cat6Total > 0) vars['CAT6_COUNT'] = String(cat6Total);
 
   // Point-to-Point
-  const ptpTotal = sumQty(matchItems(ptpKeywords));
+  const ptpTotal = sumQty(byCat('ptp'));
   if (ptpTotal > 0) vars['PTP_COUNT'] = String(ptpTotal);
 
   // Licenses
-  const licenseTotal = sumQty(consume(bomItems.filter(isLicense)));
+  const licenseTotal = sumQty(byCat('license'));
   if (licenseTotal > 0) vars['LICENSE_COUNT'] = String(licenseTotal);
 
   // PoE Switches (must match "switch" to avoid catching injectors)
-  const poeSwitchItems = consume(hardwareItems.filter(item => {
-    const desc = (item.description || '').toLowerCase();
-    const pn = (item.partNumber || '').toLowerCase();
-    return poeSwitchKeywords.some(k => desc.includes(k)) || (desc.includes('switch') && desc.includes('poe')) || merakiSwitch.test(pn);
-  }));
+  const poeSwitchItems = byCat('poe_switch');
   const poeSwitchTotal = sumQty(poeSwitchItems);
   if (poeSwitchTotal > 0) vars['POE_SWITCH_COUNT'] = String(poeSwitchTotal);
   const switchModels = collectModels(poeSwitchItems);
   if (switchModels) vars['SWITCH_MODELS'] = switchModels;
 
   // PoE Injectors
-  const poeInjectorItems = consume(hardwareItems.filter(item => {
-    const desc = (item.description || '').toLowerCase();
-    const pn = (item.partNumber || '').toLowerCase();
-    return (poeInjectorKeywords.some(k => desc.includes(k) || pn.includes(k)) || merakiInjector.test(pn)) && !desc.includes('switch');
-  }));
+  const poeInjectorItems = byCat('poe_injector');
   const poeInjectorTotal = sumQty(poeInjectorItems);
   if (poeInjectorTotal > 0) vars['POE_INJECTOR_COUNT'] = String(poeInjectorTotal);
 
   // Mounts & Accessories
-  const mountTotal = sumQty(matchItems(mountKeywords, [merakiMount]));
+  const mountTotal = sumQty(byCat('mount'));
   if (mountTotal > 0) vars['MOUNT_COUNT'] = String(mountTotal);
 
   // Server/NVR
-  const serverKeywords = ['server', 'nvr', 'recorder', 'recording server'];
-  const serverItems = matchItems(serverKeywords);
+  const serverItems = byCat('server');
   const serverTotal = sumQty(serverItems);
   if (serverTotal > 0) vars['SERVER_TOTAL'] = String(serverTotal);
   if (serverTotal > 0) vars['NVR_COUNT'] = String(serverTotal);
@@ -567,26 +581,22 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (topServerVendor) vars['SERVER_BRAND'] = topServerVendor[0];
 
   // VMS Platform
-  const vmsKeywords = ['vms', 'milestone', 'genetec', 'exacq', 'wisenet wave', 'nx witness', 'video management'];
-  const vmsItems = matchItems(vmsKeywords);
+  const vmsItems = byCat('vms');
   if (vmsItems.length > 0) vars['VMS_PLATFORM'] = vmsItems[0].description || vmsItems[0].vendor || '';
 
   // Camera Licenses
   const camLicKeywords = ['camera license', 'channel license', 'cam license', 'device license'];
-  const camLicItems = bomItems.filter(i => isLicense(i) && (camLicKeywords.some(k => i.description.toLowerCase().includes(k)) || /lic-mv|mv.*licen|camera/i.test(`${i.partNumber || ''} ${i.description}`)));
+  const camLicItems = byCat('license').filter(i => (camLicKeywords.some(k => i.description.toLowerCase().includes(k)) || /lic-mv|mv.*licen|camera/i.test(`${i.partNumber || ''} ${i.description}`)));
   const camLicTotal = sumQty(camLicItems);
   if (camLicTotal > 0) vars['CAMERA_LICENSES'] = String(camLicTotal);
 
   // Camera count (reuse camera total)
   if (cameraTotal > 0) vars['CAMERA_COUNT'] = String(cameraTotal);
 
-  console.log(`[AutoFill] Starting AC auto-fill with ${bomItems.length} items`);
 
   // Access Control Controllers
-  const controllerKeywords = ['controller', 'door controller', 'access panel', 'access control panel', 'acm', 'mercury', 'hid edge', 'vertx'];
-  const controllerItems = matchItems(controllerKeywords);
+  const controllerItems = byCat('controller');
   const controllerTotal = sumQty(controllerItems);
-  console.log(`[AutoFill] Controllers: ${controllerItems.length} items, qty=${controllerTotal}`, controllerItems.map(i => `${i.quantity}x ${i.description}`));
   if (controllerTotal > 0) vars['CONTROLLER_COUNT'] = String(controllerTotal);
   const controllerModels = collectModels(controllerItems);
   if (controllerModels) vars['CONTROLLER_MODELS'] = controllerModels;
@@ -598,10 +608,8 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (topControllerVendor) vars['CONTROLLER_BRAND'] = topControllerVendor[0];
 
   // Intercoms
-  const intercomKeywords = ['intercom', 'video intercom', 'door station', 'call station', 'entry panel', 'talk-a-phone', 'aiphone', '2n'];
-  const intercomItems = matchItems(intercomKeywords);
+  const intercomItems = byCat('intercom');
   const intercomTotal = sumQty(intercomItems);
-  console.log(`[AutoFill] Intercoms: ${intercomItems.length} items, qty=${intercomTotal}`, intercomItems.map(i => `${i.quantity}x ${i.description}`));
   if (intercomTotal > 0) vars['INTERCOM_TOTAL'] = String(intercomTotal);
   const intercomModels = collectModels(intercomItems);
   if (intercomModels) vars['INTERCOM_MODELS'] = intercomModels;
@@ -613,18 +621,15 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (topIntercomVendor) vars['INTERCOM_BRAND'] = topIntercomVendor[0];
 
   // Electric Strikes
-  const strikeKeywords = ['electric strike', 'e-strike', 'door strike', 'hes ', 'von duprin strike'];
-  const strikeTotal = sumQty(matchItems(strikeKeywords));
+  const strikeTotal = sumQty(byCat('strike'));
   if (strikeTotal > 0) vars['ELECTRIC_STRIKE_COUNT'] = String(strikeTotal);
 
   // Maglocks
-  const maglockKeywords = ['maglock', 'mag lock', 'magnetic lock', 'electromagnetic lock', 'em lock', 'mag-lock'];
-  const maglockTotal = sumQty(matchItems(maglockKeywords));
+  const maglockTotal = sumQty(byCat('maglock'));
   if (maglockTotal > 0) vars['MAGLOCK_COUNT'] = String(maglockTotal);
 
   // Motorized Latch / Electrified Exit Devices
-  const motorizedKeywords = ['motorized latch', 'electrified latch', 'electric latch', 'exit device', 'electrified exit', 'e-latch', 'motorized trim'];
-  const motorizedTotal = sumQty(matchItems(motorizedKeywords));
+  const motorizedTotal = sumQty(byCat('motorized'));
   if (motorizedTotal > 0) vars['MOTORIZED_LATCH_COUNT'] = String(motorizedTotal);
 
   // Lock total (sum of all lock types found)
@@ -632,15 +637,12 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (lockTotal > 0) vars['LOCK_TOTAL'] = String(lockTotal);
 
   // Power Transfers (hinge/loop)
-  const powerTransferKeywords = ['power transfer', 'epc', 'ept', 'elec hinge', 'electric hinge', 'power hinge', 'door loop', 'armored door loop', 'door cord'];
-  const powerTransferTotal = sumQty(matchItems(powerTransferKeywords));
+  const powerTransferTotal = sumQty(byCat('power_transfer'));
   if (powerTransferTotal > 0) vars['POWER_TRANSFER_COUNT'] = String(powerTransferTotal);
 
   // Readers
-  const readerKeywords = ['reader', 'card reader', 'proximity reader', 'smart reader', 'multi-tech reader', 'iclass', 'multiclass', 'signo', 'r10', 'r40', 'r90', 'osdp reader'];
-  const readerItems = matchItems(readerKeywords);
+  const readerItems = byCat('reader');
   const readerTotal = sumQty(readerItems);
-  console.log(`[AutoFill] Readers: ${readerItems.length} items, qty=${readerTotal}`, readerItems.map(i => `${i.quantity}x ${i.description}`));
   if (readerTotal > 0) vars['NEW_READER_COUNT'] = String(readerTotal);
   const readerModels = collectModels(readerItems);
   if (readerModels) vars['READER_MODELS'] = readerModels;
@@ -652,33 +654,24 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
   if (topReaderVendor) vars['READER_BRAND'] = topReaderVendor[0];
 
   // Door Position Sensors
-  const dpsKeywords = ['door position sensor', 'dps', 'door contact', 'magnetic contact', 'door sensor'];
-  const dpsTotal = sumQty(matchItems(dpsKeywords));
+  const dpsTotal = sumQty(byCat('dps'));
   if (dpsTotal > 0) vars['DPS_COUNT'] = String(dpsTotal);
 
   // REX (Request to Exit)
-  const rexKeywords = ['request to exit', 'rex', 'motion sensor exit', 'exit sensor', 'request-to-exit', 'pir exit'];
-  const rexItems = consume(bomItems.filter(item => {
-    const desc = (item.description || '').toLowerCase();
-    const pn = (item.partNumber || '').toLowerCase();
-    return rexKeywords.some(k => desc.includes(k) || pn.includes(k));
-  }));
+  const rexItems = byCat('rex');
   const rexTotal = sumQty(rexItems);
   if (rexTotal > 0) vars['REX_COUNT'] = String(rexTotal);
 
   // Push-to-Exit Buttons
-  const pushKeywords = ['push to exit', 'push-to-exit', 'push button', 'exit button', 'egress button', 'mushroom button'];
-  const pushTotal = sumQty(matchItems(pushKeywords));
+  const pushTotal = sumQty(byCat('push'));
   if (pushTotal > 0) vars['PUSH_COUNTS'] = String(pushTotal);
 
   // Power Supplies
-  const powerSupplyKeywords = ['power supply', 'pwr supply', 'altronix', 'al400', 'al600', 'al1024', 'al1012', 'eflow', 'trove', 'supply/charger'];
-  const powerSupplyTotal = sumQty(matchItems(powerSupplyKeywords));
+  const powerSupplyTotal = sumQty(byCat('power_supply'));
   if (powerSupplyTotal > 0) vars['POWER_SUPPLY_COUNT'] = String(powerSupplyTotal);
 
   // Vape Detection Sensors (Verkada, Halo, Triton)
-  const vapeKeywords = ['vape', 'vaping', 'halo smart', 'halo 3c', 'halo sensor', 'halo', 'verkada', 'triton', 'vape detector', 'vape sensor', 'thc sensor', 'smoke sensor', 'air quality sensor', 'iaq sensor'];
-  const vapeItems = matchItems(vapeKeywords);
+  const vapeItems = byCat('vape');
   const vapeTotal = sumQty(vapeItems);
   if (vapeTotal > 0) vars['VAPE_SENSOR_COUNT'] = String(vapeTotal);
   const vapeModels = collectModels(vapeItems);
@@ -692,17 +685,7 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
 
 
   // Intrusion / Alarm System
-  const alarmPanelKeywords = [
-    'alarm panel', 'alarm control panel', 'intrusion panel', 'burglar panel', 'security panel',
-    'vista ', 'powerseries', 'iq panel', 'qolsys', 'lyric', 'napco', 'gemini panel', 'concord',
-    // Verkada alarms
-    'alarm console', 'bc81', 'bc61', 'bp52', 'verkada alarm', 'alarm hub',
-    // Honeywell
-    'honeywell', 'proseries', 'proa7', 'pro a7', 'vista-', 'vista20', 'vista 20', 'vista128',
-    // Brivo
-    'brivo', 'brivo alarm', 'acs300', 'acs6000',
-  ];
-  const alarmPanelItems = matchItems(alarmPanelKeywords);
+  const alarmPanelItems = byCat('alarm_panel');
   const alarmPanelTotal = sumQty(alarmPanelItems);
   if (alarmPanelTotal > 0) vars['ALARM_PANEL_COUNT'] = String(alarmPanelTotal);
   const alarmPanelModels = collectModels(alarmPanelItems);
@@ -729,37 +712,37 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     if (brandGuess) vars['ALARM_BRAND'] = brandGuess;
   }
 
-  const keypadTotal = sumQty(matchItems(['alarm keypad', 'keypad', 'touchpad', 'arming station', 'ak11', 'bk22', '6160', 'tuxedo']));
+  const keypadTotal = sumQty(byCat('keypad'));
   if (keypadTotal > 0) vars['ALARM_KEYPAD_COUNT'] = String(keypadTotal);
 
-  const motionTotal = sumQty(matchItems(['motion detector', 'pir detector', 'dual tec', 'dual-tec', 'intrusion motion', 'occupancy detector', 'motion sensor', 'ms11', '5800pir', 'sixpir']));
+  const motionTotal = sumQty(byCat('motion'));
   if (motionTotal > 0) vars['MOTION_DETECTOR_COUNT'] = String(motionTotal);
 
-  const contactTotal = sumQty(matchItems(['window contact', 'door/window contact', 'overhead door contact', 'recessed contact', 'surface contact', 'reed switch', 'door sensor', 'ds10', '5816', 'sixminict']));
+  const contactTotal = sumQty(byCat('contact'));
   if (contactTotal > 0) vars['DOOR_CONTACT_COUNT'] = String(contactTotal);
 
-  const glassbreakTotal = sumQty(matchItems(['glassbreak', 'glass break', 'glass-break', 'shock sensor', 'gb21', '5853', 'sixgb']));
+  const glassbreakTotal = sumQty(byCat('glassbreak'));
   if (glassbreakTotal > 0) vars['GLASSBREAK_COUNT'] = String(glassbreakTotal);
 
-  const sirenTotal = sumQty(matchItems(['siren', 'horn strobe', 'horn/strobe', 'sounder', 'strobe', 'bz32', 'wave2', 'sixsiren']));
+  const sirenTotal = sumQty(byCat('siren'));
   if (sirenTotal > 0) vars['SIREN_COUNT'] = String(sirenTotal);
 
-  const communicatorTotal = sumQty(matchItems(['communicator', 'lte module', 'acc-cel-lte', 'cellular backup', 'alarmnet', 'telguard', 'dialer', 'lte-xa', 'lte-ia', 'cell module']));
+  const communicatorTotal = sumQty(byCat('communicator'));
   if (communicatorTotal > 0) vars['ALARM_COMMUNICATOR_COUNT'] = String(communicatorTotal);
 
-  const panicTotal = sumQty(matchItems(['panic button', 'pb11', 'br33', 'duress button', 'hold-up button', 'holdup button']));
+  const panicTotal = sumQty(byCat('panic'));
   if (panicTotal > 0) vars['PANIC_BUTTON_COUNT'] = String(panicTotal);
 
-  const wirelessHubTotal = sumQty(matchItems(['wireless hub', 'wh52', 'wireless receiver', 'rf receiver']));
+  const wirelessHubTotal = sumQty(byCat('wireless_hub'));
   if (wirelessHubTotal > 0) vars['WIRELESS_HUB_COUNT'] = String(wirelessHubTotal);
 
-  const alarmBatteryTotal = sumQty(matchItems(['backup battery', 'battery enclosure', 'acc-vbx', 'sla battery', 'backup batteries']));
+  const alarmBatteryTotal = sumQty(byCat('alarm_battery'));
   if (alarmBatteryTotal > 0) vars['ALARM_BATTERY_COUNT'] = String(alarmBatteryTotal);
 
 
 
   // Miscellaneous: anything on the BOM not recognized by any section above
-  const miscItems = bomItems.filter(item => !matchedItems.has(item));
+  const miscItems = bomItems.filter(item => !categoryOf.get(item));
   if (miscItems.length > 0) {
     vars['MISC_ITEMS'] = miscItems
       .map(item => {
@@ -790,7 +773,6 @@ export function autoFillFromBom(bomItems: import('@/types/sow').BomItem[]): Reco
     vars['COMPOSITE_COUNT'] = String(inferredDoorTotal);
   }
 
-  console.log(`[AutoFill] Final AC vars:`, vars);
   return vars;
 }
 
