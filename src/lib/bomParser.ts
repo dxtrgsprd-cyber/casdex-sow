@@ -41,10 +41,25 @@ const FIELD_KEYWORDS: Record<string, string[]> = {
   totalPrice: ['total', 'total price', 'ext price', 'extended', 'line total', 'ext cost', 'extended price'],
 };
 
-function matchesField(normalizedHeader: string, fieldKeywords: string[]): boolean {
-  // Headers should be short labels, not long descriptions
-  if (normalizedHeader.length > 25) return false;
-  return fieldKeywords.some(k => normalizedHeader.includes(k));
+function fieldMatchScore(normalizedHeader: string, field: keyof typeof FIELD_KEYWORDS): number {
+  if (!normalizedHeader || normalizedHeader.length > 40) return 0;
+
+  const compact = normalizedHeader.replace(/[^a-z0-9]/g, '');
+  const exactAliases: Record<keyof typeof FIELD_KEYWORDS, string[]> = {
+    description: ['description', 'desc', 'product description', 'material description', 'equipment description'],
+    quantity: ['quantity', 'qty', 'qnty', 'units'],
+    partNumber: ['part number', 'part no', 'part #', 'p/n', 'pn', 'sku', 'model', 'catalog number'],
+    vendor: ['vendor', 'manufacturer', 'mfg', 'brand', 'supplier', 'make'],
+    unitPrice: ['unit price', 'unit cost', 'each price', 'each cost'],
+    totalPrice: ['total price', 'extended price', 'ext price', 'line total', 'extended cost', 'ext cost'],
+  };
+
+  if (exactAliases[field].some((alias) => normalizedHeader === alias)) return 100;
+  if (field === 'partNumber' && ['partno', 'partnumber', 'part', 'pn'].includes(compact)) return 95;
+  if (field === 'quantity' && compact === 'qty') return 100;
+  if (field === 'description' && ['item', 'name', 'product', 'material', 'equipment', 'component', 'lineitem'].includes(compact)) return 20;
+
+  return FIELD_KEYWORDS[field].some((keyword) => normalizedHeader.includes(keyword)) ? 10 : 0;
 }
 
 interface ColumnMap {
@@ -59,11 +74,13 @@ interface ColumnMap {
 
 function buildColumnMap(sheet: XLSX.WorkSheet): ColumnMap | null {
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
-  const maxScanRow = Math.min(range.e.r, 30);
+  const maxScanRow = Math.min(range.e.r, 200);
+  let best: ColumnMap | null = null;
+  let bestScore = -1;
 
   for (let row = range.s.r; row <= maxScanRow; row++) {
     const map: Partial<Record<keyof typeof FIELD_KEYWORDS, number>> = {};
-    let matchCount = 0;
+    const scores: Partial<Record<keyof typeof FIELD_KEYWORDS, number>> = {};
 
     for (let col = range.s.c; col <= range.e.c; col++) {
       const cellAddr = XLSX.utils.encode_cell({ r: row, c: col });
@@ -73,17 +90,21 @@ function buildColumnMap(sheet: XLSX.WorkSheet): ColumnMap | null {
       const normalized = normalizeHeader(cell.v);
       if (!normalized) continue;
 
-      for (const [field, keywords] of Object.entries(FIELD_KEYWORDS)) {
-        if (!map[field as keyof typeof FIELD_KEYWORDS] && matchesField(normalized, keywords)) {
-          map[field as keyof typeof FIELD_KEYWORDS] = col;
-          matchCount++;
-          break;
+      for (const field of Object.keys(FIELD_KEYWORDS) as Array<keyof typeof FIELD_KEYWORDS>) {
+        const score = fieldMatchScore(normalized, field);
+        if (score > (scores[field] ?? 0)) {
+          map[field] = col;
+          scores[field] = score;
         }
       }
     }
 
-    if (matchCount >= 2 && map.description !== undefined) {
-      return {
+    if (map.description !== undefined && map.quantity !== undefined) {
+      const matchCount = Object.keys(map).length;
+      const rowScore = Object.values(scores).reduce((sum, score) => sum + (score ?? 0), 0) + matchCount * 25;
+      if (rowScore > bestScore) {
+        bestScore = rowScore;
+        best = {
         description: map.description ?? -1,
         quantity: map.quantity ?? -1,
         partNumber: map.partNumber ?? -1,
@@ -91,11 +112,12 @@ function buildColumnMap(sheet: XLSX.WorkSheet): ColumnMap | null {
         unitPrice: map.unitPrice ?? -1,
         totalPrice: map.totalPrice ?? -1,
         headerRow: row,
-      };
+        };
+      }
     }
   }
 
-  return null;
+  return best;
 }
 
 /** Extract project info from specific BOM cells */
@@ -207,13 +229,14 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
           const unitPriceCol = colMap && colMap.unitPrice >= 0 ? colMap.unitPrice : -1;
           const totalPriceCol = colMap && colMap.totalPrice >= 0 ? colMap.totalPrice : -1;
 
-          // Check if the data start row has content in the description column
-          const checkAddr = XLSX.utils.encode_cell({ r: DATA_START_ROW, c: descCol });
-          const checkCell = sheet[checkAddr];
-          // Also check column B as fallback (some sheets put data there)
-          const b20Addr = XLSX.utils.encode_cell({ r: DATA_START_ROW, c: COL_B });
-          const b20Cell = sheet[b20Addr];
-          const hasDataAtStart = (checkCell && String(checkCell.v).trim()) || (b20Cell && String(b20Cell.v).trim());
+          const startRow = colMap ? colMap.headerRow + 1 : DATA_START_ROW;
+          const hasDataAtStart = Array.from(
+            { length: Math.max(0, range.e.r - startRow + 1) },
+            (_, offset) => startRow + offset,
+          ).some((row) => {
+            const addr = XLSX.utils.encode_cell({ r: row, c: descCol });
+            return Boolean(sheet[addr] && String(sheet[addr].v).trim());
+          });
           if (!hasDataAtStart) {
             if (import.meta.env.DEV) {
               console.log(`[BOM] Sheet skipped: no data at expected start row`);
@@ -222,8 +245,6 @@ export function parseBomFile(file: File): Promise<BomParseResult> {
 
 
           const items: BomItem[] = [];
-          const startRow = colMap ? Math.max(colMap.headerRow + 1, DATA_START_ROW) : DATA_START_ROW;
-
           for (let row = startRow; row <= range.e.r; row++) {
             const getCellValue = (col: number): unknown => {
               if (col < 0) return '';
