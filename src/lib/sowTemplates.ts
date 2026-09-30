@@ -279,6 +279,15 @@ Verify power distribution, breaker operation, cellular signal strength, and netw
 Test all enclosure-mounted equipment for proper operation.`,
   },
   {
+    id: 'fire_marshal_submittal',
+    title: 'Fire Marshal Plan Submittal',
+    template: `Prepare and submit plans to the local Fire Marshal / Authority Having Jurisdiction (AHJ) for review and approval prior to installation.
+Include all required drawings, equipment cut sheets, and system documentation per AHJ requirements.
+Coordinate any required revisions and resubmittals until approval is obtained.
+Provide approved/stamped plans on site during installation and inspection.
+Schedule and attend the final Fire Marshal inspection; correct any deficiencies identified.`,
+  },
+  {
     id: 'misc_items',
     title: 'Miscellaneous Materials',
     template: `Provide and install the following additional materials listed on the BOM that are not covered in the sections above:
