@@ -281,11 +281,11 @@ Test all enclosure-mounted equipment for proper operation.`,
   {
     id: 'fire_marshal_submittal',
     title: 'Fire Marshal Plan Submittal',
-    template: `Prepare and submit plans to the local Fire Marshal / Authority Having Jurisdiction (AHJ) for review and approval prior to installation.
-Include all required drawings, equipment cut sheets, and system documentation per AHJ requirements.
-Coordinate any required revisions and resubmittals until approval is obtained.
-Provide approved/stamped plans on site during installation and inspection.
-Schedule and attend the final Fire Marshal inspection; correct any deficiencies identified.`,
+    template: `Prepare the Special Locking Arrangement plan-review package for the access-controlled openings, including door and device schedules, egress and locking sequences, wiring/riser details, fire alarm interface information where applicable, and product data for the access control and electrified locking hardware furnished under the separate installation scope.
+Coordinate required information with the Customer, General Contractor, architect, and licensed fire alarm contractor. The General Contractor is responsible for accurate door/frame and architectural details, suitable rough-in and site access, and corrections to conditions outside the access control scope. The Customer is responsible for timely decisions, coordinated review, authorization and signatures, and governmental fees unless expressly included.
+Submit to the Louisiana Office of State Fire Marshal after complete documents and Customer authorization are received. Provide the Customer with the submitted package and available review correspondence; address reasonable initial comments limited to the submitting contractor's own documentation.
+Allow an estimated ten (10) business days to prepare the package after receipt of complete, accurate information, excluding agency and other-party review time. Missing or conflicting information pauses the schedule; later changes to openings, hardware, egress sequences, fire alarm interfaces, or design may require a change order.
+Approval rests solely with the Fire Marshal and is not guaranteed. Field verification, architectural or code corrections, comments arising from information supplied by others, resubmittals caused by others, and final inspection work are outside this plan-submittal scope unless separately agreed.`,
   },
   {
     id: 'misc_items',
