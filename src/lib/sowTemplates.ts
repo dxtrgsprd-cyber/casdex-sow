@@ -288,6 +288,12 @@ Allow an estimated ten (10) business days to prepare the package after receipt o
 Approval rests solely with the Fire Marshal and is not guaranteed. Field verification, architectural or code corrections, comments arising from information supplied by others, resubmittals caused by others, and final inspection work are outside this plan-submittal scope unless separately agreed.`,
   },
   {
+    id: 'reuse_onsite_equipment',
+    title: 'Reuse of Onsite Equipment',
+    template: `Reuse existing onsite equipment as directed by the Customer or identified during the site walk. Reused equipment will be reinstalled and integrated with the new system to the extent it is compatible and in working condition.
+All reused equipment is provided by the Customer and is reused as-is. No warranty or guarantee is made, express or implied, that existing equipment is functional, compatible, or will operate reliably with the new system. Any failures, defects, incompatibilities, or additional labor or materials discovered during or after reinstallation of reused equipment are outside the contracted scope and will require a written change order for evaluation, repair, or replacement before work continues.`,
+  },
+  {
     id: 'misc_items',
     title: 'Miscellaneous Materials',
     template: `Provide and install the following additional materials listed on the BOM that are not covered in the sections above:
