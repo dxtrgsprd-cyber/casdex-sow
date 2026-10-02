@@ -1,14 +1,15 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Wrench, Zap, Settings2, Code2 } from 'lucide-react';
+import { Wrench, Zap, Settings2, Code2, Plus, Trash2 } from 'lucide-react';
 import {
   SOW_SECTION_TEMPLATES,
   SOW_VARIABLES,
+  CUSTOM_QTY_PREFIX,
   autoFillFromBom,
   generateSowText,
 } from '@/lib/sowTemplates';
@@ -213,6 +214,9 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
 
 
   const enabledSections = new Set(sowState.enabledSections);
+  const [pinnedKeys, setPinnedKeys] = useState<string[]>([]);
+  const [newCustomLabel, setNewCustomLabel] = useState('');
+  const [newCustomQty, setNewCustomQty] = useState('');
 
   const mergeCustomForChange = useCallback(
     (nextState: SowBuilderState): string | null => {
@@ -295,13 +299,55 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
     for (const id of enabledSections) {
       const tmpl = templateMap.get(id);
       if (!tmpl) continue;
-      const matches = Array.from(tmpl.template.matchAll(/\{\{(\w+)\}\}/g));
+      const text = sowState.customTemplates?.[id] ?? tmpl.template;
+      const matches = Array.from(text.matchAll(/\{\{(\w+)\}\}/g));
       for (const match of matches) {
         used.add(match[1] as string);
       }
     }
     return SOW_VARIABLES.filter((v) => used.has(v.key) && v.key !== 'PROGRAMMING_DETAILS');
-  }, [enabledSections, templateMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sowState.enabledSections, sowState.customTemplates, templateMap]);
+
+  // Standard variables shown: used by enabled sections, pinned by the user, or already holding a value
+  const shownVariables = useMemo(() => {
+    const usedKeys = new Set(usedVariables.map((v) => v.key));
+    const extra = SOW_VARIABLES.filter(
+      (v) =>
+        !usedKeys.has(v.key) &&
+        v.key !== 'PROGRAMMING_DETAILS' &&
+        (pinnedKeys.includes(v.key) || ((sowState.variables[v.key] || '').trim() && sowState.variables[v.key].trim() !== '0' && /_(COUNT|COUNTS|TOTAL)$/.test(v.key)))
+    );
+    return [...usedVariables, ...extra];
+  }, [usedVariables, pinnedKeys, sowState.variables]);
+
+  const availableQtyVariables = useMemo(() => {
+    const shown = new Set(shownVariables.map((v) => v.key));
+    return SOW_VARIABLES.filter((v) => /_(COUNT|COUNTS|TOTAL)$/.test(v.key) && !shown.has(v.key));
+  }, [shownVariables]);
+
+  const customQtyKeys = useMemo(
+    () => Object.keys(sowState.variables).filter((k) => k.startsWith(CUSTOM_QTY_PREFIX)),
+    [sowState.variables]
+  );
+
+  const addCustomQty = useCallback(() => {
+    const label = newCustomLabel.trim().replace(/[{}]/g, '');
+    if (!label) return;
+    handleVariableChange(CUSTOM_QTY_PREFIX + label, newCustomQty.trim());
+    setNewCustomLabel('');
+    setNewCustomQty('');
+  }, [newCustomLabel, newCustomQty, handleVariableChange]);
+
+  const removeVariable = useCallback(
+    (key: string) => {
+      const nextVariables = { ...sowState.variables };
+      delete nextVariables[key];
+      const next = { ...sowState, variables: nextVariables };
+      onSowStateChange({ ...next, customSowText: mergeCustomForChange(next) });
+    },
+    [sowState, onSowStateChange, mergeCustomForChange]
+  );
 
   const autoFilledKeys = useMemo(() => {
     if (bomItems.length === 0) return new Set<string>();
@@ -410,13 +456,13 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {usedVariables.length === 0 ? (
+              {shownVariables.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">
                   No variables needed for the currently enabled sections.
                 </p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {usedVariables.map((v) => (
+                  {shownVariables.map((v) => (
                     <div key={v.key}>
                       <Label className="flex items-center gap-1.5 text-xs">
                         {v.label}
@@ -434,6 +480,65 @@ export default function SowBuilder({ bomItems, sowState, onSowStateChange, onNex
                   ))}
                 </div>
               )}
+
+              {/* Add quantities */}
+              <div className="mt-4 border-t pt-3 space-y-3">
+                <Label className="text-xs font-semibold">Add Quantity</Label>
+                <div className="flex flex-wrap gap-2 items-end">
+                  <select
+                    className="h-8 rounded-md border border-input bg-background px-2 text-sm flex-1 min-w-[180px]"
+                    value=""
+                    onChange={(e) => {
+                      const key = e.target.value;
+                      if (key) setPinnedKeys((p) => Array.from(new Set([...p, key])));
+                    }}
+                  >
+                    <option value="">Choose standard item (cameras, readers, etc.)…</option>
+                    {availableQtyVariables.map((v) => (
+                      <option key={v.key} value={v.key}>{v.label}</option>
+                    ))}
+                  </select>
+                  <Input
+                    value={newCustomLabel}
+                    onChange={(e) => setNewCustomLabel(e.target.value)}
+                    placeholder="Or custom item name"
+                    className="h-8 text-sm flex-1 min-w-[140px]"
+                  />
+                  <Input
+                    value={newCustomQty}
+                    onChange={(e) => setNewCustomQty(e.target.value)}
+                    placeholder="Qty"
+                    inputMode="numeric"
+                    className="h-8 text-sm w-20"
+                  />
+                  <Button size="sm" className="h-8 gap-1" onClick={addCustomQty} disabled={!newCustomLabel.trim()}>
+                    <Plus className="w-3.5 h-3.5" /> Add
+                  </Button>
+                </div>
+                {customQtyKeys.length > 0 && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {customQtyKeys.map((key) => (
+                      <div key={key} className="flex items-end gap-1">
+                        <div className="flex-1">
+                          <Label className="text-xs">{key.slice(CUSTOM_QTY_PREFIX.length)}</Label>
+                          <Input
+                            value={sowState.variables[key] || ''}
+                            onChange={(e) => handleVariableChange(key, e.target.value)}
+                            inputMode="numeric"
+                            className="mt-1 h-8 text-sm"
+                          />
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeVariable(key)} aria-label="Remove quantity">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  Custom items appear in an "Additional Quantities" section of the SOW.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
