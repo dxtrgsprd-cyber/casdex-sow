@@ -916,6 +916,7 @@ export function generateSowText(
     // First pass: substitute variables, marking empty/zero ones for line removal
     const emptyMarker = '\x00EMPTY_VAR\x00';
     for (const [key, value] of Object.entries(variables)) {
+      if (key.startsWith(CUSTOM_QTY_PREFIX)) continue;
       const trimmed = (value || '').trim();
       const isEmptyOrZero = !trimmed || trimmed === '0';
       const display = isEmptyOrZero ? emptyMarker : formatNumericSpelling(trimmed);
@@ -940,5 +941,17 @@ export function generateSowText(
     parts.push(`${num}. ${tmpl.title}\n\n${indentedBody}`);
   }
 
+  // User-added custom quantities
+  const customLines = Object.entries(variables)
+    .filter(([key, value]) => key.startsWith(CUSTOM_QTY_PREFIX) && (value || '').trim() && value.trim() !== '0')
+    .map(([key, value]) => `    - ${key.slice(CUSTOM_QTY_PREFIX.length)}: ${formatNumericSpelling(value.trim())}`);
+  if (customLines.length) {
+    num++;
+    parts.push(`${num}. Additional Quantities\n\n${customLines.join('\n')}`);
+  }
+
   return parts.join('\n\n');
 }
+
+/** Variable-key prefix for user-added quantities; the remainder of the key is the display label. */
+export const CUSTOM_QTY_PREFIX = 'CUSTOM_QTY__';
