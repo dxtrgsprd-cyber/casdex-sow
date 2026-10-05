@@ -272,12 +272,13 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
       defaultUsername: 'admin (fixed)',
       defaultPassword: 'Set on first login',
       managementPorts: '80 (HTTP), 554 (RTSP)',
-      relayOutput: 'Yes — but requires DC 12V external power',
-      communicationProtocol: 'SIP / ONVIF',
-      vms: 'Wisenet Wave',
-      managementUrl: 'http://<device-ip>',
-      keySpecs: 'DC 12V required for door strike relay — PoE alone will NOT trigger relay',
+      relayOutput: 'Yes — 12V DC / 550mA max; requires DC 12V external power',
+      communicationProtocol: 'SIP / ONVIF Profile S',
+      vms: 'Wisenet Wave (native)',
+      managementUrl: 'http://<device-ip> (Chrome)',
+      keySpecs: 'DC 12V required for door strike relay — PoE alone will NOT trigger relay; relay max 12V DC / 550mA; Cat5e/6 max 100 m',
       installNotes: [
+        'Confirm model on back label; Cat5e/6 run under 100 m; PoE port 802.3af (15.4W budget)',
         'Mount intercom at 48" AFF',
         'Connect Cat6 to PoE switch (802.3af)',
         'Connect DC 12V power supply to relay terminal for door strike',
@@ -288,6 +289,14 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
       ],
       criticalNotes: [
         'DC 12V REQUIRED for door strike relay — PoE alone will NOT power the relay output. This is the #1 field issue.',
+        'Relay max 12V DC / 550mA — confirm strike draw and relay setting match the lock type.',
+        'Factory reset (hold RESET 5 s) wipes all config and returns to DHCP; there is no default password.',
+        'Push notifications need the Wave server reachable externally (port 7001 forwarded) or a WAVE Sync license — confirm with network admin.',
+      ],
+      qcChecks: [
+        ['DC 12V strike supply', 'Connected; door releases from Wave'],
+        ['Strike current', '550mA or less'],
+        ['Audio / video call', 'Two-way audio and video verified'],
       ],
     },
   },
@@ -1257,7 +1266,69 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
       ],
     },
   },
+  {
+    pattern: /\bVideo ?Insight\b|\bVI (Enterprise|Professional)\b/i,
+    spec: {
+      name: 'i-PRO VideoInsight VMS 8.x', type: 'VMS', vendor: 'i-PRO',
+      poe: 'N/A (Windows server)', defaultIp: 'Server static IP per design', defaultUsername: 'Created at setup', defaultPassword: 'Created at setup',
+      managementPorts: '80/443 (web client), 1433 (SQL, local), 554 (RTSP), UDP 3702 (ONVIF discovery)', relayOutput: 'N/A', communicationProtocol: 'TCP/IP',
+      vms: 'i-PRO VideoInsight', managementUrl: 'http://<server-IP>/videoinsight', keySpecs: 'Windows 64-bit server, Microsoft SQL Server; camera licenses free for i-PRO/Advidia, required for third-party',
+      installNotes: [
+        'Install VideoInsight 8.x (i-pro.com > VMS Solutions) with bundled or existing SQL Server',
+        'Allow TCP 80/443 inbound in Windows Firewall; remote access needs port forwarding or VPN',
+        'Add cameras, set recording per scope, confirm live view and playback',
+        'Server migration: back up DB and export the VI registry key, stop SQL before copying MDF/LDF, run VI.sql as administrator, restore ServerID, then activate with the existing serial',
+      ],
+      criticalNotes: [
+        'Third-party (non i-PRO/Advidia) cameras require a license.',
+        'Migration: video storage path on the new server must be IDENTICAL (same drive letter and folder) or recorded video will not carry over.',
+        'Migration: copy database files only while SQL services are stopped; schedule a maintenance window.',
+      ],
+      qcChecks: [
+        ['Web client', 'http://<server-IP>/videoinsight loads'],
+        ['Licenses', 'Activated; third-party cameras licensed'],
+        ['Migration (if in scope)', 'Users/cameras present, old video plays back, ServerID matches'],
+      ],
+    },
+  },
+  {
+    pattern: /UDB-Pro/i,
+    spec: {
+      name: 'Ubiquiti UDB-Pro / UDB-Pro-Sector PtP Link', type: 'Wireless Bridge', vendor: 'Ubiquiti',
+      poe: 'PoE on the data run; PoE+ upstream if UDB-Pro passthrough powers a device', defaultIp: 'DHCP (UniFi adopted)', defaultUsername: 'UniFi controller', defaultPassword: 'UniFi controller',
+      managementPorts: 'UniFi Network controller', relayOutput: 'N/A', communicationProtocol: 'Wireless bridge (UniFi)',
+      vms: 'UniFi Network', managementUrl: 'UniFi Network controller', keySpecs: 'UDB-Pro-Sector = Base/AP (1x GbE); UDB-Pro = Remote (PoE-IN + passive PoE-OUT)',
+      installNotes: [
+        'Label both radios (site, link, Base/Remote, VLAN); adopt Base then Remote on the head-end LAN before going up the lift',
+        'Base (Sector) at head-end aimed at remote; Remote aimed back at Sector — peak signal on LEDs before tightening',
+        'Mount high and clear of metal; drip loop; outdoor-rated Cat6 and UV ties; seal penetrations; surge/grounding per AHJ',
+        'Power a remote device from PoE-OUT only if it supports passive PoE',
+      ],
+      criticalNotes: [
+        'Do not swap sides: Sector is always the Base, UDB-Pro is always the Remote.',
+        'Bad terminations and non-outdoor cable are the top causes of random dropouts.',
+      ],
+      qcChecks: [
+        ['Link stability', 'Connected 5-10 min, no flapping'],
+        ['UniFi status', 'Both radios Online'],
+        ['Remote side', 'Correct IP; ping and real traffic pass; VLAN tagging verified'],
+      ],
+    },
+  },
 ];
+
+/** Network rules from the Verkada field manuals, applied to all Verkada devices */
+const VERKADA_NET: Record<string, { note: string; ports: string }> = {
+  'CCTV Camera': { note: 'No local web UI/credentials — all setup in Command; DHCP only (use MAC reservation).', ports: 'TCP 443, TCP 4460, UDP 123 to cloud; TCP/UDP 4100 local streaming' },
+  'Access Controller': { note: 'DHCP only (MAC reservation). Controllers cache credentials offline, but Command lockdown will not run on an offline controller. Verify fire alarm (FAI) behavior with AHJ.', ports: 'TCP/UDP 443, UDP 123; access.control.verkada.com' },
+  'Video Intercom': { note: 'DHCP only (MAC reservation).', ports: 'TCP 443; *.livekit.cloud UDP 50000-60000; *.twilio.com TCP/UDP 5060/5061' },
+};
+for (const e of DEVICE_DATABASE) {
+  const n = e.spec.vendor === 'Verkada' ? VERKADA_NET[e.spec.type] : undefined;
+  if (!n) continue;
+  e.spec.criticalNotes = [...e.spec.criticalNotes, 'Verkada devices are incompatible with proxies and SSL/TLS inspection — firewall bypass required before deployment.', n.note];
+  e.spec.qcChecks = [...(e.spec.qcChecks ?? []), ['Firewall / SSL inspection bypass', n.ports], ['Online in Verkada Command', 'Assigned to correct site; DHCP reservation set']];
+}
 
 /** Camera programming standard (applies to every BOM camera regardless of brand) */
 export const CAMERA_PROGRAMMING_QC: [string, string][] = [
