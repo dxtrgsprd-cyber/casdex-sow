@@ -17,13 +17,15 @@ export interface DeviceSpec {
   keySpecs: string;
   installNotes: string[];
   criticalNotes: string[];
+  /** Brand/model-specific QC checks (item, spec) */
+  qcChecks?: [string, string][];
 }
 
 // Pattern → spec lookup. Patterns are matched against part numbers (case-insensitive).
 const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
   // ── Verkada ──
   {
-    pattern: /TD53/i,
+    pattern: /\bTD53\b/i,
     spec: {
       name: 'TD53 Video Intercom',
       type: 'Video Intercom',
@@ -51,7 +53,7 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
     },
   },
   {
-    pattern: /AC12/i,
+    pattern: /\bAC12\b/i,
     spec: {
       name: 'AC12 1-Door Controller',
       type: 'Access Controller',
@@ -82,7 +84,7 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
     },
   },
   {
-    pattern: /AD34/i,
+    pattern: /\bAD34\b/i,
     spec: {
       name: 'AD34 OSDP Multi-Tech Reader',
       type: 'Card Reader',
@@ -109,7 +111,7 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
     },
   },
   {
-    pattern: /CD52/i,
+    pattern: /\bCD52\b/i,
     spec: {
       name: 'CD52 Outdoor Dome Camera',
       type: 'CCTV Camera',
