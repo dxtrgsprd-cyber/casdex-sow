@@ -61,7 +61,7 @@ describe('second batch of field manuals', () => {
     { partNumber: 'TID-600R', description: 'Hanwha intercom', quantity: 2 },
   ]);
   it('matches Ubiquiti and TID-600R with BOM quantities', () => {
-    expect(r.devices.map((d) => [d.spec.vendor, d.quantity])).toEqual([['Hanwha', 2], ['Ubiquiti', 1]].sort(() => 0).filter(Boolean).length ? expect.arrayContaining([['Ubiquiti', 1], ['Hanwha', 2]]) : []);
+    expect(r.devices.map((d) => [d.spec.vendor, d.quantity])).toEqual(expect.arrayContaining([['Ubiquiti', 1], ['Hanwha', 2]]));
   });
   it('TID-600R relay limit is 550mA', () => {
     expect(r.devices.find((d) => d.spec.vendor === 'Hanwha')?.spec.relayOutput).toMatch(/550mA/);
