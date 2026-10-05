@@ -37,3 +37,20 @@ describe('field manual follows the BOM', () => {
     expect(qc.flatMap((g) => g.rows).some(([i]) => /Lock release/.test(i))).toBe(false);
   });
 });
+
+describe('uploaded camera/VMS field manuals', () => {
+  const r = matchBomToDevices([
+    { partNumber: 'XNV-8080R', description: 'Wisenet 5MP dome', quantity: 3 },
+    { partNumber: '02367-001', description: 'AXIS P3265-LVE Dome', quantity: 2 },
+    { partNumber: 'WV-S2136L', description: 'i-PRO dome', quantity: 1 },
+    { partNumber: '5.0C-H5A-BO1-IR', description: 'Avigilon bullet', quantity: 4 },
+    { partNumber: 'WAVE-PRO-04', description: 'Wisenet WAVE Professional License', quantity: 4 },
+  ]);
+  it('matches each brand with BOM quantities', () => {
+    const q = (v: string) => r.devices.find((d) => d.spec.vendor === v)?.quantity;
+    expect([q('Hanwha'), q('Axis'), q('i-PRO'), q('Avigilon')]).toEqual([3, 2, 1, 4]);
+  });
+  it('keeps VMS licenses out of devices', () => {
+    expect(r.accessories.map((a) => a.partNumber)).toEqual(['WAVE-PRO-04']);
+  });
+});
