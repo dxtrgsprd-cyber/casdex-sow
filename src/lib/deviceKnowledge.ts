@@ -1324,6 +1324,7 @@ export function matchBomToDevices(
     const ref: BomLineRef = { partNumber: (item.partNumber || '').trim(), description: (item.description || '').trim(), quantity: Number(item.quantity) || 0 };
     const pn = ref.partNumber;
     const isAccessory = ACCESSORY_RE.test(pn) || ACCESSORY_RE.test(ref.description);
+    if (/^LIC-|\b(licen[cs]e|subscription)\b/i.test(`${pn} ${ref.description}`)) { accessories.push(ref); continue; }
     let entry = pn ? DEVICE_DATABASE.find((e) => e.pattern.test(pn)) : undefined;
     if (!entry && !isAccessory) {
       const text = `${ref.description} ${item.vendor || ''}`;
