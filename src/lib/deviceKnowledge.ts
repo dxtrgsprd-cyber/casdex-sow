@@ -516,6 +516,468 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
       ],
     },
   },
+  {
+    pattern: /^MV\d{2}[A-Z]*(-HW)?\b/i,
+    spec: {
+      name: 'Cisco Meraki MV Smart Camera',
+      type: 'CCTV Camera',
+      vendor: 'Cisco Meraki',
+      poe: 'PoE — class varies by model, confirm on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound internet to Meraki cloud (see Dashboard > Help > Firewall info)',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Meraki Dashboard)',
+      vms: 'Cisco Meraki Dashboard',
+      managementUrl: 'https://dashboard.meraki.com',
+      keySpecs: 'Cloud-managed camera, on-board storage, managed in Meraki Dashboard',
+      installNotes: [
+        'Confirm with PM that camera serials / order number are claimed into the correct Dashboard organization and network before arrival',
+        'Mount using the Meraki mount accessory listed on the BOM for this model',
+        'Run Cat6 to a PoE switch port and confirm the port supplies the PoE class required by the model',
+        'Camera obtains an IP by DHCP and connects to Meraki cloud automatically — confirm status turns green in Dashboard',
+        'Allow firmware to update in Dashboard before final aiming',
+        'Aim and focus using the live view in Dashboard; set name and location to match the Hardware Schedule',
+      ],
+      criticalNotes: [
+        'A valid MV license must be applied in Dashboard for every camera — unlicensed cameras put the organization out of compliance',
+        'Do not factory reset or re-claim cameras without PM approval',
+      ],
+      qcChecks: [
+        ['Camera online in Meraki Dashboard', 'Status green, correct network'],
+        ['MV license applied', 'No license warnings in Organization > License info'],
+        ['Camera named per Hardware Schedule', 'Name and address/location set in Dashboard'],
+        ['Field of view and focus approved', 'Screenshot of live view saved'],
+        ['Firmware up to date', 'No pending upgrade in Dashboard'],
+      ],
+    },
+  },
+  {
+    pattern: /^MS\d{3}/i,
+    spec: {
+      name: 'Cisco Meraki MS Switch',
+      type: 'PoE Switch',
+      vendor: 'Cisco Meraki',
+      poe: 'N/A (AC powered, provides PoE)',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound internet to Meraki cloud (see Dashboard > Help > Firewall info)',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Meraki Dashboard)',
+      vms: 'Cisco Meraki Dashboard',
+      managementUrl: 'https://dashboard.meraki.com',
+      keySpecs: 'Cloud-managed switch',
+      installNotes: [
+        'Confirm switch serial is claimed in the correct Dashboard network',
+        'Rack/mount and connect AC power',
+        'Connect uplink port to the customer network per PM direction',
+        'Confirm switch is online in Dashboard and firmware is current',
+        'Label each device port per the Hardware Schedule',
+      ],
+      criticalNotes: [
+        'Confirm VLAN and uplink configuration with PM before connecting to the customer network',
+      ],
+      qcChecks: [
+        ['Switch online in Meraki Dashboard', 'Status green'],
+        ['Port labels match Hardware Schedule', 'Device names set on switch ports'],
+        ['PoE budget sufficient', 'No PoE overload alerts in Dashboard'],
+      ],
+    },
+  },
+  {
+    pattern: /^MR\d{2}/i,
+    spec: {
+      name: 'Cisco Meraki MR Access Point',
+      type: 'Wireless Access Point',
+      vendor: 'Cisco Meraki',
+      poe: 'PoE — confirm class on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound internet to Meraki cloud (see Dashboard > Help > Firewall info)',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Meraki Dashboard)',
+      vms: 'Cisco Meraki Dashboard',
+      managementUrl: 'https://dashboard.meraki.com',
+      keySpecs: 'Cloud-managed access point',
+      installNotes: [
+        'Confirm AP serial is claimed in Dashboard',
+        'Mount with the Meraki mount supplied',
+        'Connect Cat6 to PoE switch port',
+        'Confirm AP online in Dashboard',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['AP online in Meraki Dashboard', 'Status green'],
+        ['AP named / placed on floor plan', 'Per Hardware Schedule'],
+      ],
+    },
+  },
+  {
+    pattern: /^MX\d{2,3}/i,
+    spec: {
+      name: 'Cisco Meraki MX Security Appliance',
+      type: 'Firewall / Gateway',
+      vendor: 'Cisco Meraki',
+      poe: 'N/A (AC powered)',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound internet to Meraki cloud (see Dashboard > Help > Firewall info)',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Meraki Dashboard)',
+      vms: 'Cisco Meraki Dashboard',
+      managementUrl: 'https://dashboard.meraki.com',
+      keySpecs: 'Cloud-managed security appliance',
+      installNotes: [
+        'Confirm MX serial is claimed in Dashboard',
+        'Connect WAN to customer ISP hand-off per PM',
+        'Confirm MX online in Dashboard',
+      ],
+      criticalNotes: [
+        'Do not connect the WAN port until PM confirms WAN addressing',
+      ],
+      qcChecks: [
+        ['MX online in Meraki Dashboard', 'Status green'],
+        ['WAN connectivity confirmed', 'Uplink status healthy'],
+      ],
+    },
+  },
+  {
+    pattern: /^MT\d{2}/i,
+    spec: {
+      name: 'Cisco Meraki MT Sensor',
+      type: 'Environmental Sensor',
+      vendor: 'Cisco Meraki',
+      poe: 'Battery powered',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Reports through a Meraki MV or MR gateway',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Bluetooth to Meraki gateway',
+      vms: 'Cisco Meraki Dashboard',
+      managementUrl: 'https://dashboard.meraki.com',
+      keySpecs: 'Cloud-managed sensor',
+      installNotes: [
+        'Confirm sensor is claimed in Dashboard',
+        'Confirm a Meraki MV camera or MR AP gateway is within range',
+        'Mount sensor per Hardware Schedule',
+        'Confirm readings appear in Dashboard',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Sensor reporting in Dashboard', 'Readings visible'],
+        ['Gateway assigned', 'Sensor shows connected gateway'],
+      ],
+    },
+  },
+  {
+    pattern: /^(CD|CB|CM|CF|CP|CH)\d{2}(-E)?(-HW)?\b/i,
+    spec: {
+      name: 'Verkada Camera',
+      type: 'CCTV Camera',
+      vendor: 'Verkada',
+      poe: 'PoE — class varies by model, confirm on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Cloud-managed camera with on-board storage',
+      installNotes: [
+        'Confirm with PM that cameras are added to the correct Verkada Command organization and site',
+        'Mount using the Verkada mount accessory listed on the BOM',
+        'Run Cat6 to a PoE switch port meeting the model PoE class',
+        'Camera connects to Command automatically — confirm it appears online',
+        'Aim and focus from live view in Command; name per Hardware Schedule',
+      ],
+      criticalNotes: [
+        'Each camera requires an active Verkada license in Command',
+      ],
+      qcChecks: [
+        ['Camera online in Verkada Command', 'Correct site'],
+        ['License assigned', 'No license warning'],
+        ['Camera named per Hardware Schedule', 'Name set in Command'],
+        ['Field of view approved', 'Screenshot saved'],
+      ],
+    },
+  },
+  {
+    pattern: /^BP52/i,
+    spec: {
+      name: 'Verkada BP52 Alarm Panel',
+      type: 'Alarm Panel',
+      vendor: 'Verkada',
+      poe: 'Confirm power on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Verkada intrusion system component',
+      installNotes: [
+        'Add panel to the site in Verkada Command > Alarms',
+        'Mount panel in secure location per Hardware Schedule',
+        'Connect network uplink (and cellular communicator if on BOM)',
+        'Install backup battery listed on BOM',
+        'Confirm panel online in Command',
+      ],
+      criticalNotes: [
+        'Notify monitoring/customer before any alarm test',
+      ],
+      qcChecks: [
+        ['Device online in Verkada Command > Alarms', 'Correct site'],
+        ['Device tested', 'Alarm event received in Command'],
+      ],
+    },
+  },
+  {
+    pattern: /^BK22/i,
+    spec: {
+      name: 'Verkada BK22 Keypad',
+      type: 'Alarm Keypad',
+      vendor: 'Verkada',
+      poe: 'See model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Verkada intrusion system component',
+      installNotes: [
+        'Mount at entry location per Hardware Schedule',
+        'Pair/enroll keypad to the BP52 panel in Command',
+        'Test arm/disarm',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Device online in Verkada Command > Alarms', 'Correct site'],
+        ['Device tested', 'Alarm event received in Command'],
+      ],
+    },
+  },
+  {
+    pattern: /^BR33/i,
+    spec: {
+      name: 'Verkada BR33 Panic Button',
+      type: 'Panic Button',
+      vendor: 'Verkada',
+      poe: 'Battery powered',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Verkada intrusion system component',
+      installNotes: [
+        'Mount per Hardware Schedule (confirm height with PM)',
+        'Enroll to panel in Command',
+        'Test activation with monitoring placed on test',
+      ],
+      criticalNotes: [
+        'Notify monitoring/customer before any alarm test',
+      ],
+      qcChecks: [
+        ['Device online in Verkada Command > Alarms', 'Correct site'],
+        ['Device tested', 'Alarm event received in Command'],
+      ],
+    },
+  },
+  {
+    pattern: /^BZ32/i,
+    spec: {
+      name: 'Verkada BZ32 Siren',
+      type: 'Siren',
+      vendor: 'Verkada',
+      poe: 'See model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Verkada intrusion system component',
+      installNotes: [
+        'Mount per Hardware Schedule',
+        'Enroll to panel in Command',
+        'Test siren with customer notified',
+      ],
+      criticalNotes: [
+        'Notify monitoring/customer before any alarm test',
+      ],
+      qcChecks: [
+        ['Device online in Verkada Command > Alarms', 'Correct site'],
+        ['Device tested', 'Alarm event received in Command'],
+      ],
+    },
+  },
+  {
+    pattern: /^WH52/i,
+    spec: {
+      name: 'Verkada WH52 Wireless Hub',
+      type: 'Wireless Hub',
+      vendor: 'Verkada',
+      poe: 'See model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Verkada intrusion system component',
+      installNotes: [
+        'Mount centrally for wireless coverage',
+        'Connect and add to site in Command',
+        'Confirm wireless devices report signal strength',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Device online in Verkada Command > Alarms', 'Correct site'],
+        ['Device tested', 'Alarm event received in Command'],
+      ],
+    },
+  },
+  {
+    pattern: /^ACC-CEL-LTE/i,
+    spec: {
+      name: 'Verkada Cellular Communicator',
+      type: 'Alarm Communicator',
+      vendor: 'Verkada',
+      poe: 'Powered from panel',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Verkada intrusion system component',
+      installNotes: [
+        'Install communicator in BP52 panel per Verkada guide',
+        'Confirm cellular signal in Command',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Device online in Verkada Command > Alarms', 'Correct site'],
+        ['Device tested', 'Alarm event received in Command'],
+      ],
+    },
+  },
+  {
+    pattern: /^SV\d{2}/i,
+    spec: {
+      name: 'Verkada SV Environmental / Vape Sensor',
+      type: 'Vape Sensor',
+      vendor: 'Verkada',
+      poe: 'PoE — confirm on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Outbound HTTPS (443) to Verkada cloud',
+      relayOutput: 'N/A',
+      communicationProtocol: 'Cloud (Verkada Command)',
+      vms: 'Verkada Command',
+      managementUrl: 'https://command.verkada.com',
+      keySpecs: 'Cloud-managed air quality / vape sensor',
+      installNotes: [
+        'Confirm sensor is added to the correct site in Command',
+        'Mount per Hardware Schedule away from HVAC supply vents',
+        'Connect Cat6 to PoE switch',
+        'Confirm readings and alert thresholds in Command',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Sensor online in Verkada Command', 'Readings visible'],
+        ['Alert notifications configured', 'Recipients confirmed with PM'],
+      ],
+    },
+  },
+  {
+    pattern: /\bHALO\b/i,
+    spec: {
+      name: 'HALO Smart Sensor (IPVideo)',
+      type: 'Vape Sensor',
+      vendor: 'IPVideo (HALO)',
+      poe: 'PoE — confirm on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Per IPVideo HALO documentation',
+      relayOutput: 'Relay output available on some models — see datasheet',
+      communicationProtocol: 'Network (PoE)',
+      vms: 'HALO Cloud / HALO device web interface',
+      managementUrl: 'Per IPVideo HALO documentation',
+      keySpecs: 'Vape / air quality / sound-event sensor',
+      installNotes: [
+        'Mount per Hardware Schedule away from HVAC supply vents',
+        'Connect Cat6 to PoE switch',
+        'Register sensor in HALO Cloud (or configure via web interface) per IPVideo quick start',
+        'Set alert thresholds and notification recipients with PM',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Sensor online in HALO Cloud', 'Readings visible'],
+        ['Alerts configured', 'Test alert received by customer contact'],
+      ],
+    },
+  },
+  {
+    pattern: /\bTRITON\b/i,
+    spec: {
+      name: 'Triton Vape Sensor',
+      type: 'Vape Sensor',
+      vendor: 'Triton',
+      poe: 'Confirm on model datasheet',
+      defaultIp: 'DHCP',
+      defaultUsername: 'N/A (cloud-managed)',
+      defaultPassword: 'N/A (cloud-managed)',
+      managementPorts: 'Per Triton documentation',
+      relayOutput: 'See model datasheet',
+      communicationProtocol: 'Network',
+      vms: 'Triton management platform',
+      managementUrl: 'Per Triton documentation',
+      keySpecs: 'Vape detection sensor',
+      installNotes: [
+        'Mount per Hardware Schedule away from HVAC supply vents',
+        'Connect network/power per Triton install guide',
+        'Register sensor in the Triton platform',
+        'Set alert recipients with PM',
+      ],
+      criticalNotes: [
+      ],
+      qcChecks: [
+        ['Sensor online in Triton platform', 'Readings visible'],
+        ['Alerts configured', 'Test alert received'],
+      ],
+    },
+  },
 ];
 
 /**
@@ -539,6 +1001,54 @@ export function matchDevicesFromBom(
 
   return Array.from(matched.values());
 }
+
+export interface BomLineRef { partNumber: string; description: string; quantity: number }
+export interface MatchedDevice { spec: DeviceSpec; lines: BomLineRef[]; quantity: number }
+export interface BomMatchResult {
+  devices: MatchedDevice[];
+  /** Licenses, mounts, cable, power and other materials */
+  accessories: BomLineRef[];
+  /** Device lines with no verified manufacturer reference */
+  unmatched: BomLineRef[];
+}
+
+const ACCESSORY_RE = /^LIC-|\b(licen[cs]e|subscription|warranty|mount|bracket|adapter|cable|cat ?6|patch|connector|battery|batteries|pole|arm|cap|plate|box|enclosure|surge|injector|power supply|transformer|conduit|fitting|label|software|service)\b/i;
+
+/**
+ * Match each BOM line to exactly one device spec. Part number is checked first,
+ * then description/vendor. Licenses/materials are kept separate so they are
+ * never presented as devices.
+ */
+export function matchBomToDevices(
+  bomItems: { description: string; partNumber?: string; vendor?: string; quantity?: number }[]
+): BomMatchResult {
+  const map = new Map<string, MatchedDevice>();
+  const accessories: BomLineRef[] = [];
+  const unmatched: BomLineRef[] = [];
+  for (const item of bomItems) {
+    const ref: BomLineRef = { partNumber: (item.partNumber || '').trim(), description: (item.description || '').trim(), quantity: Number(item.quantity) || 0 };
+    const pn = ref.partNumber;
+    const isAccessory = ACCESSORY_RE.test(pn) || ACCESSORY_RE.test(ref.description);
+    let entry = pn ? DEVICE_DATABASE.find((e) => e.pattern.test(pn)) : undefined;
+    if (!entry && !isAccessory) {
+      const text = `${ref.description} ${item.vendor || ''}`;
+      entry = DEVICE_DATABASE.find((e) => e.pattern.test(text));
+    }
+    if (entry && !(isAccessory && !ACCESSORY_DEVICE_TYPES.has(entry.spec.type) && !(pn && entry.pattern.test(pn)))) {
+      const m = map.get(entry.spec.name) ?? { spec: entry.spec, lines: [], quantity: 0 };
+      m.lines.push(ref);
+      m.quantity += ref.quantity;
+      map.set(entry.spec.name, m);
+    } else if (isAccessory) {
+      accessories.push(ref);
+    } else {
+      unmatched.push(ref);
+    }
+  }
+  return { devices: Array.from(map.values()), accessories, unmatched };
+}
+
+const ACCESSORY_DEVICE_TYPES = new Set(['Power Supply', 'Surge Protection']);
 
 /**
  * Detect system type from matched devices
