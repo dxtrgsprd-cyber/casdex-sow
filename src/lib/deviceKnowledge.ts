@@ -1102,7 +1102,178 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
       ],
     },
   },
+  // ── VMS platforms (from uploaded field manuals) — listed before cameras ──
+  {
+    pattern: /\bCamera Station\b|\bACS[- ]?Pro\b/i,
+    spec: {
+      name: 'AXIS Camera Station Pro (VMS)', type: 'VMS', vendor: 'Axis',
+      poe: 'N/A (Windows server)', defaultIp: 'Server static IP per design', defaultUsername: 'Windows account', defaultPassword: 'Windows account',
+      managementPorts: 'TCP 29202 (ACS Pro server); TCP 55752 (ACS 5)', relayOutput: 'N/A', communicationProtocol: 'TCP/IP',
+      vms: 'AXIS Camera Station Pro', managementUrl: 'ACS Pro client', keySpecs: 'Windows 10 Pro+ / Server 2019/2022 (64-bit); up to 150 cameras per server (hardware-dependent); VM client not supported',
+      installNotes: [
+        'Size server per channel count: 8 ch i3/8GB, 32 ch i5/16GB, 64 ch Xeon E/16GB, 150 ch Xeon Silver/32GB',
+        'Install ACS Pro from axis.com/support/software on 64-bit Windows; record to a dedicated drive (never the OS drive)',
+        'Open TCP 29202 between server and clients',
+        'Add cameras with a dedicated operator/admin account (not root)',
+        'Set recording per scope and confirm live view and playback for every camera',
+      ],
+      criticalNotes: [
+        'Windows Update automatic restarts can corrupt the ACS Pro database — schedule updates in maintenance windows only.',
+        'Never record to the OS/system drive. Client on a virtual machine is not supported.',
+      ],
+      qcChecks: [
+        ['ACS Pro server/client versions', 'Match; latest approved build'],
+        ['Recording storage', 'Dedicated drive, not OS drive'],
+        ['Windows automatic restarts', 'Disabled / scheduled'],
+      ],
+    },
+  },
+  {
+    pattern: /\bUnity Video\b|\bAvigilon Control Center\b/i,
+    spec: {
+      name: 'Avigilon Unity Video 8 (VMS)', type: 'VMS', vendor: 'Avigilon',
+      poe: 'N/A (Windows server)', defaultIp: 'Server static IP per design', defaultUsername: 'Created at setup', defaultPassword: 'Created at setup',
+      managementPorts: 'TCP 38880 (server)', relayOutput: 'N/A', communicationProtocol: 'TCP/IP',
+      vms: 'Avigilon Unity Video', managementUrl: 'Unity Video client', keySpecs: 'Windows 10/11, Server 2016/2019/2022 only (no Linux); licenses via partners.avigilon.com',
+      installNotes: [
+        'Size server with the Avigilon System Calculator',
+        'Install Unity Video server from avigilon.com/software-downloads; open TCP 38880',
+        'Activate licenses through partners.avigilon.com',
+        'Add cameras, set recording per scope, confirm live view and playback',
+      ],
+      criticalNotes: [
+        'Unity Video client and server versions must match — a mismatch after a server upgrade blocks client connections.',
+      ],
+      qcChecks: [
+        ['Client/server versions', 'Match'],
+        ['Licenses activated', 'All channels licensed'],
+      ],
+    },
+  },
+  {
+    pattern: /\bWAVE\b|^WRR-/i,
+    spec: {
+      name: 'Wisenet WAVE VMS 6.0', type: 'VMS', vendor: 'Hanwha',
+      poe: 'N/A (server / NVR)', defaultIp: 'Server static IP per design', defaultUsername: 'admin (set at setup)', defaultPassword: 'Set at setup',
+      managementPorts: 'TCP 7001 (server); WAVE Sync TCP/UDP 3345, 80, 443', relayOutput: 'N/A', communicationProtocol: 'TCP/IP',
+      vms: 'Wisenet WAVE', managementUrl: 'WAVE client / WAVE Sync', keySpecs: 'Server on Windows or Ubuntu Linux; up to 128 HD devices per server',
+      installNotes: [
+        'Install WAVE 6.0 server + client (wavevms.com); keep server and client on the same version',
+        'Open TCP 7001 on the server; TCP/UDP 3345, 80, 443 outbound if WAVE Sync (cloud) is in scope',
+        'Activate licenses (30-day trial covers only 4 channels)',
+        'Add cameras, set recording per scope, confirm live view and playback',
+      ],
+      criticalNotes: ['Max 128 HD devices per server — split larger systems across servers.'],
+      qcChecks: [
+        ['WAVE server port 7001', 'Reachable from all clients'],
+        ['Licenses', 'Permanent licenses active (not trial)'],
+        ['Camera count per server', '128 or fewer'],
+      ],
+    },
+  },
+  // ── Cameras (from uploaded field manuals) ──
+  {
+    pattern: /^[XQPAT]N[VDOBPFM]-[A-Z]?\d{4}|\bWisenet\b.*\bcamera\b/i,
+    spec: {
+      name: 'Hanwha Wisenet IP Camera', type: 'CCTV Camera', vendor: 'Hanwha',
+      poe: 'PoE — confirm class on model datasheet', defaultIp: '192.168.1.100 (DHCP if server present)', defaultUsername: 'admin', defaultPassword: 'None — set at first login',
+      managementPorts: '80 (HTTP), 443 (HTTPS), 554 (RTSP), 4520 (VNP)', relayOutput: 'Model dependent', communicationProtocol: 'ONVIF / RTSP',
+      vms: 'Wisenet WAVE', managementUrl: 'http://<camera-ip> (Chrome)', keySpecs: 'RTSP: rtsp://<IP>/profile<N>/media.smp; 5 bad logins = 30 s lockout',
+      installNotes: [
+        'Run Wisenet Device Manager: Search, authenticate (Credential) until every device shows Login OK',
+        'Assign static IPs (use Simulate before Apply for bulk changes)',
+        'Right-click > Live Viewer: confirm image, angle, focus, PTZ',
+        'Update firmware if required, then export the XLS report and back up configs before leaving site',
+      ],
+      criticalNotes: [
+        'No default password — admin password must be set at first login.',
+        'Firmware must match the exact model or the camera can be bricked.',
+        'After bulk password changes, update stored credentials in WAVE/NVR immediately or the camera locks out.',
+        'Cameras on an NVR\'s internal PoE ports cannot be reached directly from Device Manager.',
+      ],
+      qcChecks: [
+        ['Device Manager status', 'All devices Login OK'],
+        ['IP scheme / ARP', 'Matches design; no conflicts'],
+        ['Device Manager XLS report + config backup', 'Saved to project folder'],
+      ],
+    },
+  },
+  {
+    pattern: /\bAXIS\s+[PMQF]\d{4}|^[PMQF]\d{4}-[A-Z]/i,
+    spec: {
+      name: 'Axis IP Camera', type: 'CCTV Camera', vendor: 'Axis',
+      poe: 'PoE — confirm class on model datasheet', defaultIp: 'DHCP; fallback 192.168.0.90 (FW < 11.8) or 169.254.x.x (FW 11.8+)', defaultUsername: 'root', defaultPassword: 'None — set at first login',
+      managementPorts: '80 (HTTP), 443 (HTTPS), 554 (RTSP), UDP 3702 (ONVIF discovery)', relayOutput: 'Model dependent', communicationProtocol: 'ONVIF / VAPIX / RTSP',
+      vms: 'AXIS Camera Station Pro', managementUrl: 'http://<camera-ip>', keySpecs: 'Multi-sensor models use one IP per channel (192.168.0.90, .91, ...)',
+      installNotes: [
+        'Discover with AXIS IP Utility or AXIS Device Manager; set static IP (System > Network > IPv4)',
+        'Set root password at first access, then enable HTTPS and change the password over HTTPS',
+        'Create a dedicated operator/admin account for the VMS (System > Users) — do not use root',
+      ],
+      criticalNotes: [
+        'The root account cannot be deleted; a lost root password requires a factory reset.',
+        'Initial password is sent in clear text — enable HTTPS right after first login.',
+      ],
+      qcChecks: [
+        ['HTTPS enabled', 'Yes'],
+        ['VMS account', 'Dedicated account, not root'],
+      ],
+    },
+  },
+  {
+    pattern: /\bWV-[SUX]\d{4}/i,
+    spec: {
+      name: 'i-PRO IP Camera', type: 'CCTV Camera', vendor: 'i-PRO',
+      poe: 'PoE — confirm class on model datasheet', defaultIp: 'DHCP; fallback 192.168.0.10', defaultUsername: 'admin (set at registration)', defaultPassword: 'None — set at first login',
+      managementPorts: '80 (HTTP), 443 (HTTPS), 554 (RTSP)', relayOutput: 'Model dependent', communicationProtocol: 'ONVIF / RTSP',
+      vms: 'Per project VMS', managementUrl: 'http://<camera-ip>', keySpecs: 'WV-S / WV-U / WV-X series (formerly Panasonic)',
+      installNotes: [
+        'Discover and set IP with i-PRO IP Setting Software',
+        'Complete the registration screen (admin credentials) before anything else',
+        'Use i-PRO Configuration Tool (iCT) for bulk settings and firmware',
+      ],
+      criticalNotes: [
+        'Firmware must match the exact model number on the camera label.',
+        'Factory reset erases all settings including IP and credentials (SD card kept).',
+      ],
+    },
+  },
+  {
+    pattern: /\b\d+(\.\d+)?C?-H[4-6]|\bAvigilon\b.*\bcamera\b/i,
+    spec: {
+      name: 'Avigilon IP Camera (H4/H5/H6)', type: 'CCTV Camera', vendor: 'Avigilon',
+      poe: 'PoE — confirm class on model datasheet', defaultIp: 'DHCP; fallback 169.254.x.x', defaultUsername: 'None — create at first login', defaultPassword: 'None — set at first login',
+      managementPorts: '80 (HTTP), 443 (HTTPS), 554 (RTSP)', relayOutput: 'Model dependent', communicationProtocol: 'ONVIF / RTSP',
+      vms: 'Avigilon Unity Video', managementUrl: 'http://<camera-ip>', keySpecs: 'H4 / H5 / H5SL / H5A / H6 / H6SL series',
+      installNotes: [
+        'Discover, configure and update with Avigilon Camera Configuration Tool (CCT); laptop on 169.254.x.x if no DHCP',
+        'Create the first user before adding to any VMS',
+        'Enable HDSM SmartCodec for bandwidth/storage efficiency',
+      ],
+      criticalNotes: [
+        'Cameras made after Jan 1 2020 have no default credentials; older units may be admin/admin — change immediately.',
+        'After bulk credential changes, update camera credentials in Unity Video or recording stops.',
+        'Firmware must match the model — wrong firmware requires recovery or factory reset.',
+      ],
+    },
+  },
 ];
+
+/** Camera programming standard (applies to every BOM camera regardless of brand) */
+export const CAMERA_PROGRAMMING_QC: [string, string][] = [
+  ['Static IP / subnet / gateway / DNS / VLAN', 'Logged in CCTV install workbook'],
+  ['Time zone + NTP', 'Camera time matches VMS'],
+  ['Firmware', 'Approved/current; camera back online after reboot'],
+  ['Main stream', 'H.265, native res, 20 FPS, VBR capped (5MP 4500 / 8MP 8000 kbps), GOP 1-2 s'],
+  ['Sub stream', '720p, 8-15 FPS, lower cap than main'],
+  ['Added to VMS', 'Native driver (ONVIF only if needed); name/location correct'],
+  ['Recording + playback', 'Mode per scope; last 5-10 min plays back'],
+  ['Image tune', 'WDR, day/night, IR, shutter, focus (incl. night), privacy masks'],
+  ['Final reboot test', 'Returns online, keeps recording, timestamps correct, bitrate normal'],
+];
+for (const e of DEVICE_DATABASE) {
+  if (e.spec.type === 'CCTV Camera') e.spec.qcChecks = [...(e.spec.qcChecks ?? []), ...CAMERA_PROGRAMMING_QC.filter(([i]) => !(e.spec.qcChecks ?? []).some(([j]) => j === i))];
+}
 
 /**
  * Match BOM items against the device knowledge base
