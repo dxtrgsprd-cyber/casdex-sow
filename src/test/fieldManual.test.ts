@@ -54,3 +54,16 @@ describe('uploaded camera/VMS field manuals', () => {
     expect(r.accessories.map((a) => a.partNumber)).toEqual(['WAVE-PRO-04']);
   });
 });
+
+describe('second batch of field manuals', () => {
+  const r = matchBomToDevices([
+    { partNumber: 'UDB-Pro-Sector', description: 'Ubiquiti sector', quantity: 1 },
+    { partNumber: 'TID-600R', description: 'Hanwha intercom', quantity: 2 },
+  ]);
+  it('matches Ubiquiti and TID-600R with BOM quantities', () => {
+    expect(r.devices.map((d) => [d.spec.vendor, d.quantity])).toEqual([['Hanwha', 2], ['Ubiquiti', 1]].sort(() => 0).filter(Boolean).length ? expect.arrayContaining([['Ubiquiti', 1], ['Hanwha', 2]]) : []);
+  });
+  it('TID-600R relay limit is 550mA', () => {
+    expect(r.devices.find((d) => d.spec.vendor === 'Hanwha')?.spec.relayOutput).toMatch(/550mA/);
+  });
+});
