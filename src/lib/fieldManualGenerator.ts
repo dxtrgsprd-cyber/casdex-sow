@@ -11,8 +11,8 @@ import {
 } from 'docx';
 import { saveAs } from 'file-saver';
 import type { ProjectInfo, BomItem } from '@/types/sow';
-import { matchDevicesFromBom, detectSystemType, detectVms } from './deviceKnowledge';
-import type { DeviceSpec } from './deviceKnowledge';
+import { matchBomToDevices, detectSystemType, detectVms } from './deviceKnowledge';
+import type { DeviceSpec, MatchedDevice, BomLineRef } from './deviceKnowledge';
 
 // ─── CONSTANTS ───
 const PAGE_WIDTH = 12240;
@@ -226,31 +226,35 @@ function dqrRow(field: string, value: string, alt: boolean) {
 const soColWidths = [3120, 3120, 3120];
 
 // ─── BUILD DEVICE SECTIONS ───
-function buildDeviceQuickRefSections(devices: DeviceSpec[]): (Paragraph | Table)[] {
+function linesSummary(m: MatchedDevice): string {
+  return m.lines.map((l) => `${l.partNumber || l.description} (x${l.quantity})`).join(', ');
+}
+
+function buildDeviceQuickRefSections(devices: MatchedDevice[]): (Paragraph | Table)[] {
   if (devices.length === 0) {
-    return [
-      subHeading('No devices matched from BOM'),
-      bodyText('Populate Device Quick Reference manually based on project hardware.', { color: MED_GRAY }),
-    ];
+    return [bodyText('No equipment on this BOM has a verified manufacturer reference. Follow the manufacturer installation guide shipped with each product.', { color: MED_GRAY })];
   }
   const elements: (Paragraph | Table)[] = [];
-  devices.forEach((dev, i) => {
-    elements.push(subHeading(`${5}.${i + 1}  ${dev.name}`));
+  devices.forEach((m, i) => {
+    const dev = m.spec;
+    elements.push(subHeading(`4.${i + 1}  ${dev.name}`));
     elements.push(new Table({
       width: { size: CONTENT_WIDTH, type: WidthType.DXA },
       columnWidths: dqrColWidths,
       rows: [
         new TableRow({ children: [headerCell('Field', dqrColWidths[0]), headerCell('Value', dqrColWidths[1])] }),
+        dqrRow('BOM Part # (Qty)', linesSummary(m), false),
+        dqrRow('Total Quantity', String(m.quantity), true),
         dqrRow('Type', dev.type, false),
-        dqrRow('Vendor', dev.vendor, true),
+        dqrRow('Manufacturer', dev.vendor, true),
         dqrRow('Default IP', dev.defaultIp, false),
         dqrRow('Default Username', dev.defaultUsername, true),
         dqrRow('Default Password', dev.defaultPassword, false),
-        dqrRow('Management Ports', dev.managementPorts, true),
-        dqrRow('PoE Requirement', dev.poe, false),
+        dqrRow('Network / Ports', dev.managementPorts, true),
+        dqrRow('Power / PoE', dev.poe, false),
         dqrRow('Relay Output', dev.relayOutput, true),
-        dqrRow('Communication Protocol', dev.communicationProtocol, false),
-        dqrRow('VMS / Platform', dev.vms, true),
+        dqrRow('Communication', dev.communicationProtocol, false),
+        dqrRow('Management Platform', dev.vms, true),
         dqrRow('Management URL', dev.managementUrl, false),
       ],
     }));
@@ -259,30 +263,113 @@ function buildDeviceQuickRefSections(devices: DeviceSpec[]): (Paragraph | Table)
   return elements;
 }
 
-function buildInstallInstructionSections(devices: DeviceSpec[]): (Paragraph | Table)[] {
-  if (devices.length === 0) {
-    return [
-      subHeading('6.1  [NODE TYPE]'),
-      bodyText('[Populate installation steps per device type]', { color: MED_GRAY }),
-    ];
+function buildInstallInstructionSections(devices: MatchedDevice[]): (Paragraph | Table)[] {
+  const installable = devices.filter((m) => m.spec.installNotes.length > 0);
+  if (installable.length === 0) {
+    return [bodyText('Install all equipment per the manufacturer installation guide shipped with each product.', { color: MED_GRAY })];
   }
   const elements: (Paragraph | Table)[] = [];
-  const installableDevices = devices.filter((d) => d.installNotes.length > 0);
-  installableDevices.forEach((dev, i) => {
-    elements.push(subHeading(`6.${i + 1}  ${dev.name}`));
-    dev.installNotes.forEach((step) => {
-      elements.push(numberedItem(step, `install-steps-${i}`));
-    });
+  installable.forEach((m, i) => {
+    const dev = m.spec;
+    elements.push(subHeading(`5.${i + 1}  ${dev.name}  —  Qty ${m.quantity}`));
+    elements.push(bodyText(`Applies to: ${linesSummary(m)}`, { color: MED_GRAY }));
+    dev.installNotes.forEach((step) => elements.push(numberedItem(step, `install-steps-${i}`)));
     if (dev.criticalNotes.length > 0) {
       elements.push(spacer());
-      dev.criticalNotes.forEach((note) => {
-        elements.push(calloutBox('CRITICAL', note));
-      });
+      dev.criticalNotes.forEach((note) => elements.push(calloutBox('CRITICAL', note)));
     }
     elements.push(spacer());
   });
   return elements;
 }
+
+function lineRefTable(lines: BomLineRef[]): Table {
+  const w = [2400, 5560, 1400];
+  return new Table({
+    width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: w,
+    rows: [
+      new TableRow({ children: [headerCell('Part #', w[0]), headerCell('Description', w[1]), headerCell('Qty', w[2], { align: AlignmentType.CENTER })] }),
+      ...lines.map((l, i) => new TableRow({ children: [
+        dataCell(l.partNumber, w[0], { shading: i % 2 ? ROW_ALT : undefined }),
+        dataCell(l.description, w[1], { shading: i % 2 ? ROW_ALT : undefined }),
+        dataCell(String(l.quantity), w[2], { shading: i % 2 ? ROW_ALT : undefined, align: AlignmentType.CENTER }),
+      ] })),
+    ],
+  });
+}
+
+// QC checks by device type (applied only when that type is on the BOM)
+const TYPE_QC: Record<string, [string, string][]> = {
+  'CCTV Camera': [['Camera mounted level and secure', 'Mount fasteners and weather seals checked'], ['Image quality acceptable day/night', 'No glare, obstructions or IR reflection']],
+  'Access Controller': [['Lock release confirmed at every door', 'Lock engages and disengages correctly'], ['REX and door position verified', 'Events report correctly in platform']],
+  'Card Reader': [['Credential read tested at every reader', 'Card/fob/mobile credential reads and grants']],
+  'Reader Interface': [['Reader interface communicating', 'Readers online in platform']],
+  'Video Intercom': [['Intercom audio/video tested', 'Two-way call completed'], ['Door release from intercom tested', 'Relay operates lock']],
+  'Vape Sensor': [['Sensor mounted per Hardware Schedule', 'Away from HVAC supply vents'], ['Detection test performed per manufacturer', 'Alert received by designated contact']],
+  'Gate Operator': [['Gate travel and limits set', 'Safety/entrapment devices tested']],
+  'Power Supply': [['Output voltage verified under load', 'Battery backup connected']],
+  'PoE Switch': [['PoE budget verified', 'All PoE devices powered']],
+  'Alarm Panel': [['Panel armed/disarmed successfully', 'Monitoring signals confirmed (if monitored)']],
+};
+
+function qcTable(rows: [string, string][]): Table {
+  return new Table({
+    width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: qcColWidths,
+    rows: [
+      new TableRow({ children: [headerCell('\u2713', qcColWidths[0], { align: AlignmentType.CENTER }), headerCell('Item', qcColWidths[1]), headerCell('Detail / Spec', qcColWidths[2])] }),
+      ...rows.map(([item, spec], i) => qcRow(item, spec, i % 2 === 1)),
+    ],
+  });
+}
+
+export function buildQcChecks(devices: MatchedDevice[]): { title: string; rows: [string, string][] }[] {
+  return devices.map((m) => ({
+    title: `${m.spec.name}  —  Qty ${m.quantity}`,
+    rows: [...(m.spec.qcChecks ?? []), ...(TYPE_QC[m.spec.type] ?? [])],
+  })).filter((g) => g.rows.length > 0);
+}
+
+function buildQcSections(devices: MatchedDevice[], allLines: BomLineRef[]): (Paragraph | Table)[] {
+  const out: (Paragraph | Table)[] = [];
+  const devLines = devices.flatMap((m) => m.lines);
+  out.push(subHeading('8.1  Device Count Verification'));
+  out.push(bodyText('Record installed quantity for every device line on the BOM. Installed must equal BOM quantity or be explained to the PM.'));
+  const w = [500, 2000, 4060, 900, 1100, 800];
+  const rows = (devLines.length ? devLines : allLines).map((l, i) => {
+    const sh = i % 2 ? ROW_ALT : undefined;
+    return new TableRow({ children: [checkboxCell(w[0], { shading: sh }), dataCell(l.partNumber, w[1], { shading: sh }), dataCell(l.description, w[2], { shading: sh }), dataCell(String(l.quantity), w[3], { shading: sh, align: AlignmentType.CENTER }), dataCell('', w[4], { shading: sh }), checkboxCell(w[5], { shading: sh })] });
+  });
+  out.push(new Table({
+    width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: w,
+    rows: [new TableRow({ children: [headerCell('\u2713', w[0], { align: AlignmentType.CENTER }), headerCell('Part #', w[1]), headerCell('Description', w[2]), headerCell('BOM Qty', w[3], { align: AlignmentType.CENTER }), headerCell('Installed', w[4]), headerCell('Tested', w[5])] }), ...rows],
+  }));
+  out.push(spacer());
+  const groups = buildQcChecks(devices);
+  groups.forEach((g, i) => {
+    out.push(subHeading(`8.${i + 2}  ${g.title}`));
+    out.push(qcTable(g.rows));
+    out.push(spacer());
+  });
+  out.push(subHeading(`8.${groups.length + 2}  General Installation`));
+  out.push(qcTable([
+    ['Hardware matches BOM and Hardware Schedule', 'No substitutions without PM approval'],
+    ['No exposed wiring or connections', 'Cables routed, supported and labeled'],
+    ['Penetrations sealed', 'Fire-stop / weatherproof as required'],
+    ['Work area cleaned', 'Debris removed to customer-designated location'],
+    ['Completion photos taken', 'Every installed device'],
+  ]));
+  return out;
+}
+
+const TROUBLESHOOTING: { types: string[] | null; problem: string; fix: string }[] = [
+  { types: null, problem: 'Device not powering on (PoE)', fix: 'Verify switch port PoE enabled and class sufficient. Check cable length (<100m). Try another port.' },
+  { types: null, problem: 'Intermittent connectivity', fix: 'Re-test terminations with a cable tester. Check for EMI near AC lines.' },
+  { types: ['CCTV Camera'], problem: 'Camera image blurry', fix: 'Clean lens/dome. Re-focus from platform live view. Verify mount angle.' },
+  { types: ['Card Reader', 'Reader Interface'], problem: 'Reader not communicating', fix: 'Verify OSDP wiring A/B, +V, GND. Check for reversed A/B.' },
+  { types: ['Access Controller'], problem: 'Lock not releasing', fix: 'Verify relay wiring N.C./N.O. and lock power supply voltage.' },
+  { types: ['Video Intercom'], problem: 'Intercom no audio', fix: 'Check call configuration in platform. Verify network connectivity.' },
+  { types: ['Vape Sensor'], problem: 'Sensor false alerts', fix: 'Check placement relative to HVAC vents. Review thresholds with PM.' },
+];
 
 // ─── MAIN GENERATOR ───
 export async function generateFieldManual(
@@ -291,9 +378,14 @@ export async function generateFieldManual(
   scopeOfWork: string
 ): Promise<Blob> {
   // Match devices from BOM
-  const devices = matchDevicesFromBom(bomItems);
-  const systemType = info.systemType || detectSystemType(devices);
-  const vms = info.vms || detectVms(devices);
+  const match = matchBomToDevices(bomItems);
+  const devices = match.devices;
+  const specs = devices.map((d) => d.spec);
+  const types = new Set(specs.map((d) => d.type));
+  const allLines: BomLineRef[] = bomItems.map((b) => ({ partNumber: b.partNumber || '', description: b.description, quantity: b.quantity }));
+  const systemType = info.systemType || detectSystemType(specs);
+  const vms = info.vms || detectVms(specs);
+  const hasReaders = types.has('Card Reader') || types.has('Reader Interface') || types.has('Access Controller');
 
   // Map fields
   const oppNumber = info.oppNumber || 'OPP-XXXXXX';
@@ -372,8 +464,6 @@ export async function generateFieldManual(
         properties: { page: { size: { width: PAGE_WIDTH, height: PAGE_HEIGHT }, margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN } } },
         children: [
           spacer(), spacer(), spacer(), spacer(),
-          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 100 }, children: [new TextRun({ text: 'HOWARD TECHNOLOGY SOLUTIONS', font: 'Arial', size: 40, bold: true, color: HTS_BLUE })] }),
-          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: 'Professional Services', font: 'Arial', size: 28, color: HTS_ORANGE })] }),
           new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 400 }, border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: HTS_BLUE, space: 1 } }, children: [] }),
           spacer(),
           new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new TextRun({ text: projectDate, font: 'Arial', size: 24, color: MED_GRAY })] }),
@@ -418,7 +508,7 @@ export async function generateFieldManual(
             children: [new Paragraph({
               border: { top: { style: BorderStyle.SINGLE, size: 4, color: HTS_BLUE, space: 4 } },
               children: [
-                new TextRun({ text: 'Howard Technology Solutions  |  Field Installation Manual', font: 'Arial', size: 16, color: MED_GRAY }),
+                new TextRun({ text: `${projectName}  |  Field Installation Manual`, font: 'Arial', size: 16, color: MED_GRAY }),
                 new TextRun({ text: '\t', font: 'Arial', size: 16 }),
                 new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 16, color: MED_GRAY }),
               ],
@@ -433,14 +523,14 @@ export async function generateFieldManual(
             width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: [2800, 6560],
             rows: [
               new TableRow({ children: [headerCell('Field', 2800), headerCell('Detail', 6560)] }),
-              new TableRow({ children: [dataCell('OPP Number', 2800, { bold: true }), dataCell(oppNumber, 6560)] }),
+              new TableRow({ children: [dataCell('Project ID', 2800, { bold: true }), dataCell(oppNumber, 6560)] }),
               new TableRow({ children: [dataCell('Project Name', 2800, { bold: true, shading: ROW_ALT }), dataCell(projectName, 6560, { shading: ROW_ALT })] }),
               ...(systemType ? [new TableRow({ children: [dataCell('System Type', 2800, { bold: true }), dataCell(systemType, 6560)] })] : []),
               new TableRow({ children: [dataCell('Customer', 2800, { bold: true, shading: ROW_ALT }), dataCell(customerName, 6560, { shading: ROW_ALT })] }),
               new TableRow({ children: [dataCell('Site Address', 2800, { bold: true }), dataCell(siteAddress, 6560)] }),
               new TableRow({ children: [dataCell('Estimated Duration', 2800, { bold: true, shading: ROW_ALT }), dataCell(`${estimatedDuration} business days`, 6560, { shading: ROW_ALT })] }),
-              ...(pmName ? [new TableRow({ children: [dataCell('HTS Project Manager', 2800, { bold: true }), dataCell(`${pmName}${pmPhone ? ' | ' + pmPhone : ''}${pmEmail ? ' | ' + pmEmail : ''}`, 6560)] })] : []),
-              new TableRow({ children: [dataCell('HTS Engineer', 2800, { bold: true, shading: ROW_ALT }), dataCell(engineerName, 6560, { shading: ROW_ALT })] }),
+              ...(pmName ? [new TableRow({ children: [dataCell('Project Manager', 2800, { bold: true }), dataCell(`${pmName}${pmPhone ? ' | ' + pmPhone : ''}${pmEmail ? ' | ' + pmEmail : ''}`, 6560)] })] : []),
+              new TableRow({ children: [dataCell('Engineer', 2800, { bold: true, shading: ROW_ALT }), dataCell(engineerName, 6560, { shading: ROW_ALT })] }),
               ...(pocName ? [new TableRow({ children: [dataCell('Customer PoC', 2800, { bold: true }), dataCell(`${pocName}${pocPhone ? ' | ' + pocPhone : ''}${pocEmail ? ' | ' + pocEmail : ''}`, 6560)] })] : []),
               ...(vms ? [new TableRow({ children: [dataCell('VMS / Platform', 2800, { bold: true, shading: ROW_ALT }), dataCell(vms, 6560, { shading: ROW_ALT })] })] : []),
             ],
@@ -449,7 +539,7 @@ export async function generateFieldManual(
           bodyText('Summary:'),
           bodyText(summary, { color: MED_GRAY }),
           spacer(),
-          calloutBox('NOTE', 'All project-related decisions are made solely by the assigned HTS Project Manager. Subcontractor shall not make any changes according to Customer directives. All Customer requests must be referred to the HTS Project Manager.'),
+          calloutBox('NOTE', 'All project-related decisions are made solely by the assigned Project Manager. Subcontractor shall not make any changes according to Customer directives. All Customer requests must be referred to the Project Manager.'),
           spacer(),
 
           // §2 First Day Site Mobilization
@@ -488,6 +578,15 @@ export async function generateFieldManual(
           bodyText('Quick reference specs for each device type in this project.'),
           spacer(),
           ...buildDeviceQuickRefSections(devices),
+          ...(match.unmatched.length ? [
+            subHeading('Equipment Without Manufacturer Reference'),
+            calloutBox('WARNING', 'The items below are not in the reference library. Follow the manufacturer installation guide shipped with each item and confirm details with the PM.'),
+            lineRefTable(match.unmatched), spacer(),
+          ] : []),
+          ...(match.accessories.length ? [
+            subHeading('Materials, Licenses & Accessories'),
+            lineRefTable(match.accessories), spacer(),
+          ] : []),
 
           // §5 Installation Instructions (auto-populated from knowledge base)
           new Paragraph({ children: [new PageBreak()] }),
@@ -499,19 +598,24 @@ export async function generateFieldManual(
           // §6 Wiring & Connection Reference
           new Paragraph({ children: [new PageBreak()] }),
           sectionHeading('6  |  Wiring & Connection Reference'),
-          subHeading('6.1  OSDP Wiring Standard'),
-          bodyText('RS-485: A(+), B(-), +V (power), GND — 4 wire from reader to controller'),
+          ...(hasReaders ? [
+            subHeading('OSDP Reader Wiring'),
+            bodyText('RS-485: A(+), B(-), +V (power), GND — 4 wire from reader to controller'),
+          ] : []),
+          subHeading('Network Cabling'),
           bodyText('Cat6: T568B termination standard'),
-          bodyText('NEC: Maintain AC/LV separation at all times'),
           bodyText('Cable max: Cat6 = 100m (328ft) from switch to device'),
-          spacer(),
-          bodyText('[Populate cable schedule, relay wiring, PoE budget, surge protection, and enclosure layout per project.]', { color: MED_GRAY }),
+          bodyText('NEC: Maintain AC/LV separation at all times'),
+          ...specs.filter((d) => d.poe && d.poe !== 'N/A').map((d) => bodyText(`${d.name}: ${d.poe}`)),
           spacer(),
 
           // §7 Network & Configuration
           new Paragraph({ children: [new PageBreak()] }),
           sectionHeading('7  |  Network & Configuration'),
-          bodyText('[Populate IP assignments, platform config, and security settings per project.]', { color: MED_GRAY }),
+          ...(specs.length ? Array.from(new Set(specs.map((d) => `${d.vms}|${d.managementUrl}|${d.managementPorts}`))).filter((k) => !k.startsWith('N/A')).map((k) => {
+            const [platform, url, ports] = k.split('|');
+            return bodyText(`${platform}: ${url}${ports && ports !== 'N/A' ? ' — ' + ports : ''}`);
+          }) : [bodyText('IP assignments and platform configuration per PM.', { color: MED_GRAY })]),
           spacer(),
 
           // §8 Quality Control Checklist
@@ -519,32 +623,7 @@ export async function generateFieldManual(
           sectionHeading('8  |  Quality Control Checklist'),
           bodyText('Complete all items before requesting customer walkthrough.'),
           spacer(),
-          subHeading('8.1  Installation Verification'),
-          new Table({
-            width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: qcColWidths,
-            rows: [
-              new TableRow({ children: [headerCell('\u2713', qcColWidths[0], { align: AlignmentType.CENTER }), headerCell('Item', qcColWidths[1]), headerCell('Detail / Spec', qcColWidths[2])] }),
-              qcRow('All hardware mounted per manufacturer specs', 'Verify mounting height, orientation, fasteners', false),
-              qcRow('No exposed wiring or connections', 'All cables properly routed and secured', true),
-              qcRow('Weatherproofing applied where needed', 'Outdoor enclosures, conduit entries sealed', false),
-              qcRow('Hardware matches approved Hardware Schedule', 'Verify every installed device against BOM', true),
-              qcRow('All penetrations sealed and protected', 'Fire-stop, weatherproof as required', false),
-            ],
-          }),
-          spacer(),
-          subHeading('8.2  System Functionality'),
-          new Table({
-            width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: qcColWidths,
-            rows: [
-              new TableRow({ children: [headerCell('\u2713', qcColWidths[0], { align: AlignmentType.CENTER }), headerCell('Item', qcColWidths[1]), headerCell('Detail / Spec', qcColWidths[2])] }),
-              qcRow('All devices online in management platform', vms ? `Verified in ${vms}` : 'Verified in VMS', false),
-              qcRow('Credential read tested at every access point', 'Card/fob/tag successfully reads', true),
-              qcRow('Lock release confirmed', 'Lock engages and disengages correctly', false),
-              qcRow('Video feed verified (if applicable)', 'Camera aim and image quality confirmed', true),
-              qcRow('Firmware updated to latest supported version', 'Version number recorded', false),
-              qcRow('Commissioning completed per PM direction', 'All programming and config verified', true),
-            ],
-          }),
+          ...buildQcSections(devices, allLines),
           spacer(),
 
           // §9 Troubleshooting
@@ -556,24 +635,17 @@ export async function generateFieldManual(
             width: { size: CONTENT_WIDTH, type: WidthType.DXA }, columnWidths: tsColWidths,
             rows: [
               new TableRow({ children: [headerCell('Problem', tsColWidths[0]), headerCell('Fix', tsColWidths[1])] }),
-              tsRow('Device not found on network', 'Confirm same subnet. Check PoE link light. Try direct connection.', false),
-              tsRow('Cannot access web UI', 'Confirm IP via device manager. Use http:// not https://. Check port.', true),
-              tsRow('Reader not communicating', 'Verify OSDP wiring (A/B, +V, GND). Check for reversed polarity.', false),
-              tsRow('Lock / gate not releasing', 'Verify relay wiring. Check N.C./N.O. Confirm DC 12V connected.', true),
-              tsRow('Camera image blurry', 'Check focus ring. Clean lens. Verify mounting angle matches design.', false),
-              tsRow('Intercom no audio', 'Check SIP config. Verify network connectivity. Test with local call.', true),
-              tsRow('PoE device not powering on', 'Verify switch port PoE enabled. Check cable run length (<100m). Try different port.', false),
-              tsRow('Intermittent connectivity', 'Check cable terminations. Test with cable tester. Check for EMI near AC lines.', true),
+              ...TROUBLESHOOTING.filter((t) => !t.types || t.types.some((x) => types.has(x))).map((t, i) => tsRow(t.problem, t.fix, i % 2 === 1)),
             ],
           }),
           spacer(),
-          calloutBox('WARNING', 'If you encounter conditions not covered in this guide, STOP work and contact the HTS Project Manager immediately.'),
+          calloutBox('WARNING', 'If you encounter conditions not covered in this guide, STOP work and contact the Project Manager immediately.'),
           spacer(),
 
           // §10 Daily Reporting
           new Paragraph({ children: [new PageBreak()] }),
           sectionHeading('10  |  Daily Reporting & Documentation'),
-          bodyText('Submit the following to the HTS Project Manager at the end of each work day:'),
+          bodyText('Submit the following to the Project Manager at the end of each work day:'),
           spacer(),
           ...['Summary of work completed', 'Summary of work remaining', 'Issues, RFIs, or field conditions', 'Photo documentation', 'Equipment / material status'].map((text) => bulletItem(text, 'bullets-reporting')),
           spacer(),
@@ -582,7 +654,7 @@ export async function generateFieldManual(
           sectionHeading('11  |  Change Management & Field Conditions'),
           bodyText('If you encounter any condition that differs from the SOW or Hardware Schedule:'),
           spacer(),
-          ...['STOP work on the affected task immediately', 'Document the condition with photos and written description', 'Notify the HTS Project Manager and await authorization', 'Do NOT proceed without written PM approval'].map((text) => bulletItem(text, 'bullets-change')),
+          ...['STOP work on the affected task immediately', 'Document the condition with photos and written description', 'Notify the Project Manager and await authorization', 'Do NOT proceed without written PM approval'].map((text) => bulletItem(text, 'bullets-change')),
           spacer(),
 
           // §12 Safety
