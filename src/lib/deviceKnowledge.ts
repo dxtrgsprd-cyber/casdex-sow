@@ -1272,7 +1272,7 @@ export const CAMERA_PROGRAMMING_QC: [string, string][] = [
   ['Final reboot test', 'Returns online, keeps recording, timestamps correct, bitrate normal'],
 ];
 for (const e of DEVICE_DATABASE) {
-  if (e.spec.type === 'CCTV Camera') e.spec.qcChecks = [...(e.spec.qcChecks ?? []), ...CAMERA_PROGRAMMING_QC.filter(([i]) => !(e.spec.qcChecks ?? []).some(([j]) => j === i))];
+  if (e.spec.type === 'CCTV Camera' && ['Hanwha', 'Axis', 'i-PRO', 'Avigilon'].includes(e.spec.vendor)) e.spec.qcChecks = [...(e.spec.qcChecks ?? []), ...CAMERA_PROGRAMMING_QC.filter(([i]) => !(e.spec.qcChecks ?? []).some(([j]) => j === i))];
 }
 
 /**
