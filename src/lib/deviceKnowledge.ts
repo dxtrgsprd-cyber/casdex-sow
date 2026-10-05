@@ -215,6 +215,47 @@ const DEVICE_DATABASE: { pattern: RegExp; spec: DeviceSpec }[] = [
     },
   },
   // ── Hanwha / Wisenet ──
+  // BLAZE steps from Hanwha "BLAZE: Get Started" article supplied by the user.
+  {
+    pattern: /\bBLAZE\b/i,
+    spec: {
+      name: 'Hanwha BLAZE VMS Appliance / Server',
+      type: 'NVR / VMS Server',
+      vendor: 'Hanwha',
+      poe: 'Appliance: PoE camera ports (see model spec sheet); server: N/A',
+      defaultIp: 'Set under Settings > Servers > Network > IP and port',
+      defaultUsername: 'admin (created at first boot)',
+      defaultPassword: 'Set on first boot',
+      managementPorts: 'Per BLAZE server IP and port setting',
+      relayOutput: 'N/A',
+      communicationProtocol: 'IP / ONVIF camera discovery; optional Hanwha Vision Cloud',
+      vms: 'Hanwha BLAZE',
+      managementUrl: 'BLAZE desktop client, web client or Hanwha Vision Cloud',
+      keySpecs: 'Appliance includes recording licenses; software server includes 5 free trial licenses (30 days)',
+      installNotes: [
+        'Appliance: connect local monitor, keyboard and mouse, then power up',
+        'Connect cameras to appliance PoE ports, or through a network switch to a NIC',
+        'Accept Terms and Conditions, create admin password and name the server',
+        'Settings > Servers > Network > IP and port: configure each NIC',
+        'Settings > Devices > Add devices: scan and add cameras with their credentials',
+        'Multi-select devices and start recording with the included licenses',
+        'Server install: install BLAZE server (runs as a service), then the BLAZE client, and connect by server IP and port',
+        'Optional: link the system to Hanwha Vision Cloud for remote, mobile and web access',
+      ],
+      criticalNotes: [
+        'Software server trial licenses expire after 30 days — confirm permanent licenses are applied before turnover',
+        'Record the admin password and server name in the turnover package',
+      ],
+      qcChecks: [
+        ['BLAZE admin account created and documented', 'Pass'],
+        ['NIC IP and port configured per network plan', 'Pass'],
+        ['All BOM cameras added in Settings > Devices', 'Count matches BOM'],
+        ['Recording enabled on every camera (Use license ON)', 'Pass'],
+        ['Permanent licenses applied (not 30-day trial)', 'Pass'],
+        ['Hanwha Vision Cloud link (if in scope)', 'Remote access verified'],
+      ],
+    },
+  },
   {
     pattern: /TID-600R/i,
     spec: {
